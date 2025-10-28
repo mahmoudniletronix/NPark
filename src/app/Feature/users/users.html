@@ -1,0 +1,105 @@
+<div class="users-theme container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0 fw-bold">Users</h4>
+    <button class="btn btn-primary" (click)="openAdd()">
+      <i class="bi bi-plus-lg me-1"></i> Add New
+    </button>
+  </div>
+
+  <div class="card shadow-soft mb-3">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead class="table-head">
+            <tr>
+              <th style="width: 80px">#</th>
+              <th>Name</th>
+              <th>Email</th>
+              <th style="width: 120px">Role</th>
+              <th style="width: 110px">Status</th>
+              <th style="width: 120px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of users">
+              <td>{{ u.id }}</td>
+              <td class="mono">{{ u.name }}</td>
+              <td class="mono">{{ u.email }}</td>
+              <td>
+                <span class="badge theme-amber" *ngIf="u.role === 'Admin'">Admin</span>
+                <span class="badge theme-blue" *ngIf="u.role === 'User'">User</span>
+              </td>
+              <td>
+                <span class="badge theme-green" *ngIf="u.active">Active</span>
+                <span class="badge bg-secondary" *ngIf="!u.active">Inactive</span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary me-2" (click)="openEdit(u)">
+                  <i class="bi bi-pencil"></i> Edit
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="!users.length && !loading">
+              <td colspan="6" class="text-center text-muted py-4">No users</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Inline Form Card -->
+  <div class="card shadow-soft mb-4" *ngIf="showForm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+      <strong>{{ isEdit ? 'Edit User' : 'Add New User' }}</strong>
+      <button class="btn btn-sm btn-outline-secondary" (click)="cancel()">Close</button>
+    </div>
+    <div class="card-body">
+      <form (ngSubmit)="save()">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">Name</label>
+            <input type="text" class="form-control" [(ngModel)]="model.name" name="name" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Email</label>
+            <input
+              type="email"
+              class="form-control"
+              [(ngModel)]="model.email"
+              name="email"
+              required
+            />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">Role</label>
+            <select class="form-select" [(ngModel)]="model.role" name="role">
+              <option value="User">User</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <div class="form-check">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="active"
+                [(ngModel)]="model.active"
+                name="active"
+              />
+              <label for="active" class="form-check-label">Active</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <button class="btn btn-success me-2" type="submit">
+            <i class="bi" [ngClass]="isEdit ? 'bi-save' : 'bi-plus-lg'"></i>
+            {{ isEdit ? 'Save' : 'Create' }}
+          </button>
+          <button class="btn btn-outline-secondary" type="button" (click)="cancel()">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

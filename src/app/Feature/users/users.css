@@ -1,0 +1,54 @@
+.users-theme {
+  padding: 0.5rem;
+}
+
+.users-theme .theme-blue {
+  background-color: #0ea5e9;
+  color: #081018;
+}
+.users-theme .theme-green {
+  background-color: #10b981;
+  color: #062a1f;
+}
+.users-theme .theme-amber {
+  background-color: #f59e0b;
+  color: #2a1a00;
+}
+
+.shadow-soft {
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+}
+.table-head {
+  background: #f8fafc;
+}
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+.btn-primary {
+  background-color: #0ea5e9;
+  border-color: #0ea5e9;
+}
+.btn-primary:hover {
+  background-color: #0284c7;
+  border-color: #0284c7;
+}
+.btn-outline-primary {
+  border-color: #0ea5e9;
+  color: #0ea5e9;
+}
+.btn-outline-primary:hover {
+  background-color: #0ea5e9;
+  color: #081018;
+}
+
+.badge {
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  padding: 0.45rem 0.6rem;
+}
+
+.form-label {
+  font-weight: 600;
+}

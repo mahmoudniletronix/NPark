@@ -1,0 +1,93 @@
+<div class="tickets-theme container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0 fw-bold">Tickets</h4>
+    <div class="d-flex gap-2">
+      <input
+        class="form-control form-control-sm"
+        style="width: 220px"
+        placeholder="Search ID / Plate"
+        [(ngModel)]="q"
+        (ngModelChange)="applyFilters()"
+      />
+      <select
+        class="form-select form-select-sm"
+        style="width: 140px"
+        [(ngModel)]="action"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">All actions</option>
+        <option value="IN">IN</option>
+        <option value="OUT">OUT</option>
+      </select>
+      <select
+        class="form-select form-select-sm"
+        style="width: 120px"
+        [(ngModel)]="gate"
+        (ngModelChange)="applyFilters()"
+      >
+        <option value="">All gates</option>
+        <option *ngFor="let g of gates()" [value]="g">{{ g }}</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card shadow-soft">
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead class="table-head">
+          <tr>
+            <th style="width: 90px">ID</th>
+            <th>Plate</th>
+            <th style="width: 120px">Action</th>
+            <th style="width: 120px">Gate</th>
+            <th style="width: 160px">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let t of pageItems()">
+            <td>{{ t.id }}</td>
+            <td class="mono">{{ t.plate }}</td>
+            <td>
+              <span
+                class="badge pill"
+                [class.theme-green]="t.action === 'IN'"
+                [class.theme-red]="t.action === 'OUT'"
+              >
+                {{ t.action }}
+              </span>
+            </td>
+            <td>{{ t.gate }}</td>
+            <td>{{ t.time | date : 'short' }}</td>
+          </tr>
+          <tr *ngIf="!pageItems().length && !loading">
+            <td colspan="5" class="text-center text-muted py-4">No tickets</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center p-2 border-top">
+      <div class="small text-muted">
+        Showing {{ (page - 1) * pageSize + 1 }}–{{ Math.min(page * pageSize, filtered.length) }} of
+        {{ filtered.length }}
+      </div>
+      <div class="btn-group">
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="page <= 1"
+          (click)="page = page - 1"
+        >
+          Prev
+        </button>
+        <button
+          class="btn btn-sm btn-outline-secondary"
+          [disabled]="page >= pagesCount()"
+          (click)="page = page + 1"
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+<div class="app-shell d-flex">
+  <!-- Sidebar -->
+  <aside class="app-sidebar d-flex flex-column p-3">
+    <a class="brand text-decoration-none mb-4" routerLink="/">
+      <span class="n">N</span><span class="p">Park</span>
+    </a>
+
+    <nav class="nav flex-column gap-1">
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+      >
+        <i class="bi bi-house"></i> Overview
+      </a>
+      <div class="text-secondary small mt-3 mb-1 text-uppercase">Parking</div>
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/">
+        <i class="bi bi-graph-up"></i> Dashboard
+      </a>
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/tickets">
+        <i class="bi bi-ticket"></i> Tickets
+      </a>
+
+      <div class="text-secondary small mt-3 mb-1 text-uppercase">Management</div>
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/users">
+        <i class="bi bi-people"></i> Users
+      </a>
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/settings">
+        <i class="bi bi-gear"></i> Settings
+      </a>
+    </nav>
+
+    <div class="mt-auto small text-secondary">v1.0</div>
+  </aside>
+
+  <section class="app-content flex-fill d-flex flex-column">
+    <header class="app-topbar d-flex align-items-center justify-content-between px-4 py-3">
+      <div class="fw-semibold">Dashboard</div>
+      <div class="text-muted small">Welcome back</div>
+    </header>
+
+    <main class="p-4">
+      <router-outlet></router-outlet>
+    </main>
+  </section>
+</div>

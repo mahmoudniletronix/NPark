@@ -1,0 +1,84 @@
+/* @import 'primeicons/primeicons.css';
+@import 'primeng/resources/themes/lara-light-blue/theme.css';
+@import 'primeng/resources/primeng.min.css';
+@import 'primeflex/primeflex.css'; */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+}
+
+.app-shell main.page-content,
+.app-shell main.flex-fill {
+  flex: 1 0 auto;
+  display: block;
+}
+
+.app-shell app-footer-component {
+  margin-top: auto;
+}
+
+.floating-logo {
+  position: fixed;
+  bottom: 20px;
+  right: 24px;
+  width: 90px;
+  height: auto;
+  opacity: 0.85;
+  z-index: 2000;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.floating-logo:hover {
+  transform: scale(1.05);
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .floating-logo {
+    width: 70px;
+    bottom: 14px;
+    right: 14px;
+  }
+}
+
+:root {
+  --sidebar-w: 260px;
+}
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+}
+.app-sidebar {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.app-content {
+  background: #f8fafc;
+}
+.brand {
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.brand .n {
+  color: #dc3545;
+}
+.brand .p {
+  color: #6c757d;
+}
+
+.card-kpi .value {
+  font-size: 1.8rem;
+  font-weight: 700;
+}

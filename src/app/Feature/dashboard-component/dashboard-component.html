@@ -1,0 +1,100 @@
+<div class="container-fluid dash-theme">
+  <div class="row g-3">
+    <!-- Stations -->
+    <div class="col-12 col-md-4">
+      <div class="card kpi kpi-blue h-100">
+        <div class="card-body">
+          <div class="text-muted">Stations</div>
+          <div class="value">{{ stations?.total || 0 }}</div>
+          <div class="small">
+            Full: {{ stations?.full || 0 }} · Empty: {{ stations?.empty || 0 }}
+          </div>
+          <div class="chart-wrap mt-3"><canvas #stationsChart></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div class="col-12 col-md-4">
+      <div class="card kpi kpi-green h-100 users-card">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div>
+              <div class="text-muted">Users</div>
+              <div class="value mb-1">{{ usersTotal() }}</div>
+              <div class="small text-muted">إجمالي المستخدمين (Subscribers + Visitors)</div>
+            </div>
+
+            <a routerLink="/users" class="btn btn-sm btn-primary shadow-none"> See all users </a>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <span class="badge pill theme-green-soft">
+              Subscribers: {{ users?.subscribers || 0 }}
+            </span>
+            <span class="badge pill theme-amber-soft"> Visitors: {{ users?.visitors || 0 }} </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- In/Out -->
+    <div class="col-12 col-md-4">
+      <div class="card kpi kpi-amber h-100">
+        <div class="card-body">
+          <div class="text-muted">Live In/Out (today)</div>
+          <div class="chart-wrap mt-2"><canvas #inoutChart></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tickets table -->
+    <div class="col-12">
+      <div class="card shadow-sm">
+        <div class="card-header bg-white">
+          <div class="d-flex justify-content-between align-items-center">
+            <strong>Recent Tickets</strong>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small d-none d-md-inline">Last 10 Records</span>
+              <a routerLink="/tickets" class="btn btn-sm btn-primary">See all tickets</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Plate</th>
+                <th>Action</th>
+                <th>Gate</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of tickets">
+                <td>{{ t.id }}</td>
+                <td>{{ t.plate }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class.bg-success]="t.action === 'IN'"
+                    [class.bg-danger]="t.action === 'OUT'"
+                  >
+                    {{ t.action }}
+                  </span>
+                </td>
+                <td>{{ t.gate }}</td>
+                <td>{{ t.time | date : 'shortTime' }}</td>
+              </tr>
+              <tr *ngIf="tickets.length === 0">
+                <td colspan="5" class="text-center text-muted py-4">No data</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

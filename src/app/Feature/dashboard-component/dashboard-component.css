@@ -1,0 +1,133 @@
+:root {
+  --np-red: #e11d48;
+  --np-gray: #6b7280;
+  --np-blue: #0ea5e9;
+  --np-green: #10b981;
+  --np-amber: #f59e0b;
+
+  --bg: #f6f8fb;
+  --surface: #ffffff;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border: #e5e7eb;
+  --shadow: 0 6px 24px rgba(15, 23, 42, 0.06);
+}
+
+.dash-theme {
+  background: radial-gradient(1200px 600px at -10% -20%, #eef6ff 0%, transparent 60%) no-repeat,
+    radial-gradient(1000px 600px at 110% 10%, #fff0f5 0%, transparent 60%) no-repeat, var(--bg);
+  padding: 1.25rem 1.25rem 2rem;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.card .card-header {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.card.kpi {
+  border-top: 5px solid transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.1);
+}
+
+.kpi .value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: var(--text-main);
+}
+
+.kpi .text-muted {
+  color: var(--text-muted) !important;
+}
+
+.kpi-blue {
+  border-top-color: var(--np-blue);
+}
+.kpi-green {
+  border-top-color: var(--np-green);
+}
+.kpi-amber {
+  border-top-color: var(--np-amber);
+}
+
+.chart-wrap {
+  height: 200px;
+  position: relative;
+}
+
+.table {
+  --bs-table-color: var(--text-main);
+}
+.table thead th {
+  color: var(--text-main);
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+}
+.table tbody tr:hover {
+  background: #f9fbff;
+}
+.table td,
+.table th {
+  vertical-align: middle;
+}
+.badge {
+  padding: 0.45rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+td:nth-child(2) {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+.shadow-soft {
+  box-shadow: var(--shadow);
+}
+.rounded-12 {
+  border-radius: 12px;
+}
+.users-card .value {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.users-card .btn.btn-sm.btn-primary {
+  background-color: #0ea5e9;
+  border-color: #0ea5e9;
+}
+.users-card .btn.btn-sm.btn-primary:hover {
+  background-color: #0284c7;
+  border-color: #0284c7;
+}
+
+.users-card .badge.pill {
+  border-radius: 999px;
+  padding: 0.45rem 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.users-card .theme-green-soft {
+  background: rgba(16, 185, 129, 0.15);
+  color: #065f46;
+}
+.users-card .theme-amber-soft {
+  background: rgba(245, 158, 11, 0.18);
+  color: #7c4a03;
+}

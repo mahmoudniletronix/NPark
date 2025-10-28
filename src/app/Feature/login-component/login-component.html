@@ -1,0 +1,170 @@
+<div class="container d-flex align-items-center justify-content-center min-vh-70">
+  <div class="card shadow border-0 login-card">
+    <div class="card-body p-4 p-md-5">
+      <div class="text-center mb-4">
+        <div class="brand fs-2 fw-bold">
+          <span class="text-danger">N</span><span class="text-secondary">Park</span>
+        </div>
+        <div class="text-muted">Sign in to continue</div>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <div class="mb-3">
+          <label class="form-label">Username</label>
+          <input class="form-control" type="text" formControlName="username" placeholder="admin" />
+          <div
+            class="invalid-feedback d-block"
+            *ngIf="form.controls.username.touched && form.controls.username.invalid"
+          >
+            Username is required.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <input
+              class="form-control"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              (click)="showPassword = !showPassword"
+              tabindex="-1"
+            >
+              <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
+
+          <div
+            class="invalid-feedback d-block"
+            *ngIf="form.controls.password.touched && form.controls.password.invalid"
+          >
+            Password is required.
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              id="remember"
+              formControlName="remember"
+            />
+            <label class="form-check-label" for="remember">Remember me</label>
+          </div>
+          <a class="small text-decoration-none" routerLink="/forgot-password">Forgot password?</a>
+        </div>
+
+        <button class="btn btn-danger w-100" [disabled]="loading">
+          <span *ngIf="!loading">Sign In</span>
+          <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
+        </button>
+
+        <div *ngIf="error" class="alert alert-danger mt-3 mb-0">
+          {{ error }}
+        </div>
+      </form>
+
+      <div class="hint mt-3 small text-muted">
+        For first-time admin use: <code>admin / Admin123</code>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div
+  class="modal-backdrop"
+  *ngIf="showChangeModal"
+  style="position: fixed; inset: 0; z-index: 1050; background: rgba(0, 0, 0, 0.45)"
+></div>
+
+<div
+  class="modal d-block"
+  tabindex="-1"
+  *ngIf="showChangeModal"
+  role="dialog"
+  style="z-index: 1060"
+>
+  <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Change admin credentials</h5>
+      </div>
+
+      <div class="modal-body">
+        <p class="small text-muted">
+          You are using a temporary password. Please create new credentials.
+        </p>
+
+        <form [formGroup]="changeForm" (ngSubmit)="saveNewCredentials()">
+          <div class="mb-2">
+            <label class="form-label small">New username</label>
+            <input class="form-control form-control-sm" formControlName="newUsername" />
+            <div
+              class="text-danger small mt-1"
+              *ngIf="
+                changeForm.controls.newUsername.touched && changeForm.controls.newUsername.invalid
+              "
+            >
+              Username required (min 3).
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small">New password</label>
+            <input
+              class="form-control form-control-sm"
+              type="password"
+              formControlName="newPassword"
+            />
+            <div
+              class="text-danger small mt-1"
+              *ngIf="
+                changeForm.controls.newPassword.touched && changeForm.controls.newPassword.invalid
+              "
+            >
+              Password required (min 6).
+            </div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label small">Confirm password</label>
+            <input
+              class="form-control form-control-sm"
+              type="password"
+              formControlName="confirmPassword"
+            />
+            <div
+              class="text-danger small mt-1"
+              *ngIf="changeForm.errors?.['mismatch'] && changeForm.touched"
+            >
+              Passwords do not match.
+            </div>
+          </div>
+
+          <div *ngIf="changeError" class="alert alert-danger small">{{ changeError }}</div>
+
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button
+              type="button"
+              class="btn btn-outline-secondary btn-sm"
+              (click)="showChangeModal = false"
+              [disabled]="changeLoading"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-success btn-sm" [disabled]="changeLoading">
+              <span *ngIf="!changeLoading">Save</span>
+              <span *ngIf="changeLoading" class="spinner-border spinner-border-sm"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
