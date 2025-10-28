@@ -12,7 +12,7 @@ export interface LoginFirstTimeRequest {
 export interface UserInfo {
   id: number;
   name: string;
-  role: 'Admin' | 'User';
+  role: 'Admin' | 'User' | string;
   email: string;
 }
 

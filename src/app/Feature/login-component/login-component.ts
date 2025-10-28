@@ -53,35 +53,28 @@ export class LoginComponent {
     const userName = this.form.value.username!.trim();
     const password = this.form.value.password!;
 
-    this.auth.login({ userName, password }).subscribe({
-      next: (resp) => {
-        this.loading = false;
+    const firstLoginData = {
+      userName,
+      password,
+      newPassword: '',
+      confirmedPassword: '',
+    };
+    localStorage.setItem('first_login_data', JSON.stringify(firstLoginData));
 
-        if (resp.mustChangePassword) {
-          this.tmpUsername = userName;
-          this.tmpPassword = password;
-          this.showChangeModal = true;
-          this.changeForm.reset();
-          return;
-        }
+    localStorage.setItem(
+      'auth_user',
+      JSON.stringify({
+        id: 1,
+        name: userName,
+        role: 'Admin',
+        email: `${userName}@np.com`,
+      })
+    );
+    localStorage.setItem('auth_token', 'local.temp.' + Date.now());
 
-        this.navigateAfterLogin();
-      },
-      error: (err) => {
-        this.loading = false;
-
-        const mustChange = err?.error?.mustChangePassword === true;
-        if (mustChange) {
-          this.tmpUsername = userName;
-          this.tmpPassword = password;
-          this.showChangeModal = true;
-          this.changeForm.reset();
-          return;
-        }
-
-        this.error = err?.error?.message || err?.message || 'Login failed';
-      },
-    });
+    this.loading = false;
+    this.showChangeModal = true;
+    this.changeForm.reset();
   }
 
   public passwordsMatch(group: any) {
@@ -98,25 +91,42 @@ export class LoginComponent {
     this.changeLoading = true;
     this.changeError = null;
 
-    const newPassword = this.changeForm.value.newPassword!;
-    this.auth
-      .loginFirstTime({
-        userName: this.tmpUsername,
-        password: this.tmpPassword,
-        newPassword,
-      })
-      .subscribe({
-        next: (_) => {
-          this.changeLoading = false;
-          this.showChangeModal = false;
-          this.navigateAfterLogin();
-        },
-        error: (err) => {
-          this.changeLoading = false;
-          this.changeError =
-            err?.error?.message || err?.message || 'Error while updating credentials';
-        },
-      });
+    const stored = localStorage.getItem('first_login_data');
+    const base = stored
+      ? (JSON.parse(stored) as {
+          userName: string;
+          password: string;
+          newPassword: string;
+          confirmedPassword: string;
+        })
+      : null;
+
+    if (!base) {
+      this.changeLoading = false;
+      this.changeError = 'No first-time data found.';
+      return;
+    }
+
+    const payload = {
+      userName: base.userName,
+      password: base.password,
+      newPassword: this.changeForm.value.newPassword!,
+      confirmedPassword: this.changeForm.value.confirmPassword!,
+    };
+
+    this.auth.loginFirstTime(payload).subscribe({
+      next: (resp) => {
+        localStorage.removeItem('first_login_data');
+
+        this.changeLoading = false;
+        this.showChangeModal = false;
+        this.navigateAfterLogin();
+      },
+      error: (err) => {
+        this.changeLoading = false;
+        this.changeError = err?.error?.message || err?.message || 'Failed to update credentials';
+      },
+    });
   }
 
   private navigateAfterLogin() {
