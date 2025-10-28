@@ -9,15 +9,8 @@ export interface LoginFirstTimeRequest {
   newPassword: string;
 }
 
-export interface UserInfo {
-  id: number;
-  name: string;
-  role: 'Admin' | 'User' | string;
-  email: string;
-}
 
 export interface LoginResponse {
   token: string;
-  user: UserInfo;
-  mustChangePassword?: boolean;
+  roleName: string;
 }

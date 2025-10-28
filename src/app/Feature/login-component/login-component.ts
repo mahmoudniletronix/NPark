@@ -4,6 +4,7 @@ import { AuthService } from '../../Services/Auth/auth-service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { LoginRequest } from '../../Domain/Auth/auth.models';
 
 @Component({
   selector: 'app-login-component',
@@ -47,34 +48,51 @@ export class LoginComponent {
       this.form.markAllAsTouched();
       return;
     }
+
     this.loading = true;
     this.error = null;
 
-    const userName = this.form.value.username!.trim();
-    const password = this.form.value.password!;
+    const userName = (this.form.value.username ?? '').trim();
+    const password = this.form.value.password ?? '';
 
-    const firstLoginData = {
-      userName,
-      password,
-      newPassword: '',
-      confirmedPassword: '',
-    };
-    localStorage.setItem('first_login_data', JSON.stringify(firstLoginData));
+    // ✅ الحالة الأولى: أول تسجيل دخول للمستخدم الافتراضي
+    if (userName === 'Admin' && password === 'Admin123') {
+      const firstLoginData = {
+        userName,
+        password,
+        newPassword: '',
+        confirmedPassword: '',
+      };
 
-    localStorage.setItem(
-      'auth_user',
-      JSON.stringify({
-        id: 1,
-        name: userName,
-        role: 'Admin',
-        email: `${userName}@np.com`,
-      })
-    );
-    localStorage.setItem('auth_token', 'local.temp.' + Date.now());
+      localStorage.setItem('first_login_data', JSON.stringify(firstLoginData));
+      localStorage.setItem(
+        'auth_user',
+        JSON.stringify({
+          id: 1,
+          name: userName,
+          role: 'Admin',
+          email: `${userName}@np.com`,
+        })
+      );
+      localStorage.setItem('auth_token', 'local.temp.' + Date.now());
 
-    this.loading = false;
-    this.showChangeModal = true;
-    this.changeForm.reset();
+      this.loading = false;
+      this.showChangeModal = true;
+      this.changeForm.reset();
+      return;
+    }
+
+    // ✅ الحالة الثانية: تسجيل دخول عادي -> استدعاء API
+    const dto: LoginRequest = { userName, password };
+
+this.auth.login({ userName, password }).subscribe({
+  next: (resp) => {
+    console.log('Login OK:', resp);   // { token, roleName }
+  },
+  error: (err) => {
+    console.error('Login ERR:', err);
+  }
+});
   }
 
   public passwordsMatch(group: any) {
