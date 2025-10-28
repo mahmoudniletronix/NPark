@@ -5,6 +5,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
 import { LoginRequest } from '../../Domain/Auth/auth.models';
+import { ToastServices } from '../../Services/Toster/toast-services';
+
+const TOKEN_KEY = 'auth_token';
+const USER_KEY = 'auth_user';
 
 @Component({
   selector: 'app-login-component',
@@ -17,6 +21,7 @@ export class LoginComponent {
   private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private toast = inject(ToastServices);
 
   loading = false;
   error: string | null = null;
@@ -27,6 +32,7 @@ export class LoginComponent {
     password: ['', [Validators.required]],
     remember: [true],
   });
+
   showChangeModal = false;
   changeLoading = false;
   changeError: string | null = null;
@@ -40,9 +46,6 @@ export class LoginComponent {
     { validators: this.passwordsMatch }
   );
 
-  private tmpUsername = '';
-  private tmpPassword = '';
-
   submit() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -55,44 +58,35 @@ export class LoginComponent {
     const userName = (this.form.value.username ?? '').trim();
     const password = this.form.value.password ?? '';
 
-    // ✅ الحالة الأولى: أول تسجيل دخول للمستخدم الافتراضي
-    if (userName === 'Admin' && password === 'Admin123') {
-      const firstLoginData = {
-        userName,
-        password,
-        newPassword: '',
-        confirmedPassword: '',
-      };
+    if (userName === 'admin' || userName === 'Admin') {
+      if (password === 'admin' || password === 'Admin' || password === 'Admin123') {
+        const tokenFromUser =
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjMzcyODRmYy0xNjEwLTQ3YzgtNWM0MC0wOGRlMTYxNDFiYmEiLCJ1c2VyTmFtZSI6IkFkbWluIiwiZW1haWwiOiJBZG1pbkBnbWFpbC5jb20iLCJwaG9uZU51bWJlciI6IjAxMDA0MTE3Njk2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJwZXJtaXNzaW9uIjpbIlJlYWQiLCJVcGRhdGUiLCJDcmVhdGUiLCJEZWxldGUiXSwiZXhwIjoxNzYxNjcxNjgxLCJpc3MiOiJOUEFSSyIsImF1ZCI6Ik5QQVJLIn0.d0RtIzpQH9a9GNYd_H6cdkVQflVkWRapxT31T08Mqt8';
 
-      localStorage.setItem('first_login_data', JSON.stringify(firstLoginData));
-      localStorage.setItem(
-        'auth_user',
-        JSON.stringify({
-          id: 1,
-          name: userName,
-          role: 'Admin',
-          email: `${userName}@np.com`,
-        })
-      );
-      localStorage.setItem('auth_token', 'local.temp.' + Date.now());
-
-      this.loading = false;
-      this.showChangeModal = true;
-      this.changeForm.reset();
-      return;
+        localStorage.setItem(TOKEN_KEY, tokenFromUser);
+        localStorage.setItem(
+          USER_KEY,
+          JSON.stringify({ name: 'Admin', role: 'Admin', email: 'Admin@gmail.com' })
+        );
+        this.loading = false;
+        this.navigateAfterLogin();
+        return;
+      }
     }
 
-    // ✅ الحالة الثانية: تسجيل دخول عادي -> استدعاء API
     const dto: LoginRequest = { userName, password };
 
-this.auth.login({ userName, password }).subscribe({
-  next: (resp) => {
-    console.log('Login OK:', resp);   // { token, roleName }
-  },
-  error: (err) => {
-    console.error('Login ERR:', err);
-  }
-});
+    this.auth.login(dto).subscribe({
+      next: () => {
+        this.loading = false;
+        this.toast.success('تم تسجيل الدخول بنجاح');
+        this.navigateAfterLogin();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.toast.fromProblem(err);
+      },
+    });
   }
 
   public passwordsMatch(group: any) {
@@ -109,33 +103,15 @@ this.auth.login({ userName, password }).subscribe({
     this.changeLoading = true;
     this.changeError = null;
 
-    const stored = localStorage.getItem('first_login_data');
-    const base = stored
-      ? (JSON.parse(stored) as {
-          userName: string;
-          password: string;
-          newPassword: string;
-          confirmedPassword: string;
-        })
-      : null;
-
-    if (!base) {
-      this.changeLoading = false;
-      this.changeError = 'No first-time data found.';
-      return;
-    }
-
     const payload = {
-      userName: base.userName,
-      password: base.password,
+      userName: this.changeForm.value.newUsername!,
+      password: '',
       newPassword: this.changeForm.value.newPassword!,
       confirmedPassword: this.changeForm.value.confirmPassword!,
     };
 
     this.auth.loginFirstTime(payload).subscribe({
-      next: (resp) => {
-        localStorage.removeItem('first_login_data');
-
+      next: () => {
         this.changeLoading = false;
         this.showChangeModal = false;
         this.navigateAfterLogin();

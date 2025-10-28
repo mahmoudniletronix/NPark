@@ -103,19 +103,6 @@
 
         <form [formGroup]="changeForm" (ngSubmit)="saveNewCredentials()">
           <div class="mb-2">
-            <label class="form-label small">New username</label>
-            <input class="form-control form-control-sm" formControlName="newUsername" />
-            <div
-              class="text-danger small mt-1"
-              *ngIf="
-                changeForm.controls.newUsername.touched && changeForm.controls.newUsername.invalid
-              "
-            >
-              Username required (min 3).
-            </div>
-          </div>
-
-          <div class="mb-2">
             <label class="form-label small">New password</label>
             <input
               class="form-control form-control-sm"
