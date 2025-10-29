@@ -1,0 +1,184 @@
+<div class="registration page-rtl container-fluid">
+  <div class="row g-4">
+    <div class="col-12 col-xl-5">
+      <div class="card fancy-card card--glass shadow-sm">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-badge-fill"></i>
+            <h5 class="mb-0 fw-bold">تسجيل اشتراك</h5>
+          </div>
+          <span class="badge pill badge--info">جديد</span>
+        </div>
+
+        <div class="card-body" [formGroup]="form">
+          <div class="section-title">بيانات المشترك</div>
+
+          <div class="mb-3">
+            <label class="form-label">رقم الكارت</label>
+            <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
+            <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
+              برجاء إدخال رقم كارت صحيح
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label d-block">رقم السيارة</label>
+
+            <div class="plate-input" formGroupName="plate">
+              <input maxlength="1" formControlName="p1" />
+              <input maxlength="1" formControlName="p2" />
+              <input maxlength="1" formControlName="p3" />
+              <span class="sep">ـ</span>
+              <input maxlength="4" formControlName="p4" />
+            </div>
+
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.get('plate')?.touched && form.get('plate')?.invalid"
+            >
+              برجاء استكمال خانات لوحة السيارة
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="mb-3 col-12">
+              <label class="form-label">اسم المشترك</label>
+              <input
+                class="form-control"
+                formControlName="subscriberName"
+                placeholder="مثال: حسام خالد"
+              />
+              <div class="invalid-feedback d-block" *ngIf="hasErr('subscriberName')">
+                الاسم مطلوب
+              </div>
+            </div>
+
+            <div class="mb-3 col-6">
+              <label class="form-label">رقم التليفون</label>
+              <input class="form-control" formControlName="phone" placeholder="مثال: 01012345678" />
+              <div class="invalid-feedback d-block" *ngIf="hasErr('phone')">رقم هاتف غير صالح</div>
+            </div>
+
+            <div class="mb-3 col-6">
+              <label class="form-label">رقم البطاقة</label>
+              <input
+                class="form-control"
+                formControlName="nationalId"
+                placeholder="مثال: 2980*********"
+              />
+              <div class="invalid-feedback d-block" *ngIf="hasErr('nationalId')">
+                رقم بطاقة غير صالح
+              </div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label d-block">صورة السيارة</label>
+            <div class="upload">
+              <input type="file" accept="image/*" (change)="onPickImage($event)" />
+              <div class="preview" *ngIf="preview()">
+                <img [src]="preview()" alt="car" />
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title mt-4">تفاصيل الاشتراك</div>
+
+          <div class="type-tabs mb-3">
+            <button
+              type="button"
+              class="type-tab"
+              [class.active]="form.get('durationType')?.value === 'Hours'"
+              (click)="form.get('durationType')?.setValue('Hours')"
+            >
+              بالساعات
+              <i class="bi bi-alarm ms-1"></i>
+            </button>
+            <button
+              type="button"
+              class="type-tab"
+              [class.active]="form.get('durationType')?.value === 'Days'"
+              (click)="form.get('durationType')?.setValue('Days')"
+            >
+              بالأيام
+              <i class="bi bi-calendar3 ms-1"></i>
+            </button>
+            <button
+              type="button"
+              class="type-tab"
+              [class.active]="form.get('durationType')?.value === 'Monthly'"
+              (click)="form.get('durationType')?.setValue('Monthly')"
+            >
+              اشتراك شهري
+              <i class="bi bi-calendar2-month ms-1"></i>
+            </button>
+          </div>
+
+          <div class="row gx-3">
+            <div class="mb-3 col-6">
+              <label class="form-label">من (التاريخ)</label>
+              <input type="date" class="form-control" formControlName="dateFrom" />
+              <div class="invalid-feedback d-block" *ngIf="hasErr('dateFrom')">التاريخ مطلوب</div>
+            </div>
+            <div class="mb-3 col-6">
+              <label class="form-label">إلى (التاريخ)</label>
+              <input type="date" class="form-control" formControlName="dateTo" />
+              <div class="invalid-feedback d-block" *ngIf="hasErr('dateTo')">التاريخ مطلوب</div>
+            </div>
+
+            <div class="mb-3 col-6" [class.disabled]="!isHours()">
+              <label class="form-label">من (الساعة)</label>
+              <input type="time" class="form-control" formControlName="timeFrom" />
+            </div>
+            <div class="mb-3 col-6" [class.disabled]="!isHours()">
+              <label class="form-label">إلى (الساعة)</label>
+              <input type="time" class="form-control" formControlName="timeTo" />
+              <div
+                class="invalid-feedback d-block"
+                *ngIf="form.touched && form.errors?.['timerange']"
+              >
+                زمن النهاية يجب أن يكون بعد البداية
+              </div>
+            </div>
+
+            <div class="mb-3 col-6">
+              <label class="form-label">(جنيه) السعر</label>
+              <input type="number" class="form-control" formControlName="price" min="0" />
+            </div>
+
+            <div class="mb-3 col-6">
+              <label class="form-label">ترتيب الشريحة</label>
+              <input type="number" class="form-control" formControlName="orderPriority" min="1" />
+            </div>
+          </div>
+
+          <div class="d-flex gap-2 mt-2">
+            <button class="btn btn-danger" (click)="save()" [disabled]="saving()">
+              <i class="bi bi-save"></i>
+              <span class="ms-1">حفظ</span>
+            </button>
+
+            <button class="btn btn-outline" type="button" (click)="reset()" [disabled]="saving()">
+              <i class="bi bi-arrow-counterclockwise"></i>
+              <span class="ms-1">إعادة ضبط</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-7">
+      <div class="card shadow-sm card--glass h-100">
+        <div class="card-header">
+          <h6 class="mb-0 fw-bold">نظرة عامة</h6>
+        </div>
+        <div class="card-body overview">
+          <ul class="meta">
+            <li><span>#</span> سيظهر ملخص الاشتراك هنا بعد الحفظ.</li>
+            <li>النمط/الألوان متناسقة مع لوحة “Subscription Type”.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

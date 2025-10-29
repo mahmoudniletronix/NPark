@@ -177,7 +177,7 @@ export class SubscriptionComponent implements OnInit {
       orderPriority: v.orderPriority ?? 1,
       isActive: v.isActive!,
       totalHours: isHours ? (v.totalHours != null ? Number(v.totalHours) : 0) : undefined, // NEW
-      totalDays: undefined,  
+      totalDays: undefined,
     };
   }
 

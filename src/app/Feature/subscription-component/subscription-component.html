@@ -186,7 +186,7 @@
               <tr *ngFor="let r of filtered(); let i = index" class="row-hover">
                 <td class="text-center">{{ i + 1 }}</td>
                 <td class="fw-semibold">
-                  <i class="bi bi-card-checklist me-1 text-primary"></i>{{ r.name }}
+                  <i class="bi bi-card-checklist ms-2 text-primary"></i>{{ r.name }}
                 </td>
                 <td>
                   <span class="badge pill badge--secondary">
@@ -221,7 +221,7 @@
                     {{ r.isActive ? 'مفعل' : 'موقوف' }}
                   </span>
                 </td>
-                <td class="text-end">
+                <td class="text-end d-flex gap-1">
                   <button
                     class="btn btn-sm btn-outline-primary me-1 btn-icon"
                     (click)="edit(r)"

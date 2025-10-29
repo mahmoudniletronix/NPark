@@ -40,6 +40,14 @@ export const routes: Routes = [
             (m) => m.SubscriptionComponent
           ),
       },
+      {
+        path: 'registration',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./Feature/Registration-component/registration-component').then(
+            (m) => m.RegistrationComponent
+          ),
+      },
     ],
   },
 
