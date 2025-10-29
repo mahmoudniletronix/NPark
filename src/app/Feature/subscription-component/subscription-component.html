@@ -1,6 +1,6 @@
 <div class="subscription page-rtl container-fluid">
   <div class="row g-4">
-    <!-- Form -->
+    <!-- ==== Form ==== -->
     <div class="col-12 col-lg-5">
       <div class="card shadow-sm fancy-card card--glass">
         <div class="card-header d-flex align-items-center justify-content-between">
@@ -14,12 +14,13 @@
         </div>
 
         <div class="card-body" [formGroup]="form">
+          <!-- الاسم -->
           <div class="mb-3">
             <label class="form-label">اسم الشريحة</label>
             <input
               class="form-control"
               formControlName="name"
-              placeholder="مثال: اشتراك شهري / annual"
+              placeholder="مثال: اشتراك شهري / Hourly Pass"
             />
             <div
               class="invalid-feedback d-block"
@@ -29,6 +30,7 @@
             </div>
           </div>
 
+          <!-- نوع المدة -->
           <div class="mb-3">
             <label class="form-label">نوع المدة</label>
             <div class="btn-group w-100 mode-toggle" role="group">
@@ -57,6 +59,20 @@
             </div>
           </div>
 
+          <!-- حساب متكرر: يظهر فقط في الساعات -->
+          <div class="col-12 d-flex align-items-center mt-2 gap-2" *ngIf="showIsRepeated()">
+            <label class="form-label mb-0">حساب متكرر</label>
+            <div class="form-check form-switch">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                formControlName="isRepeated"
+              />
+            </div>
+          </div>
+
+          <!-- مدى زمني (من/إلى): يظهر فقط في الساعات + isRepeated = false -->
           <div class="row g-2 mb-3" *ngIf="showRangeWindow()">
             <div class="col-6">
               <label class="form-label">من</label>
@@ -76,6 +92,19 @@
             </div>
           </div>
 
+          <!-- إجمالي الساعات: يظهر فقط في الساعات -->
+          <div class="mb-3" *ngIf="isHours()">
+            <label class="form-label">إجمالي الساعات</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="totalHours"
+              min="0"
+              step="1"
+              placeholder="مثال: 12"
+            />
+          </div>
+
           <div class="row g-2">
             <div class="col-6">
               <label class="form-label">السعر (جنيه)</label>
@@ -86,35 +115,17 @@
                 min="0"
                 step="0.5"
               />
+              <div
+                class="invalid-feedback d-block"
+                *ngIf="form.get('price')?.touched && form.get('price')?.invalid"
+              >
+                السعر مطلوب ويجب أن يكون 0 أو أكثر.
+              </div>
             </div>
 
             <div class="col-6">
               <label class="form-label">ترتيب الشريحة</label>
               <input type="number" class="form-control" formControlName="orderPriority" min="1" />
-            </div>
-
-            <div class="col-12 d-flex align-items-center mt-2 gap-2">
-              <label class="form-label mb-0">حساب متكرر</label>
-              <div class="form-check form-switch">
-                <input
-                  class="form-check-input"
-                  type="checkbox"
-                  role="switch"
-                  formControlName="isRepeated"
-                />
-              </div>
-            </div>
-
-            <div class="col-12">
-              <label class="form-label">سعر التكرار</label>
-              <input
-                type="number"
-                class="form-control"
-                formControlName="repeatPrice"
-                min="0"
-                step="0.5"
-              />
-              <div class="form-text">اتركه مساويًا للسعر الأساسي إن لم يكن هناك فرق.</div>
             </div>
           </div>
         </div>
@@ -135,7 +146,7 @@
       </div>
     </div>
 
-    <!-- Table -->
+    <!-- ==== Table ==== -->
     <div class="col-12 col-lg-7">
       <div class="card shadow-sm fancy-card card--glass">
         <div class="card-header d-flex align-items-center justify-content-between">
@@ -182,8 +193,14 @@
                     {{ r.durationType === 2 ? 'ساعات' : 'أيام' }}
                   </span>
                 </td>
-                <td>{{ r.durationType === 2 && !r.isRepeated ? r.startTime || '00:00' : '-' }}</td>
-                <td>{{ r.durationType === 2 && !r.isRepeated ? r.endTime || '00:00' : '-' }}</td>
+                <td>
+                  {{
+                    r.durationType === 2 && r.isRepeated === false ? r.startTime || '00:00' : '-'
+                  }}
+                </td>
+                <td>
+                  {{ r.durationType === 2 && r.isRepeated === false ? r.endTime || '00:00' : '-' }}
+                </td>
                 <td>
                   <span class="badge pill badge--success">
                     {{ r.price | number : '1.0-2' }} ج

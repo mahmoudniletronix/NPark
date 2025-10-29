@@ -20,6 +20,7 @@ type FormShape = {
   repeatPrice: FormControl<number | null>;
   orderPriority: FormControl<number | null>;
   isActive: FormControl<boolean>;
+  totalHours: FormControl<number | null>;
 };
 
 @Component({
@@ -33,76 +34,114 @@ export class SubscriptionComponent implements OnInit {
   private fb = inject(FormBuilder);
   private api = inject(SubscriptionType);
 
-  // ====== State (signals) ======
-  loading = signal<boolean>(false);
-  saving = signal<boolean>(false);
+  // ====== State ======
+  loading = signal(false);
+  saving = signal(false);
   rows = signal<PricingRow[]>([]);
   query = signal<string>('');
   private editingRowId = signal<number | null>(null);
 
   // ====== Form ======
-  form = this.fb.group({
+  form = this.fb.group<FormShape>({
     id: this.fb.control<number | null>(null),
     name: this.fb.control<string>('', {
       nonNullable: true,
       validators: [Validators.required, Validators.minLength(2)],
     }),
-    durationType: this.fb.control<DurationType>(DurationType.Days, {
-      nonNullable: true,
-    }),
+    durationType: this.fb.control<DurationType>(DurationType.Days, { nonNullable: true }),
     startTime: this.fb.control<string | null>(null),
     endTime: this.fb.control<string | null>(null),
     price: this.fb.control<number | null>(null, {
       validators: [Validators.required, Validators.min(0)],
     }),
     isRepeated: this.fb.control<boolean>(true, { nonNullable: true }),
-    repeatPrice: this.fb.control<number | null>(null, {
-      validators: [Validators.min(0)],
-    }),
-    orderPriority: this.fb.control<number | null>(1, {
-      validators: [Validators.min(1)],
-    }),
+    repeatPrice: this.fb.control<number | null>(null, { validators: [Validators.min(0)] }),
+    orderPriority: this.fb.control<number | null>(1, { validators: [Validators.min(1)] }),
     isActive: this.fb.control<boolean>(true, { nonNullable: true }),
+    totalHours: this.fb.control<number | null>(null, {}),
   });
 
-  // ====== Derived View ======
+  // ====== Derived ======
   filtered = computed(() => {
     const q = (this.query() || '').trim().toLowerCase();
     const data = this.rows();
     if (!q) return data;
     return data.filter(
       (r) =>
-        r.name?.toLowerCase().includes(q) ||
-        (r.durationType === DurationType.Hours ? 'ساعات' : 'أيام').toLowerCase().includes(q)
+        (r.name || '').toLowerCase().includes(q) ||
+        (r.durationType === DurationType.Hours ? 'ساعات' : 'أيام').includes(q)
     );
   });
 
-  // ====== Helpers ======
-  private toTimeOrNull(value: string | null | undefined): string | null {
-    if (!value) return null;
-    return /^\d{2}:\d{2}$/.test(value) ? `${value}:00` : value;
+  // ====== UI flags (لإظهار/إخفاء العناصر) ======
+  isDays(): boolean {
+    return this.form.controls.durationType.value === DurationType.Days;
+  }
+  isHours(): boolean {
+    return this.form.controls.durationType.value === DurationType.Hours;
+  }
+  showIsRepeated(): boolean {
+    // يظهر فقط في الساعات
+    return this.isHours();
+  }
+  showRangeWindow(): boolean {
+    // يظهر فقط في الساعات عندما isRepeated = false
+    return this.isHours() && this.form.controls.isRepeated.value === false;
   }
 
-  private updateTimeValidators() {
-    const durationType = this.form.controls.durationType.value;
-    const isRepeated = this.form.controls.isRepeated.value;
+  // ====== Helpers ======
+  private toHmsOrNull(v: string | null | undefined): string | null {
+    if (!v) return null;
+    if (/^\d{2}:\d{2}$/.test(v)) return `${v}:00`;
+    if (/^\d{2}:\d{2}:\d{2}$/.test(v)) return v;
+    return null;
+  }
+  private toMinutes(v: string): number {
+    const [hh, mm] = v.split(':');
+    return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+  }
 
+  private updateTimeAndModeRules() {
+    const dt = this.form.controls.durationType.value;
+    const isRep = this.form.controls.isRepeated.value;
+
+    if (dt === DurationType.Days) {
+      if (!isRep) this.form.controls.isRepeated.setValue(true, { emitEvent: false });
+      if (this.form.controls.startTime.value)
+        this.form.controls.startTime.setValue(null, { emitEvent: false });
+      if (this.form.controls.endTime.value)
+        this.form.controls.endTime.setValue(null, { emitEvent: false });
+      if (this.form.controls.totalHours.value !== null) {
+        this.form.controls.totalHours.setValue(null, { emitEvent: false });
+      }
+    }
+
+    if (dt === DurationType.Hours && isRep === true) {
+      if (this.form.controls.startTime.value)
+        this.form.controls.startTime.setValue(null, { emitEvent: false });
+      if (this.form.controls.endTime.value)
+        this.form.controls.endTime.setValue(null, { emitEvent: false });
+    }
+
+    // Validators:
     this.form.setErrors(null);
     this.form.controls.startTime.clearValidators();
     this.form.controls.endTime.clearValidators();
 
-    const needsRange = durationType === DurationType.Hours && isRepeated === false;
-
+    const needsRange = dt === DurationType.Hours && isRep === false;
     if (needsRange) {
       this.form.controls.startTime.addValidators([Validators.required]);
       this.form.controls.endTime.addValidators([Validators.required]);
 
-      const start = this.form.controls.startTime.value;
-      const end = this.form.controls.endTime.value;
-      if (!start || !end) {
+      const s = this.toHmsOrNull(this.form.controls.startTime.value);
+      const e = this.toHmsOrNull(this.form.controls.endTime.value);
+
+      if (!s || !e) {
         this.form.setErrors({ rangeRequired: true });
-      } else if (end <= start) {
-        this.form.setErrors({ invalidRangeOrder: true });
+      } else {
+        const sMin = this.toMinutes(s);
+        const eMin = this.toMinutes(e);
+        if (eMin <= sMin) this.form.setErrors({ invalidRangeOrder: true });
       }
     }
 
@@ -118,78 +157,67 @@ export class SubscriptionComponent implements OnInit {
     }
   }
 
-  // ====== Effects ======
-  private formEffect = effect(() => {
-    const dt = this.form.controls.durationType.value;
-    const isRep = this.form.controls.isRepeated.value;
+  private buildDto(): AddPricingSchemaCommand {
+    const v = this.form.getRawValue();
+    const isDays = v.durationType === DurationType.Days;
+    const isHours = v.durationType === DurationType.Hours;
+    const needsRange = isHours && v.isRepeated === false;
 
-    if (dt === DurationType.Days) {
-      if (!isRep) {
-        this.form.controls.isRepeated.setValue(true, { emitEvent: false });
-      }
-      if (!this.form.controls.isRepeated.disabled) {
-        this.form.controls.isRepeated.disable({ emitEvent: false });
-      }
-    } else {
-      if (this.form.controls.isRepeated.disabled) {
-        this.form.controls.isRepeated.enable({ emitEvent: false });
-      }
-    }
+    const start = needsRange ? this.toHmsOrNull(v.startTime) : null;
+    const end = needsRange ? this.toHmsOrNull(v.endTime) : null;
 
-    this.updateTimeValidators();
-  });
+    return {
+      name: (v.name || '').trim(),
+      durationType: v.durationType!,
+      startTime: start,
+      endTime: end,
+      price: Number(v.price ?? 0),
+      isRepeated: isDays ? true : !!v.isRepeated,
+      repeatPrice: Number(v.repeatPrice ?? v.price ?? 0),
+      orderPriority: v.orderPriority ?? 1,
+      isActive: v.isActive!,
+      totalHours: isHours ? (v.totalHours != null ? Number(v.totalHours) : 0) : undefined, // NEW
+      totalDays: undefined,  
+    };
+  }
 
   // ====== Lifecycle ======
   ngOnInit(): void {
     this.loadRows();
-
-    this.form.controls.isRepeated.valueChanges.subscribe(() => this.updateTimeValidators());
-    this.form.controls.startTime.valueChanges.subscribe(() => this.updateTimeValidators());
-    this.form.controls.endTime.valueChanges.subscribe(() => this.updateTimeValidators());
+    // تأثيرات التزامن مع القواعد
+    this.form.controls.durationType.valueChanges.subscribe(() => this.updateTimeAndModeRules());
+    this.form.controls.isRepeated.valueChanges.subscribe(() => this.updateTimeAndModeRules());
+    this.form.controls.startTime.valueChanges.subscribe(() => this.updateTimeAndModeRules());
+    this.form.controls.endTime.valueChanges.subscribe(() => this.updateTimeAndModeRules());
     this.form.controls.price.valueChanges.subscribe(() => this.normalizeRepeatPrice());
+
+    // أول ضبط
+    this.updateTimeAndModeRules();
   }
 
   // ====== UI Helpers ======
-  showRangeWindow(): boolean {
-    const dt = this.form.controls.durationType.value;
-    const rep = this.form.controls.isRepeated.value;
-    return dt === DurationType.Hours && rep === false;
-  }
-
   editingId(): number | null {
     return this.editingRowId();
   }
 
   setMode(mode: DurationType) {
     this.form.controls.durationType.setValue(mode, { emitEvent: true });
-
-    if (mode === DurationType.Days) {
-      this.form.controls.isRepeated.setValue(true, { emitEvent: false });
-      this.form.controls.isRepeated.disable({ emitEvent: false });
-    } else {
-      this.form.controls.isRepeated.enable({ emitEvent: false });
-    }
-
-    this.updateTimeValidators();
   }
 
   // ====== CRUD ======
   private loadRows() {
     this.loading.set(true);
     this.api.list().subscribe({
-      next: (res: any) => {
-        const data: PricingRow[] = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.items)
-          ? res.items
-          : Array.isArray(res?.data)
-          ? res.data
-          : [];
-
-        const normalized = data.map((r) => ({
+      next: (data) => {
+        const normalized = (data || []).map((r) => ({
           ...r,
           repeatPrice: r.repeatPrice ?? r.price,
           isActive: r.isActive ?? true,
+          // نضمن أن start/end يظهروا فقط لما تكون ساعات + not repeated
+          startTime:
+            r.durationType === DurationType.Hours && r.isRepeated === false ? r.startTime : null,
+          endTime:
+            r.durationType === DurationType.Hours && r.isRepeated === false ? r.endTime : null,
         }));
         this.rows.set(normalized);
         this.loading.set(false);
@@ -213,10 +241,10 @@ export class SubscriptionComponent implements OnInit {
       repeatPrice: null,
       orderPriority: 1,
       isActive: true,
+      totalHours: null,
     });
     this.editingRowId.set(null);
-    this.form.controls.isRepeated.disable({ emitEvent: false });
-    this.updateTimeValidators();
+    this.updateTimeAndModeRules();
   }
 
   edit(r: PricingRow) {
@@ -225,23 +253,22 @@ export class SubscriptionComponent implements OnInit {
       id: r.id ?? null,
       name: r.name ?? '',
       durationType: r.durationType ?? DurationType.Days,
-      startTime: r.startTime ?? null,
-      endTime: r.endTime ?? null,
+      startTime:
+        r.durationType === DurationType.Hours && r.isRepeated === false
+          ? r.startTime ?? null
+          : null,
+      endTime:
+        r.durationType === DurationType.Hours && r.isRepeated === false ? r.endTime ?? null : null,
       price: r.price ?? null,
       isRepeated: isDays ? true : !!r.isRepeated,
       repeatPrice: r.repeatPrice ?? r.price ?? null,
       orderPriority: r.orderPriority ?? 1,
       isActive: r.isActive ?? true,
+      totalHours: r.totalHours ?? null,
     });
 
-    if (isDays) {
-      this.form.controls.isRepeated.disable({ emitEvent: false });
-    } else {
-      this.form.controls.isRepeated.enable({ emitEvent: false });
-    }
-
     this.editingRowId.set(r.id ?? null);
-    this.updateTimeValidators();
+    this.updateTimeAndModeRules();
   }
 
   remove(r: PricingRow) {
@@ -255,110 +282,38 @@ export class SubscriptionComponent implements OnInit {
         this.saving.set(false);
         if (this.editingRowId() === r.id) this.resetForm();
       },
-      error: () => {
-        this.saving.set(false);
-      },
+      error: () => this.saving.set(false),
     });
   }
 
-  private toHmsOrEmpty(v: string | null): string {
-    if (!v) return '';
-    if (/^\d{2}:\d{2}$/.test(v)) return `${v}:00`;
-    if (/^\d{2}:\d{2}:\d{2}$/.test(v)) return v;
-    return '';
-  }
-
-  private buildApiPayload(v: ReturnType<typeof this.form.getRawValue>): AddPricingSchemaCommand {
-    const isDays = v.durationType === DurationType.Days;
-    const isHours = v.durationType === DurationType.Hours;
-    const needsRange = isHours && v.isRepeated === false;
-
-    const start = needsRange ? this.toHmsOrEmpty(v.startTime) : '';
-    const end = needsRange ? this.toHmsOrEmpty(v.endTime) : '';
-
-    const totalDays = isDays ? 30 : 0;
-    const totalHours = isHours && v.isRepeated ? 0 : 0;
-
-    return {
-      name: (v.name || '').trim(),
-      durationType: v.durationType!,
-      startTime: start,
-      endTime: end,
-      price: Number(v.price ?? 0),
-      isRepeated: isDays ? true : !!v.isRepeated,
-      orderPriority: v.orderPriority ?? 1,
-      totalDays,
-      totalHours,
-      repeatPrice: Number(v.repeatPrice ?? 0),
-    };
-  }
-
   save() {
-    this.updateTimeValidators();
-
+    this.updateTimeAndModeRules();
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
 
-    const v = this.form.getRawValue();
-
-    const isHours = v.durationType === DurationType.Hours;
-    const needsRange = isHours && v.isRepeated === false;
-
-    if (needsRange) {
-      const startOk = !!this.toHmsOrEmpty(v.startTime);
-      const endOk = !!this.toHmsOrEmpty(v.endTime);
-      if (!startOk) this.form.get('startTime')?.setErrors({ required: true });
-      if (!endOk) this.form.get('endTime')?.setErrors({ required: true });
-      if (!startOk || !endOk) return;
-    }
-
-    const payload: PricingRow = {
-      id: v.id ?? undefined,
-      name: v.name?.trim()!,
-      durationType: v.durationType!,
-      startTime: needsRange ? this.toHmsOrEmpty(v.startTime) : (null as any),
-      endTime: needsRange ? this.toHmsOrEmpty(v.endTime) : (null as any),
-      price: Number(v.price ?? 0),
-      isRepeated: v.durationType === DurationType.Days ? true : !!v.isRepeated,
-      repeatPrice: v.repeatPrice != null ? Number(v.repeatPrice) : Number(v.price ?? 0),
-      orderPriority: v.orderPriority ?? 1,
-      isActive: v.isActive!,
-    };
-
+    const dto = this.buildDto();
     this.saving.set(true);
 
-    if (!payload.id) {
-      const apiPayload = this.buildApiPayload(v);
+    //const currentId = this.form.controls.id.value; // ممكن تكون null
 
-      this.api.add(apiPayload as any).subscribe({
-        next: (created) => {
-          const newRow: PricingRow = {
-            ...created,
-            repeatPrice: (created as any).repeatPrice ?? payload.price,
-            isActive: (created as any).isActive ?? true,
-          };
-          this.rows.set([newRow, ...this.rows()]);
-          this.saving.set(false);
-          this.resetForm();
-        },
-        error: () => this.saving.set(false),
-      });
-    } else {
-      this.api.update(payload).subscribe({
-        next: (updated) => {
-          const upd: PricingRow = {
-            ...updated,
-            repeatPrice: updated.repeatPrice ?? updated.price,
-            isActive: updated.isActive ?? true,
-          };
-          this.rows.set(this.rows().map((x) => (x.id === upd.id ? upd : x)));
-          this.saving.set(false);
-          this.resetForm();
-        },
-        error: () => this.saving.set(false),
-      });
-    }
+    // ADD
+
+    this.api.add(dto).subscribe({
+      next: (created) => {
+        const safeCreated: PricingRow = {
+          ...created,
+          repeatPrice: created?.repeatPrice ?? dto.price,
+          isActive: created?.isActive ?? true,
+        };
+        const list = this.rows() ?? []; // أمان احتياطي
+        this.rows.set([safeCreated, ...list]);
+        this.saving.set(false);
+        this.resetForm();
+      },
+      error: () => this.saving.set(false),
+    });
+    return;
   }
 }
