@@ -1,25 +1,47 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './Feature/login-component/login-component';
 import { authGuard } from './interceptors/Guard/auth.guard';
-import { DashboardComponent } from './Feature/dashboard-component/dashboard-component';
-import { ShellComponent } from './Feature/shell-component/shell-component';
-import { Users } from './Feature/users/users';
-import { TicketComponent } from './Feature/ticket-component/ticket-component';
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./Feature/login-component/login-component').then((m) => m.LoginComponent),
+  },
 
   {
     path: '',
-    component: ShellComponent,
     canActivate: [authGuard],
+    loadComponent: () =>
+      import('./Feature/shell-component/shell-component').then((m) => m.ShellComponent),
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: DashboardComponent },
-      { path: 'users', component: Users },
-      { path: 'tickets', component: TicketComponent },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./Feature/dashboard-component/dashboard-component').then(
+            (m) => m.DashboardComponent
+          ),
+      },
+      {
+        path: 'users',
+        loadComponent: () => import('./Feature/users/users').then((m) => m.Users),
+      },
+      {
+        path: 'tickets',
+        loadComponent: () =>
+          import('./Feature/ticket-component/ticket-component').then((m) => m.TicketComponent),
+      },
+      {
+        path: 'subscription',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./Feature/subscription-component/subscription-component').then(
+            (m) => m.SubscriptionComponent
+          ),
+      },
     ],
   },
 
-  { path: '**', redirectTo: 'dashboard' },
+  { path: '**', redirectTo: 'login' },
 ];

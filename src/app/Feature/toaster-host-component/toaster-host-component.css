@@ -1,0 +1,22 @@
+.toaster-host {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  width: auto;
+  max-width: min(92vw, 420px);
+  pointer-events: none;
+}
+
+.toaster-host .toast-container,
+.toaster-host .ngx-toastr {
+  pointer-events: auto;
+}
+
+@media (max-width: 576px) {
+  .toaster-host {
+    right: 8px;
+    left: 8px;
+    max-width: unset;
+  }
+}

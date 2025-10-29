@@ -7,11 +7,9 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { LoginRequest } from '../../Domain/Auth/auth.models';
 import { ToastServices } from '../../Services/Toster/toast-services';
 
-const TOKEN_KEY = 'auth_token';
-const USER_KEY = 'auth_user';
-
 @Component({
   selector: 'app-login-component',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login-component.html',
   styleUrl: './login-component.css',
@@ -24,8 +22,13 @@ export class LoginComponent {
   private toast = inject(ToastServices);
 
   loading = false;
-  error: string | null = null;
   showPassword = false;
+  error: string | null = null;
+  changeError: string | null = null;
+  errorToast: string | null = null;
+
+  private firstUserName: string | null = null;
+  private firstPassword: string | null = null;
 
   form = this.fb.group({
     username: ['', [Validators.required]],
@@ -35,16 +38,20 @@ export class LoginComponent {
 
   showChangeModal = false;
   changeLoading = false;
-  changeError: string | null = null;
 
   changeForm = this.fb.group(
     {
-      newUsername: ['', [Validators.required, Validators.minLength(3)]],
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
       confirmPassword: ['', [Validators.required]],
     },
     { validators: this.passwordsMatch }
   );
+
+  passwordsMatch(group: any) {
+    return group.get('newPassword')?.value === group.get('confirmPassword')?.value
+      ? null
+      : { mismatch: true };
+  }
 
   submit() {
     if (this.form.invalid) {
@@ -53,46 +60,30 @@ export class LoginComponent {
     }
 
     this.loading = true;
-    this.error = null;
 
     const userName = (this.form.value.username ?? '').trim();
     const password = this.form.value.password ?? '';
 
-    if (userName === 'admin' || userName === 'Admin') {
-      if (password === 'admin' || password === 'Admin' || password === 'Admin123') {
-        const tokenFromUser =
-          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjMzcyODRmYy0xNjEwLTQ3YzgtNWM0MC0wOGRlMTYxNDFiYmEiLCJ1c2VyTmFtZSI6IkFkbWluIiwiZW1haWwiOiJBZG1pbkBnbWFpbC5jb20iLCJwaG9uZU51bWJlciI6IjAxMDA0MTE3Njk2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiQWRtaW4iLCJwZXJtaXNzaW9uIjpbIlJlYWQiLCJVcGRhdGUiLCJDcmVhdGUiLCJEZWxldGUiXSwiZXhwIjoxNzYxNjcxNjgxLCJpc3MiOiJOUEFSSyIsImF1ZCI6Ik5QQVJLIn0.d0RtIzpQH9a9GNYd_H6cdkVQflVkWRapxT31T08Mqt8';
-
-        localStorage.setItem(TOKEN_KEY, tokenFromUser);
-        localStorage.setItem(
-          USER_KEY,
-          JSON.stringify({ name: 'Admin', role: 'Admin', email: 'Admin@gmail.com' })
-        );
-        this.loading = false;
-        this.navigateAfterLogin();
-        return;
-      }
+    if ((userName === 'Admin' || userName === 'admin') && password === 'Admin123') {
+      this.firstUserName = userName;
+      this.firstPassword = password;
+      this.loading = false;
+      this.showChangeModal = true;
+      this.changeForm.reset();
+      return;
     }
 
-    const dto: LoginRequest = { userName, password };
-
-    this.auth.login(dto).subscribe({
+    this.auth.login({ userName, password }).subscribe({
       next: () => {
         this.loading = false;
-        this.toast.success('تم تسجيل الدخول بنجاح');
+        this.toast?.success?.('تم تسجيل الدخول بنجاح');
         this.navigateAfterLogin();
       },
       error: (err) => {
         this.loading = false;
-        this.toast.fromProblem(err);
+        this.toast?.fromProblem?.(err);
       },
     });
-  }
-
-  public passwordsMatch(group: any) {
-    return group.get('newPassword')?.value === group.get('confirmPassword')?.value
-      ? null
-      : { mismatch: true };
   }
 
   saveNewCredentials() {
@@ -100,25 +91,39 @@ export class LoginComponent {
       this.changeForm.markAllAsTouched();
       return;
     }
+    if (!this.firstUserName || !this.firstPassword) {
+      this.toast?.error?.('لا توجد بيانات أول مرة. أعد محاولة تسجيل الدخول بـ Admin / Admin123');
+      return;
+    }
+
     this.changeLoading = true;
-    this.changeError = null;
 
     const payload = {
-      userName: this.changeForm.value.newUsername!,
-      password: '',
+      userName: this.firstUserName,
+      password: this.firstPassword,
       newPassword: this.changeForm.value.newPassword!,
-      confirmedPassword: this.changeForm.value.confirmPassword!,
     };
 
     this.auth.loginFirstTime(payload).subscribe({
       next: () => {
-        this.changeLoading = false;
-        this.showChangeModal = false;
-        this.navigateAfterLogin();
+        this.auth
+          .login({ userName: this.firstUserName!, password: payload.newPassword })
+          .subscribe({
+            next: () => {
+              this.changeLoading = false;
+              this.showChangeModal = false;
+              this.toast?.success?.('تم تحديث كلمة المرور وتسجيل الدخول بنجاح');
+              this.navigateAfterLogin();
+            },
+            error: (err) => {
+              this.changeLoading = false;
+              this.toast?.fromProblem?.(err);
+            },
+          });
       },
       error: (err) => {
         this.changeLoading = false;
-        this.changeError = err?.error?.message || err?.message || 'Failed to update credentials';
+        this.toast?.fromProblem?.(err);
       },
     });
   }

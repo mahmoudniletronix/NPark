@@ -8,26 +8,34 @@
     <nav class="nav flex-column gap-1">
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
-        routerLink="/"
+        routerLink="/dashboard"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
       >
         <i class="bi bi-house"></i> Overview
       </a>
       <div class="text-secondary small mt-3 mb-1 text-uppercase">Parking</div>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/">
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/dashboard">
         <i class="bi bi-graph-up"></i> Dashboard
       </a>
       <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/tickets">
         <i class="bi bi-ticket"></i> Tickets
+      </a>
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/subscription">
+        <i class="bi bi-credit-card"></i>
+        Subscription Type
       </a>
 
       <div class="text-secondary small mt-3 mb-1 text-uppercase">Management</div>
       <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/users">
         <i class="bi bi-people"></i> Users
       </a>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/settings">
-        <i class="bi bi-gear"></i> Settings
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/users">
+        <i class="bi bi-person"></i>
+        Customer
+      </a>
+      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/tickets">
+        <i class="bi bi-gear"></i> Setting
       </a>
     </nav>
 

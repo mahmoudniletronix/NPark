@@ -65,14 +65,14 @@
           <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
         </button>
 
-        <div *ngIf="error" class="alert alert-danger mt-3 mb-0">
-          {{ error }}
+        <div *ngIf="errorToast" class="alert alert-danger mt-3 mb-0">
+          {{ errorToast }}
         </div>
       </form>
 
-      <div class="hint mt-3 small text-muted">
+      <!-- <div class="hint mt-3 small text-muted">
         For first-time admin use: <code>admin / Admin123</code>
-      </div>
+      </div> -->
     </div>
   </div>
 </div>

@@ -1,0 +1,244 @@
+<div class="subscription page-rtl container-fluid">
+  <div class="row g-4">
+    <!-- Form -->
+    <div class="col-12 col-lg-5">
+      <div class="card shadow-sm fancy-card card--glass">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-badge-ad fill"></i>
+            <h5 class="mb-0 fw-bold">شريحة المحاسبة</h5>
+          </div>
+          <span class="badge pill badge--info">
+            {{ editingId() ? 'تعديل' : 'إضافة' }}
+          </span>
+        </div>
+
+        <div class="card-body" [formGroup]="form">
+          <div class="mb-3">
+            <label class="form-label">اسم الشريحة</label>
+            <input
+              class="form-control"
+              formControlName="name"
+              placeholder="مثال: اشتراك شهري / annual"
+            />
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.get('name')?.touched && form.get('name')?.invalid"
+            >
+              الاسم مطلوب (حد أدنى 2 حرف).
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">نوع المدة</label>
+            <div class="btn-group w-100 mode-toggle" role="group">
+              <button
+                type="button"
+                class="btn btn-ghost ms-2"
+                [class.btn-primary]="form.value.durationType === 2"
+                [class.btn-outline-primary]="form.value.durationType !== 2"
+                (click)="setMode(2)"
+                title="احتساب بالساعة"
+              >
+                <i class="bi bi-clock"></i>
+                بالساعات
+              </button>
+              <button
+                type="button"
+                class="btn btn-ghost"
+                [class.btn-primary]="form.value.durationType === 1"
+                [class.btn-outline-primary]="form.value.durationType !== 1"
+                (click)="setMode(1)"
+                title="احتساب بالأيام"
+              >
+                <i class="bi bi-calendar3"></i>
+                بالأيام
+              </button>
+            </div>
+          </div>
+
+          <div class="row g-2 mb-3" *ngIf="showRangeWindow()">
+            <div class="col-6">
+              <label class="form-label">من</label>
+              <input type="time" class="form-control" formControlName="startTime" />
+            </div>
+            <div class="col-6">
+              <label class="form-label">إلى</label>
+              <input type="time" class="form-control" formControlName="endTime" />
+            </div>
+            <div class="col-12">
+              <div class="invalid-feedback d-block" *ngIf="form.errors?.['rangeRequired']">
+                من/إلى مطلوبان عند اختيار الساعات بدون تكرار.
+              </div>
+              <div class="invalid-feedback d-block" *ngIf="form.errors?.['invalidRangeOrder']">
+                يجب أن يكون وقت "إلى" أكبر من "من".
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label">السعر (جنيه)</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="price"
+                min="0"
+                step="0.5"
+              />
+            </div>
+
+            <div class="col-6">
+              <label class="form-label">ترتيب الشريحة</label>
+              <input type="number" class="form-control" formControlName="orderPriority" min="1" />
+            </div>
+
+            <div class="col-12 d-flex align-items-center mt-2 gap-2">
+              <label class="form-label mb-0">حساب متكرر</label>
+              <div class="form-check form-switch">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  formControlName="isRepeated"
+                />
+              </div>
+            </div>
+
+            <div class="col-12">
+              <label class="form-label">سعر التكرار</label>
+              <input
+                type="number"
+                class="form-control"
+                formControlName="repeatPrice"
+                min="0"
+                step="0.5"
+              />
+              <div class="form-text">اتركه مساويًا للسعر الأساسي إن لم يكن هناك فرق.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2 justify-content-end">
+          <button class="btn btn-light btn-soft" type="button" (click)="resetForm()">
+            <i class="bi bi-arrow-repeat"></i> إعادة ضبط
+          </button>
+          <button
+            class="btn btn-primary btn-raised"
+            type="button"
+            (click)="save()"
+            [disabled]="loading() || saving()"
+          >
+            <i class="bi bi-save"></i> حفظ
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="col-12 col-lg-7">
+      <div class="card shadow-sm fancy-card card--glass">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-table"></i>
+            <h6 class="mb-0">قائمة الشرائح</h6>
+          </div>
+          <div class="search-wrap">
+            <i class="bi bi-search"></i>
+            <input
+              #searchBox
+              class="form-control form-control-sm"
+              placeholder="بحث..."
+              [value]="query()"
+              (input)="query.set(searchBox.value)"
+            />
+          </div>
+        </div>
+
+        <div class="card-body p-0 table-responsive">
+          <table class="table table-hover align-middle mb-0 table-striped table-modern">
+            <thead class="table-light sticky-top">
+              <tr>
+                <th class="text-center">#</th>
+                <th>الاسم</th>
+                <th>النوع</th>
+                <th>من</th>
+                <th>إلى</th>
+                <th>السعر</th>
+                <th>سعر التكرار</th>
+                <th>ترتيب</th>
+                <th>حالة</th>
+                <th class="text-end">إجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of filtered(); let i = index" class="row-hover">
+                <td class="text-center">{{ i + 1 }}</td>
+                <td class="fw-semibold">
+                  <i class="bi bi-card-checklist me-1 text-primary"></i>{{ r.name }}
+                </td>
+                <td>
+                  <span class="badge pill badge--secondary">
+                    {{ r.durationType === 2 ? 'ساعات' : 'أيام' }}
+                  </span>
+                </td>
+                <td>{{ r.durationType === 2 && !r.isRepeated ? r.startTime || '00:00' : '-' }}</td>
+                <td>{{ r.durationType === 2 && !r.isRepeated ? r.endTime || '00:00' : '-' }}</td>
+                <td>
+                  <span class="badge pill badge--success">
+                    {{ r.price | number : '1.0-2' }} ج
+                  </span>
+                </td>
+                <td>
+                  <span class="badge pill badge--info">
+                    {{ r.repeatPrice ?? r.price | number : '1.0-2' }}
+                  </span>
+                </td>
+                <td>{{ r.orderPriority }}</td>
+                <td>
+                  <span
+                    class="badge pill"
+                    [class.badge--active]="r.isActive"
+                    [class.badge--muted]="!r.isActive"
+                  >
+                    {{ r.isActive ? 'مفعل' : 'موقوف' }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <button
+                    class="btn btn-sm btn-outline-primary me-1 btn-icon"
+                    (click)="edit(r)"
+                    title="تعديل"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-outline-danger btn-icon"
+                    (click)="remove(r)"
+                    [disabled]="!r?.id"
+                    title="حذف"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </td>
+              </tr>
+
+              <tr *ngIf="!filtered().length">
+                <td colspan="10" class="text-center text-muted py-4">
+                  لا توجد بيانات مطابقة للبحث.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card-footer small text-muted d-flex align-items-center justify-content-between">
+          <span><i class="bi bi-info-circle"></i> يظهر آخر {{ filtered().length }} شريحة.</span>
+          <a routerLink="/dashboard" class="link-underline link-underline-opacity-0">
+            عودة للوحة التحكم
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
