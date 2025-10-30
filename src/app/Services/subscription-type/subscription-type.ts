@@ -42,6 +42,8 @@ export class SubscriptionType {
       repeatPrice: dto.repeatPrice,
       orderPriority: dto.orderPriority,
       isActive: dto.isActive,
+      totalHours: dto.totalHours,
+      totalDays: dto.totalDays,
     };
     return this.http.post<PricingRow>(`${this.base}/Update`, payload);
   }

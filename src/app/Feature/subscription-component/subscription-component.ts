@@ -21,6 +21,7 @@ type FormShape = {
   orderPriority: FormControl<number | null>;
   isActive: FormControl<boolean>;
   totalHours: FormControl<number | null>;
+  totalDays: FormControl<number | null>;
 };
 
 @Component({
@@ -33,6 +34,9 @@ type FormShape = {
 export class SubscriptionComponent implements OnInit {
   private fb = inject(FormBuilder);
   private api = inject(SubscriptionType);
+
+  // === Expose enum to template
+  public DurationType = DurationType;
 
   // ====== State ======
   loading = signal(false);
@@ -54,11 +58,12 @@ export class SubscriptionComponent implements OnInit {
     price: this.fb.control<number | null>(null, {
       validators: [Validators.required, Validators.min(0)],
     }),
-    isRepeated: this.fb.control<boolean>(true, { nonNullable: true }),
+    isRepeated: this.fb.control<boolean>(false, { nonNullable: true }),
     repeatPrice: this.fb.control<number | null>(null, { validators: [Validators.min(0)] }),
     orderPriority: this.fb.control<number | null>(1, { validators: [Validators.min(1)] }),
     isActive: this.fb.control<boolean>(true, { nonNullable: true }),
     totalHours: this.fb.control<number | null>(null, {}),
+    totalDays: this.fb.control<number | null>(1, { validators: [Validators.min(1)] }),
   });
 
   // ====== Derived ======
@@ -73,7 +78,7 @@ export class SubscriptionComponent implements OnInit {
     );
   });
 
-  // ====== UI flags (لإظهار/إخفاء العناصر) ======
+  // ====== UI flags ======
   isDays(): boolean {
     return this.form.controls.durationType.value === DurationType.Days;
   }
@@ -81,11 +86,9 @@ export class SubscriptionComponent implements OnInit {
     return this.form.controls.durationType.value === DurationType.Hours;
   }
   showIsRepeated(): boolean {
-    // يظهر فقط في الساعات
     return this.isHours();
   }
   showRangeWindow(): boolean {
-    // يظهر فقط في الساعات عندما isRepeated = false
     return this.isHours() && this.form.controls.isRepeated.value === false;
   }
 
@@ -105,43 +108,42 @@ export class SubscriptionComponent implements OnInit {
     const dt = this.form.controls.durationType.value;
     const isRep = this.form.controls.isRepeated.value;
 
-    if (dt === DurationType.Days) {
-      if (!isRep) this.form.controls.isRepeated.setValue(true, { emitEvent: false });
-      if (this.form.controls.startTime.value)
-        this.form.controls.startTime.setValue(null, { emitEvent: false });
-      if (this.form.controls.endTime.value)
-        this.form.controls.endTime.setValue(null, { emitEvent: false });
-      if (this.form.controls.totalHours.value !== null) {
-        this.form.controls.totalHours.setValue(null, { emitEvent: false });
-      }
-    }
-
-    if (dt === DurationType.Hours && isRep === true) {
-      if (this.form.controls.startTime.value)
-        this.form.controls.startTime.setValue(null, { emitEvent: false });
-      if (this.form.controls.endTime.value)
-        this.form.controls.endTime.setValue(null, { emitEvent: false });
-    }
-
-    // Validators:
     this.form.setErrors(null);
     this.form.controls.startTime.clearValidators();
     this.form.controls.endTime.clearValidators();
 
+    // === أيام ===
+    if (dt === DurationType.Days) {
+      if (isRep) this.form.controls.isRepeated.setValue(false, { emitEvent: false });
+      // ❌ لا نعدّل start/end هنا إطلاقًا
+      if (!this.form.controls.totalDays.value || this.form.controls.totalDays.value < 1) {
+        this.form.controls.totalDays.setValue(1, { emitEvent: false });
+      }
+      this.form.controls.totalHours.setValue(null, { emitEvent: false });
+    }
+
+    // === ساعات + متكرر ===
+    if (dt === DurationType.Hours && isRep === true) {
+      this.form.controls.startTime.setValue(null, { emitEvent: false });
+      this.form.controls.endTime.setValue(null, { emitEvent: false });
+      this.form.controls.totalDays.setValue(null, { emitEvent: false });
+    }
+
+    // === ساعات + نافذة ===
     const needsRange = dt === DurationType.Hours && isRep === false;
     if (needsRange) {
+      this.form.controls.totalDays.setValue(null, { emitEvent: false });
+      this.form.controls.totalHours.setValue(null, { emitEvent: false });
       this.form.controls.startTime.addValidators([Validators.required]);
       this.form.controls.endTime.addValidators([Validators.required]);
 
       const s = this.toHmsOrNull(this.form.controls.startTime.value);
       const e = this.toHmsOrNull(this.form.controls.endTime.value);
-
-      if (!s || !e) {
-        this.form.setErrors({ rangeRequired: true });
-      } else {
-        const sMin = this.toMinutes(s);
-        const eMin = this.toMinutes(e);
-        if (eMin <= sMin) this.form.setErrors({ invalidRangeOrder: true });
+      if (!s || !e) this.form.setErrors({ rangeRequired: true });
+      else {
+        const [sh, sm] = s.split(':').map(Number);
+        const [eh, em] = e.split(':').map(Number);
+        if (eh * 60 + em <= sh * 60 + sm) this.form.setErrors({ invalidRangeOrder: true });
       }
     }
 
@@ -150,48 +152,62 @@ export class SubscriptionComponent implements OnInit {
   }
 
   private normalizeRepeatPrice() {
-    const price = this.form.controls.price.value ?? 0;
-    const repeat = this.form.controls.repeatPrice.value;
-    if (repeat == null) {
-      this.form.controls.repeatPrice.setValue(price, { emitEvent: false });
+    const dt = this.form.controls.durationType.value;
+    const isRep = this.form.controls.isRepeated.value;
+
+    if (dt === DurationType.Hours && isRep) {
+      const price = this.form.controls.price.value ?? 0;
+      const repeat = this.form.controls.repeatPrice.value;
+      if (repeat == null) {
+        this.form.controls.repeatPrice.setValue(price, { emitEvent: false });
+      }
+    } else {
+      if (this.form.controls.repeatPrice.value != null) {
+        this.form.controls.repeatPrice.setValue(null, { emitEvent: false });
+      }
     }
   }
 
   private buildDto(): AddPricingSchemaCommand {
     const v = this.form.getRawValue();
-    const isDays = v.durationType === DurationType.Days;
     const isHours = v.durationType === DurationType.Hours;
-    const needsRange = isHours && v.isRepeated === false;
+    const isDays = v.durationType === DurationType.Days;
+    const repeated = isHours ? !!v.isRepeated : false;
+    const needsRange = isHours && !repeated;
 
-    const start = needsRange ? this.toHmsOrNull(v.startTime) : null;
-    const end = needsRange ? this.toHmsOrNull(v.endTime) : null;
+    const s = this.toHmsOrNull(v.startTime);
+    const e = this.toHmsOrNull(v.endTime);
 
     return {
       name: (v.name || '').trim(),
       durationType: v.durationType!,
-      startTime: start,
-      endTime: end,
+
+      startTime: isDays ? null : needsRange ? s : null,
+      endTime: isDays ? null : needsRange ? e : null,
+
       price: Number(v.price ?? 0),
-      isRepeated: isDays ? true : !!v.isRepeated,
-      repeatPrice: Number(v.repeatPrice ?? v.price ?? 0),
+      isRepeated: repeated,
+
+      repeatPrice: isHours && repeated ? Number(v.repeatPrice ?? v.price ?? 0) : null,
+
       orderPriority: v.orderPriority ?? 1,
       isActive: v.isActive!,
-      totalHours: isHours ? (v.totalHours != null ? Number(v.totalHours) : 0) : undefined, // NEW
-      totalDays: undefined,
+
+      totalHours: isHours && repeated ? Number(v.totalHours ?? 0) : null,
+
+      totalDays: isDays ? Number(v.totalDays ?? 1) : null,
     };
   }
 
   // ====== Lifecycle ======
   ngOnInit(): void {
     this.loadRows();
-    // تأثيرات التزامن مع القواعد
     this.form.controls.durationType.valueChanges.subscribe(() => this.updateTimeAndModeRules());
     this.form.controls.isRepeated.valueChanges.subscribe(() => this.updateTimeAndModeRules());
     this.form.controls.startTime.valueChanges.subscribe(() => this.updateTimeAndModeRules());
     this.form.controls.endTime.valueChanges.subscribe(() => this.updateTimeAndModeRules());
     this.form.controls.price.valueChanges.subscribe(() => this.normalizeRepeatPrice());
 
-    // أول ضبط
     this.updateTimeAndModeRules();
   }
 
@@ -209,16 +225,29 @@ export class SubscriptionComponent implements OnInit {
     this.loading.set(true);
     this.api.list().subscribe({
       next: (data) => {
-        const normalized = (data || []).map((r) => ({
-          ...r,
-          repeatPrice: r.repeatPrice ?? r.price,
-          isActive: r.isActive ?? true,
-          // نضمن أن start/end يظهروا فقط لما تكون ساعات + not repeated
-          startTime:
-            r.durationType === DurationType.Hours && r.isRepeated === false ? r.startTime : null,
-          endTime:
-            r.durationType === DurationType.Hours && r.isRepeated === false ? r.endTime : null,
-        }));
+        const normalized = (data || []).map((r) => {
+          const isHours = r.durationType === DurationType.Hours;
+          const isDays = r.durationType === DurationType.Days;
+          return {
+            ...r,
+            repeatPrice: r.repeatPrice ?? r.price,
+            isActive: r.isActive ?? true,
+            isRepeated: isDays ? false : !!r.isRepeated,
+            startTime:
+              isHours && r.isRepeated === false
+                ? r.startTime ?? null
+                : isDays
+                ? r.startTime ?? '00:00:00'
+                : null,
+            endTime:
+              isHours && r.isRepeated === false
+                ? r.endTime ?? null
+                : isDays
+                ? r.endTime ?? '00:00:00'
+                : null,
+            totalDays: isDays ? r.totalDays ?? 1 : null,
+          } as PricingRow;
+        });
         this.rows.set(normalized);
         this.loading.set(false);
       },
@@ -237,11 +266,12 @@ export class SubscriptionComponent implements OnInit {
       startTime: null,
       endTime: null,
       price: null,
-      isRepeated: true,
+      isRepeated: false,
       repeatPrice: null,
       orderPriority: 1,
       isActive: true,
       totalHours: null,
+      totalDays: 1,
     });
     this.editingRowId.set(null);
     this.updateTimeAndModeRules();
@@ -249,22 +279,31 @@ export class SubscriptionComponent implements OnInit {
 
   edit(r: PricingRow) {
     const isDays = (r.durationType ?? DurationType.Days) === DurationType.Days;
+    const isHours = (r.durationType ?? DurationType.Days) === DurationType.Hours;
+
     this.form.reset({
       id: r.id ?? null,
       name: r.name ?? '',
       durationType: r.durationType ?? DurationType.Days,
       startTime:
-        r.durationType === DurationType.Hours && r.isRepeated === false
+        isHours && r.isRepeated === false
           ? r.startTime ?? null
+          : isDays
+          ? r.startTime ?? '00:00'
           : null,
       endTime:
-        r.durationType === DurationType.Hours && r.isRepeated === false ? r.endTime ?? null : null,
+        isHours && r.isRepeated === false
+          ? r.endTime ?? null
+          : isDays
+          ? r.endTime ?? '00:00'
+          : null,
       price: r.price ?? null,
-      isRepeated: isDays ? true : !!r.isRepeated,
+      isRepeated: isDays ? false : !!r.isRepeated,
       repeatPrice: r.repeatPrice ?? r.price ?? null,
       orderPriority: r.orderPriority ?? 1,
       isActive: r.isActive ?? true,
       totalHours: r.totalHours ?? null,
+      totalDays: isDays ? r.totalDays ?? 1 : null,
     });
 
     this.editingRowId.set(r.id ?? null);
@@ -294,26 +333,26 @@ export class SubscriptionComponent implements OnInit {
     }
 
     const dto = this.buildDto();
+    console.log('AddPricingSchema DTO =>', dto);
+
     this.saving.set(true);
-
-    //const currentId = this.form.controls.id.value; // ممكن تكون null
-
-    // ADD
-
     this.api.add(dto).subscribe({
       next: (created) => {
         const safeCreated: PricingRow = {
           ...created,
           repeatPrice: created?.repeatPrice ?? dto.price,
           isActive: created?.isActive ?? true,
+          isRepeated: created.durationType === DurationType.Days ? false : !!created.isRepeated,
         };
-        const list = this.rows() ?? []; // أمان احتياطي
+        const list = this.rows() ?? [];
         this.rows.set([safeCreated, ...list]);
         this.saving.set(false);
         this.resetForm();
       },
-      error: () => this.saving.set(false),
+      error: (err) => {
+        this.saving.set(false);
+        console.error('422 details:', err?.status, err?.error);
+      },
     });
-    return;
   }
 }

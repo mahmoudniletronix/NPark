@@ -13,6 +13,9 @@
         </div>
       </div>
     </div>
+    <button class="btn btn-outline btn-sm" (click)="detectSensorsFromPlan()">
+      اكتشاف الحساسات
+    </button>
 
     <!-- Users -->
     <div class="col-12 col-md-4">
@@ -73,7 +76,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let t of tickets">
+              @for (t of tickets; track t.id) {
+              <tr>
                 <td>{{ t.id }}</td>
                 <td>{{ t.plate }}</td>
                 <td>
@@ -88,9 +92,11 @@
                 <td>{{ t.gate }}</td>
                 <td>{{ t.time | date : 'shortTime' }}</td>
               </tr>
-              <tr *ngIf="tickets.length === 0">
+              } @if (tickets.length === 0) {
+              <tr>
                 <td colspan="5" class="text-center text-muted py-4">No data</td>
               </tr>
+              }
             </tbody>
           </table>
         </div>

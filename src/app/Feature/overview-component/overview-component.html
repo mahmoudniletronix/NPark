@@ -1,0 +1,186 @@
+<div class="overview page-rtl container-fluid">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Overview</h1>
+      <p class="page-subtitle">Welcome back</p>
+    </div>
+    <div class="header-actions">
+      <a class="btn btn-primary btn-sm" routerLink="/users">See all users</a>
+      <button class="btn btn-outline-secondary btn-sm">Logout</button>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Left -->
+    <div class="col-12 col-xl-8">
+      <div class="row g-3 kpis">
+        <div class="col-12 col-md-6">
+          <div class="card kpi-card">
+            <div class="kpi-label">Stations</div>
+            <div class="kpi-value">{{ stationsTotal() }}</div>
+            <div class="kpi-sub">
+              <span class="tag tag--blue">Full: {{ stationsFull() }}</span>
+              <span class="sep">·</span>
+              <span class="tag tag--pink">Empty: {{ stationsEmpty() }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+          <div class="card kpi-card">
+            <div class="kpi-label">Users</div>
+            <div class="kpi-value">{{ usersTotal() }}</div>
+            <div class="kpi-sub">
+              <span class="pill pill--success">Subscribers: {{ subscribers() }}</span>
+              <span class="pill pill--warning">Visitors: {{ visitors() }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card table-card">
+        <div class="card-header">
+          <div class="card-title">Recent Tickets</div>
+          <div class="card-meta">
+            <span class="muted">Last 10 Records</span>
+            <a class="btn btn-sm btn-primary" routerLink="/tickets">See all tickets</a>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table mb-0">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Plate</th>
+                <th>Action</th>
+                <th>Gate</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let t of tickets()">
+                <td>{{ t.id }}</td>
+                <td class="plate">{{ t.plate }}</td>
+                <td>
+                  <span
+                    class="status"
+                    [class.in]="t.action === 'IN'"
+                    [class.out]="t.action === 'OUT'"
+                  >
+                    {{ t.action }}
+                  </span>
+                </td>
+                <td>{{ t.gate }}</td>
+                <td>{{ t.time }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right -->
+    <div class="col-12 col-xl-4">
+      <!-- Donut -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <div class="card-title">Occupancy</div>
+          <div class="legend">
+            <span class="dot dot--blue"></span> Full <span class="dot dot--pink ms-3"></span> Empty
+          </div>
+        </div>
+
+        <div class="donut-wrap">
+          <svg width="180" height="180" viewBox="0 0 180 180" class="donut">
+            <defs>
+              <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
+                <feDropShadow dx="0" dy="2" stdDeviation="6" flood-opacity="0.15" />
+              </filter>
+            </defs>
+
+            <!-- Track -->
+            <circle cx="90" cy="90" [attr.r]="donutRadius" class="donut-track"></circle>
+
+            <!-- Full -->
+            <circle
+              cx="90"
+              cy="90"
+              [attr.r]="donutRadius"
+              class="donut-seg donut-seg--blue"
+              [attr.stroke-dasharray]="donutCirc()"
+              [attr.stroke-dashoffset]="donutCirc() - fullStroke()"
+              [attr.transform]="'rotate(-90 90 90)'"
+            ></circle>
+
+            <!-- Empty -->
+            <circle
+              cx="90"
+              cy="90"
+              [attr.r]="donutRadius"
+              class="donut-seg donut-seg--pink"
+              [attr.stroke-dasharray]="donutCirc()"
+              [attr.stroke-dashoffset]="donutCirc() - emptyStroke() - fullStroke()"
+              [attr.transform]="'rotate(' + emptyRotateDeg() + ' 90 90)'"
+            ></circle>
+
+            <!-- Center label -->
+            <g filter="url(#softShadow)">
+              <text
+                x="50%"
+                y="50%"
+                dominant-baseline="middle"
+                text-anchor="middle"
+                class="donut-number"
+              >
+                {{ fullPercent() | number : '1.0-0' }}%
+              </text>
+              <text
+                x="50%"
+                y="50%"
+                dy="20"
+                dominant-baseline="hanging"
+                text-anchor="middle"
+                class="donut-caption"
+              >
+                Full
+              </text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Line -->
+      <div class="card chart-card">
+        <div class="card-header">
+          <div class="card-title">Live In/Out (today)</div>
+          <div class="legend">
+            <span class="dot dot--blue"></span> IN <span class="dot dot--pink ms-3"></span> OUT
+          </div>
+        </div>
+
+        <div class="line-wrap">
+          <svg [attr.width]="lineChartWidth" [attr.height]="lineChartHeight" class="linechart">
+            <g>
+              <polyline class="line line--blue" [attr.points]="inPoints()" />
+              <polyline class="line line--pink" [attr.points]="outPoints()" />
+            </g>
+            <g class="axis-x">
+              <ng-container *ngFor="let h of hours; index as i">
+                <text
+                  [attr.x]="18 + i * ((lineChartWidth - 36) / (hours.length - 1 || 1))"
+                  [attr.y]="lineChartHeight - 2"
+                  text-anchor="middle"
+                >
+                  {{ h | number : '2.0-0' }}
+                </text>
+              </ng-container>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

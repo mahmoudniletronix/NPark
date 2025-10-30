@@ -8,35 +8,59 @@
     <nav class="nav flex-column gap-1">
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
-        routerLink="/dashboard"
+        routerLink="/overview"
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
       >
-        <i class="bi bi-house"></i> Overview
+        <i class="bi bi-house"></i> overview
       </a>
       <div class="text-secondary small mt-3 mb-1 text-uppercase">Parking</div>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/dashboard">
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/dashboard"
+        routerLinkActive="active"
+      >
         <i class="bi bi-graph-up"></i> Dashboard
       </a>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/tickets">
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/tickets"
+        routerLinkActive="active"
+      >
         <i class="bi bi-ticket"></i> Tickets
       </a>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/subscription">
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/subscription"
+        routerLinkActive="active"
+      >
         <i class="bi bi-credit-card"></i>
         Subscription Type
       </a>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/registration">
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/registration"
+        routerLinkActive="active"
+      >
         <i class="bi bi-person"></i>
         Registration
       </a>
 
       <div class="text-secondary small mt-3 mb-1 text-uppercase">Management</div>
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/users">
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/users"
+        routerLinkActive="active"
+      >
         <i class="bi bi-people"></i> Users
       </a>
 
-      <a class="nav-link text-light d-flex align-items-center gap-2" routerLink="/tickets">
-        <i class="bi bi-gear"></i> Setting
+      <a
+        class="nav-link text-light d-flex align-items-center gap-2"
+        routerLink="/parking-guidance-diagram"
+        routerLinkActive="active"
+      >
+        <i class="bi bi-gear"></i> Parking Guidance Diagram
       </a>
     </nav>
 

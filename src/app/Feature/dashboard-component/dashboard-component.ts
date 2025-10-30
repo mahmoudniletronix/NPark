@@ -29,6 +29,7 @@ export class DashboardComponent {
   @ViewChild('inoutChart') inoutChartRef!: ElementRef<HTMLCanvasElement>;
   private stationsChart?: Chart;
   private inoutChart?: Chart;
+  parkingGuidanceDiagramComponent: any;
 
   constructor(private ds: DashboardService) {}
 
@@ -109,5 +110,8 @@ export class DashboardComponent {
 
   usersTotal() {
     return (this.users?.subscribers ?? 0) + (this.users?.visitors ?? 0);
+  }
+  detectSensorsFromPlan() {
+    this.parkingGuidanceDiagramComponent.detectSensorsFromPlan();
   }
 }

@@ -24,6 +24,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'overview',
+        loadComponent: () =>
+          import('./Feature/overview-component/overview-component').then(
+            (m) => m.OverviewComponent
+          ),
+      },
+      {
         path: 'users',
         loadComponent: () => import('./Feature/users/users').then((m) => m.Users),
       },
@@ -39,6 +46,14 @@ export const routes: Routes = [
           import('./Feature/subscription-component/subscription-component').then(
             (m) => m.SubscriptionComponent
           ),
+      },
+      {
+        path: 'parking-guidance-diagram',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import(
+            './Feature/parking-guidance-diagram-component/parking-guidance-diagram-component'
+          ).then((m) => m.ParkingGuidanceDiagramComponent),
       },
       {
         path: 'registration',

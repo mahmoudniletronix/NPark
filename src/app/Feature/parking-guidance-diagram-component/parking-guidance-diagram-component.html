@@ -1,0 +1,108 @@
+<div class="parking page-rtl container-fluid">
+  <div class="row g-4">
+    <div class="col-12 col-xxl-8">
+      <div class="card card--glass shadow-sm h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-bezier2"></i>
+            <h5 class="mb-0 fw-bold">خريطة الجراج</h5>
+          </div>
+
+          <div class="controls d-flex align-items-center gap-2">
+            <select class="form-select form-select-sm" (change)="onMapChange($event)">
+              <option value="B1">المخطط B1</option>
+              <option value="B2">المخطط B2</option>
+            </select>
+
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm" (click)="zoomOut()" title="تصغير">−</button>
+              <button class="btn btn-outline btn-sm" (click)="resetView()" title="إعادة">⟳</button>
+              <button class="btn btn-outline btn-sm" (click)="zoomIn()" title="تكبير">+</button>
+            </div>
+
+            <button class="btn btn-outline btn-sm" (click)="toggleSim()">
+              <i
+                class="bi"
+                [class.bi-play-circle]="!simulate()"
+                [class.bi-pause-circle]="simulate()"
+              ></i>
+              <span class="ms-1">{{ simulate() ? 'إيقاف' : 'تشغيل' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          <div class="svg-wrap">
+            <div #svgHost class="svg-host" [innerHTML]="sanitizedSvg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xxl-4">
+      <div class="card card--glass shadow-sm h-100">
+        <div class="card-header">
+          <h6 class="mb-0 fw-bold">تحكّم سريع</h6>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label">بحث بالـID</label>
+            <input class="form-control" placeholder="مثال: L1-A" (input)="onSearchInput($event)" />
+            <small class="text-muted">سيتم تظليل النتائج على الخريطة.</small>
+          </div>
+
+          <div class="row g-2 align-items-end">
+            <div class="col-7">
+              <label class="form-label">Slot ID</label>
+              <input
+                class="form-control"
+                placeholder="مثال: L1-A2"
+                (input)="onSlotIdInput($event)"
+              />
+            </div>
+            <div class="col-5">
+              <label class="form-label">الحالة</label>
+              <select class="form-select" (change)="onStatusChange($event)">
+                <option value="free">متاح</option>
+                <option value="occupied">مشغول</option>
+                <option value="reserved">محجوز</option>
+                <option value="disabled">ذوي الإعاقة</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-danger w-100" (click)="applyStatusByLabel()">
+                تطبيق على الخريطة
+              </button>
+              <small class="text-muted d-block mt-1">
+                يمكنك أيضًا الضغط على أي خانة داخل الخريطة لتحديد الـID تلقائيًا.
+              </small>
+            </div>
+          </div>
+
+          <hr />
+
+          <!-- KPIs -->
+          <h6 class="fw-bold mb-2">إحصائيات</h6>
+          <ul class="kpis">
+            <li>
+              <span class="dot dot--free"></span>المتاح: <b>{{ freeCount() }}</b>
+            </li>
+            <li>
+              <span class="dot dot--occupied"></span>المشغول: <b>{{ occupiedCount() }}</b>
+            </li>
+            <li>
+              <span class="dot dot--reserved"></span>المحجوز: <b>{{ reservedCount() }}</b>
+            </li>
+            <li>
+              <span class="dot dot--disabled"></span>ذوي الإعاقة: <b>{{ disabledCount() }}</b>
+            </li>
+          </ul>
+
+          <div class="hint mt-2">
+            ◀ عجلة الماوس للتكبير/التصغير، واسحب بالخريطة للتحريك. دبل كلك للتكبير حول المؤشر.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

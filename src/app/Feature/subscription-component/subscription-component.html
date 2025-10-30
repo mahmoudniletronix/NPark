@@ -37,9 +37,9 @@
               <button
                 type="button"
                 class="btn btn-ghost ms-2"
-                [class.btn-primary]="form.value.durationType === 2"
-                [class.btn-outline-primary]="form.value.durationType !== 2"
-                (click)="setMode(2)"
+                [class.btn-primary]="form.value.durationType === DurationType.Hours"
+                [class.btn-outline-primary]="form.value.durationType !== DurationType.Hours"
+                (click)="setMode(DurationType.Hours)"
                 title="احتساب بالساعة"
               >
                 <i class="bi bi-clock"></i>
@@ -48,9 +48,9 @@
               <button
                 type="button"
                 class="btn btn-ghost"
-                [class.btn-primary]="form.value.durationType === 1"
-                [class.btn-outline-primary]="form.value.durationType !== 1"
-                (click)="setMode(1)"
+                [class.btn-primary]="form.value.durationType === DurationType.Days"
+                [class.btn-outline-primary]="form.value.durationType !== DurationType.Days"
+                (click)="setMode(DurationType.Days)"
                 title="احتساب بالأيام"
               >
                 <i class="bi bi-calendar3"></i>
@@ -105,9 +105,40 @@
             />
           </div>
 
+          <!-- إجمالي الأيام: يظهر فقط في الأيام -->
+          <div class="mb-3" *ngIf="isDays()">
+            <label class="form-label">إجمالي الأيام</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="totalDays"
+              min="1"
+              step="1"
+              placeholder="مثال: 30"
+            />
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.get('totalDays')?.touched && form.get('totalDays')?.invalid"
+            >
+              إجمالي الأيام مطلوب (حد أدنى 1).
+            </div>
+          </div>
+
+          <!-- وقت البداية/النهاية (للأيام) -->
+          <div class="row g-2 mb-3" *ngIf="isDays()">
+            <div class="col-6">
+              <label class="form-label">وقت البداية (اليوم)</label>
+              <input type="time" class="form-control" formControlName="startTime" />
+            </div>
+            <div class="col-6">
+              <label class="form-label">وقت النهاية (اليوم)</label>
+              <input type="time" class="form-control" formControlName="endTime" />
+            </div>
+          </div>
+
           <div class="row g-2">
             <div class="col-6">
-              <label class="form-label">السعر (جنيه)</label>
+              <label class="form-label">(جنيه) السعر</label>
               <input
                 type="number"
                 class="form-control"
@@ -190,16 +221,22 @@
                 </td>
                 <td>
                   <span class="badge pill badge--secondary">
-                    {{ r.durationType === 2 ? 'ساعات' : 'أيام' }}
+                    {{ r.durationType === DurationType.Hours ? 'ساعات' : 'أيام' }}
                   </span>
                 </td>
                 <td>
                   {{
-                    r.durationType === 2 && r.isRepeated === false ? r.startTime || '00:00' : '-'
+                    r.durationType === DurationType.Hours && r.isRepeated === false
+                      ? r.startTime || '00:00'
+                      : r.startTime || '-'
                   }}
                 </td>
                 <td>
-                  {{ r.durationType === 2 && r.isRepeated === false ? r.endTime || '00:00' : '-' }}
+                  {{
+                    r.durationType === DurationType.Hours && r.isRepeated === false
+                      ? r.endTime || '00:00'
+                      : r.endTime || '-'
+                  }}
                 </td>
                 <td>
                   <span class="badge pill badge--success">
@@ -208,7 +245,7 @@
                 </td>
                 <td>
                   <span class="badge pill badge--info">
-                    {{ r.repeatPrice ?? r.price | number : '1.0-2' }}
+                    {{ r.repeatPrice | number : '1.0-2' }}
                   </span>
                 </td>
                 <td>{{ r.orderPriority }}</td>
