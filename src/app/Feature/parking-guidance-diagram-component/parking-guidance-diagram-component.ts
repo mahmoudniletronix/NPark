@@ -10,10 +10,11 @@ import {
   Renderer2,
   signal,
   ViewChild,
+  AfterViewInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ExtractResult, Lane, Station } from '../../Domain/parking.models/parking.models';
 import { extractFromInlineSvg } from './svg-extractor';
@@ -26,153 +27,42 @@ interface Slot {
   plate?: string | null;
   sensorBattery?: number;
 }
+
 @Component({
   selector: 'app-parking-guidance-diagram-component',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './parking-guidance-diagram-component.html',
   styleUrl: './parking-guidance-diagram-component.css',
 })
-export class ParkingGuidanceDiagramComponent {
-  @Input() src = '';
+export class ParkingGuidanceDiagramComponent implements AfterViewInit {
   @Input() floor = 'B1';
   @Output() detected = new EventEmitter<ExtractResult>();
-  @ViewChild('host', { static: true }) hostRef!: ElementRef<HTMLDivElement>;
 
-  svgEl?: SVGSVGElement;
-  overlayBox = signal<{ w: number; h: number; vb?: string }>({ w: 0, h: 0 });
-  stations = signal<Station[]>([]);
-  lanes = signal<Lane[]>([]);
+  /** ⚠️ لم نعد نستخدم hostRef لحقن الـSVG */
+  @ViewChild('svgHost', { static: true }) svgHost?: ElementRef<HTMLDivElement>;
 
-  async ngAfterViewInit() {
-    await this.loadSvg();
-  }
-
-  selectedId = signal<string | null>(null);
+  // === DI
   private http = inject(HttpClient);
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
 
-  private slotMap = new Map<string, SVGGElement | SVGGraphicsElement>();
-  private bboxMap = new Map<string, DOMRect>();
+  // === SVG state
+  svgEl?: SVGSVGElement;
+  sanitizedSvg: SafeHtml = '';
+  svgMarkup = signal<string>('');
 
-  private SENSOR_COLORS = new Set(['#000', '#000000', 'rgb(0,0,0)']);
-  private CIRCLE_R_MIN = 2;
-  private CIRCLE_R_MAX = 7;
-  private RECT_SIZE_MAX = 12;
-
-  private getElementCenterInRoot(
-    el: SVGGraphicsElement,
-    svg: SVGSVGElement
-  ): { x: number; y: number } | null {
-    const bb = el.getBBox?.();
-    if (!bb) return null;
-    const p = svg.createSVGPoint();
-    p.x = bb.x + bb.width / 2;
-    p.y = bb.y + bb.height / 2;
-    const ctm = el.getCTM?.();
-    return ctm ? p.matrixTransform(ctm) : { x: p.x, y: p.y };
-  }
-
-  private getNearestSlotId(x: number, y: number): string | null {
-    let bestId: string | null = null;
-    let bestDist = Infinity;
-    for (const [id, bb] of this.bboxMap.entries()) {
-      const cx = bb.x + bb.width / 2;
-      const cy = bb.y + bb.height / 2;
-      const dx = cx - x;
-      const dy = cy - y;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < bestDist) {
-        bestDist = d2;
-        bestId = id;
-      }
-    }
-    return bestId;
-  }
-  detectSensorsFromPlan() {
-    if (!this.svgEl) return;
-    const result = extractFromInlineSvg(this.svgEl, this.floor);
-    this.stations.set(result.stations);
-    this.lanes.set(result.lanes);
-    this.detected.emit(result);
-  }
-
-  private isBlackFill(el: Element): boolean {
-    const fill = (el as Element).getAttribute('fill')?.trim()?.toLowerCase() || '';
-    if (this.SENSOR_COLORS.has(fill)) return true;
-    const style = (el as Element).getAttribute('style') || '';
-    if (/fill\s*:\s*#?000\b|rgb\(0\s*,\s*0\s*,\s*0\)/i.test(style)) return true;
-    return false;
-  }
-  private indexSlotsOnce() {
-    const host = this.svgHost?.nativeElement;
-    const svg = host?.querySelector('svg');
-    if (!svg) return;
-
-    this.slotMap.clear();
-    this.bboxMap.clear();
-
-    svg.querySelectorAll<SVGGElement | SVGGraphicsElement>('[data-slot-id]').forEach((el) => {
-      const id = el.getAttribute('data-slot-id');
-      if (!id) return;
-      this.slotMap.set(id, el);
-      const bb = (el as any).getBBox?.() as DOMRect | undefined;
-      if (bb) this.bboxMap.set(id, bb);
-    });
-  }
-  pick(id: string) {
-    this.selectedId.set(id === this.selectedId() ? null : id);
-  }
-  setMeta(key: string, value: any) {
-    const cur = this.stations().map((s) =>
-      s.id === this.selectedId() ? { ...s, data: { ...(s.data || {}), [key]: value } } : s
-    );
-    this.stations.set(cur);
-  }
-  async loadSvg() {
-    if (!this.src) return;
-    const res = await fetch(this.src);
-    const svgText = await res.text();
-    const container = this.hostRef.nativeElement;
-    container.innerHTML = svgText;
-    const found = container.querySelector('svg') as SVGSVGElement | null;
-    if (!found) return;
-    this.svgEl = found;
-
-    const vb = found.getAttribute('viewBox')?.split(/\s+/).map(Number) ?? [
-      0,
-      0,
-      found.clientWidth || 1000,
-      found.clientHeight || 800,
-    ];
-    const w = vb[2],
-      h = vb[3];
-    this.overlayBox.set({ w, h, vb: found.getAttribute('viewBox') || undefined });
-  }
-
-  @ViewChild('svgHost', { static: false }) svgHost?: ElementRef<HTMLDivElement>;
-
+  // ملفات الجراج
   private readonly B1_URL = 'assets/parking/08-26-B1[نسخة_لاداري].svg';
   private readonly B2_URL = 'assets/parking/08-26-B2[نسخة_للادارى].svg';
-
   svgUrl = signal<string>(this.B1_URL);
-  svgMarkup = signal<string>('');
-  sanitizedSvg: SafeHtml = '';
 
-  private _slots = signal<Slot[]>([
-    { id: 'L1-A1', status: 'free', sensorBattery: 88 },
-    { id: 'L1-A2', status: 'occupied', plate: 'س م ن ١٢٣٤', sensorBattery: 72 },
-    { id: 'L1-A6', status: 'occupied', plate: 'م ر ك ٢٣٤٥', sensorBattery: 65 },
-    { id: 'L1-B3', status: 'reserved', sensorBattery: 90 },
-    { id: 'L1-B7', status: 'disabled', sensorBattery: 100 },
-  ]);
+  // === Extracted
+  stations = signal<Station[]>([]);
+  lanes = signal<Lane[]>([]);
 
-  freeCount = computed(() => this._slots().filter((s) => s.status === 'free').length);
-  occupiedCount = computed(() => this._slots().filter((s) => s.status === 'occupied').length);
-  reservedCount = computed(() => this._slots().filter((s) => s.status === 'reserved').length);
-  disabledCount = computed(() => this._slots().filter((s) => s.status === 'disabled').length);
-
+  // === اختيار/بحث
+  selectedId = signal<string | null>(null);
   search = signal<string>('');
   filteredIds = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -184,26 +74,58 @@ export class ParkingGuidanceDiagramComponent {
     );
   });
 
+  // === كاونتر الحالات
+  private _slots = signal<Slot[]>([
+    { id: 'L1-A1', status: 'free', sensorBattery: 88 },
+    { id: 'L1-A2', status: 'occupied', plate: 'س م ن ١٢٣٤', sensorBattery: 72 },
+    { id: 'L1-A6', status: 'occupied', plate: 'م ر ك ٢٣٤٥', sensorBattery: 65 },
+    { id: 'L1-B3', status: 'reserved', sensorBattery: 90 },
+    { id: 'L1-B7', status: 'disabled', sensorBattery: 100 },
+  ]);
+  freeCount = computed(() => this._slots().filter((s) => s.status === 'free').length);
+  occupiedCount = computed(() => this._slots().filter((s) => s.status === 'occupied').length);
+  reservedCount = computed(() => this._slots().filter((s) => s.status === 'reserved').length);
+  disabledCount = computed(() => this._slots().filter((s) => s.status === 'disabled').length);
+
   formSlotId = signal<string>('');
   formStatus = signal<SlotStatus>('free');
   activeSelectedId = signal<string | null>(null);
 
+  // === محاكاة
   simulate = signal(false);
   private timer: any;
 
-  // Zoom & Pan
+  // === Zoom & Pan
   private pzWrap?: SVGGElement;
   scale = 1;
-  minScale = 0.5;
-  maxScale = 4;
+  minScale = 0.4;
+  maxScale = 6;
   panX = 0;
   panY = 0;
+
+  private viewW = 1000;
+  private viewH = 800;
+  private hostW = 1000;
+  private hostH = 800;
+
   private isPanning = false;
   private lastX = 0;
   private lastY = 0;
 
+  private touchStartDist = 0;
+  private touchStartScale = 1;
+  private touchMid?: { x: number; y: number };
+
+  private ro?: ResizeObserver;
+
+  private slotMap = new Map<string, SVGGElement | SVGGraphicsElement>();
+  private bboxMap = new Map<string, DOMRect>();
+
   constructor() {
-    effect(() => this.loadSvg());
+    effect(() => {
+      const url = this.svgUrl();
+      this.loadSvg(url);
+    });
     effect(() => this.applyDataToSvg());
     effect(() => {
       if (this.simulate()) this.startSim();
@@ -211,160 +133,107 @@ export class ParkingGuidanceDiagramComponent {
     });
   }
 
+  ngAfterViewInit() {
+    this.loadSvg(this.svgUrl());
+  }
+
+  // ====== تحميل الـSVG وتطعيمه في الـDOM بأمان
+  private async loadSvg(url: string) {
+    if (!url) return;
+    const svgText = await this.http.get(url, { responseType: 'text' }).toPromise();
+    if (!svgText) return;
+
+    this.svgMarkup.set(svgText);
+    this.sanitizedSvg = this.sanitizer.bypassSecurityTrustHtml(svgText);
+
+    queueMicrotask(() => {
+      const host = this.svgHost?.nativeElement;
+      const found = host?.querySelector('svg') as SVGSVGElement | null;
+      if (!found) return;
+
+      this.svgEl = found;
+
+      this.preparePanZoom();
+
+      this.indexSlotsOnce();
+
+      this.applyDataToSvg();
+    });
+  }
+
+  onMapChange(e: Event) {
+    const key = (e.target as HTMLSelectElement).value;
+    this.switchSvg(key);
+  }
+  switchSvg(mapKey: string) {
+    this.svgUrl.set(mapKey === 'B2' ? this.B2_URL : this.B1_URL);
+  }
+
   onSearchInput(e: Event) {
-    const v = this.readInputValue(e);
-    this.search.set(v);
+    this.search.set((e.target as HTMLInputElement).value ?? '');
     this.applyDataToSvg();
   }
   onSlotIdInput(e: Event) {
-    const v = this.readInputValue(e);
-    this.formSlotId.set(v);
+    this.formSlotId.set((e.target as HTMLInputElement).value ?? '');
   }
   onStatusChange(e: Event) {
-    const v = this.readSelectValue(e) as SlotStatus;
-    this.formStatus.set(v);
-  }
-  onMapChange(e: Event) {
-    const key = this.readSelectValue(e);
-    this.switchSvg(key);
+    this.formStatus.set((e.target as HTMLSelectElement).value as SlotStatus);
   }
 
-  switchSvg(mapKey: string) {
-    if (mapKey === 'B2') this.svgUrl.set(this.B2_URL);
-    else this.svgUrl.set(this.B1_URL);
+  exportJson() {
+    if (!this.svgEl) return;
+    const result = extractFromInlineSvg(this.svgEl, this.floor);
+    this.stations.set(result.stations);
+    this.lanes.set(result.lanes);
+    this.detected.emit(result);
+
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `garage-${this.floor}.json`;
+    a.click();
   }
 
-  toggleSim() {
-    this.simulate.update((v) => !v);
-  }
-
-  private preparePanZoom() {
-    const host = this.svgHost?.nativeElement;
-    if (!host) return;
-    const svg = host.querySelector('svg');
+  // ====== تمييز خانة مختارة
+  private highlightSelected(el: Element) {
+    const svg = this.svgEl;
     if (!svg) return;
-
-    this.pzWrap =
-      svg.querySelector<SVGGElement>('#pz-wrap') ??
-      document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-    if (!this.pzWrap.id) {
-      this.pzWrap.setAttribute('id', 'pz-wrap');
-      const children = Array.from(svg.childNodes);
-      for (const ch of children) {
-        if (ch !== this.pzWrap) this.pzWrap.appendChild(ch);
-      }
-      svg.appendChild(this.pzWrap);
-    }
-
-    this.scale = 1;
-    this.panX = 0;
-    this.panY = 0;
-    this.applyTransform();
-
-    svg.onmousedown = (e: MouseEvent) => {
-      const targetEl = e.target as Element;
-      const slotEl = targetEl?.closest?.('[data-slot-id]') as SVGGElement | null;
-      if (slotEl) {
-        const id = slotEl.getAttribute('data-slot-id');
-        if (id) {
-          this.activeSelectedId.set(id);
-          this.formSlotId.set(id);
-          this.highlightSelected(slotEl);
-          e.preventDefault();
-          return;
-        }
-      }
-      this.isPanning = true;
-      this.lastX = e.clientX;
-      this.lastY = e.clientY;
-      (svg as any).style.cursor = 'grabbing';
-    };
-
-    svg.onmousemove = (e: MouseEvent) => {
-      if (!this.isPanning) return;
-      const dx = e.clientX - this.lastX;
-      const dy = e.clientY - this.lastY;
-      this.lastX = e.clientX;
-      this.lastY = e.clientY;
-      this.panX += dx;
-      this.panY += dy;
-      this.applyTransform();
-    };
-
-    const endPan = () => {
-      this.isPanning = false;
-      (svg as any).style.cursor = 'default';
-      (svg as any).style.width = '100%';
-    };
-    svg.onmouseup = endPan;
-    svg.onmouseleave = endPan;
-
-    svg.onwheel = (e: WheelEvent) => {
-      e.preventDefault();
-      const intensity = 0.0015;
-      const delta = -e.deltaY * intensity;
-      const newScale = this.clamp(this.scale * (1 + delta), this.minScale, this.maxScale);
-
-      const rect = svg.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const sx = (mx - this.panX) / this.scale;
-      const sy = (my - this.panY) / this.scale;
-
-      this.scale = newScale;
-      this.panX = mx - sx * this.scale;
-      this.panY = my - sy * this.scale;
-      this.applyTransform();
-    };
-
-    svg.ondblclick = (e: MouseEvent) => {
-      const rect = svg.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      const factor = 1.25;
-      const newScale = this.clamp(this.scale * factor, this.minScale, this.maxScale);
-
-      const sx = (mx - this.panX) / this.scale;
-      const sy = (my - this.panY) / this.scale;
-
-      this.scale = newScale;
-      this.panX = mx - sx * this.scale;
-      this.panY = my - sy * this.scale;
-      this.applyTransform();
-    };
+    svg.querySelectorAll('.slot--selected').forEach((e) => e.classList.remove('slot--selected'));
+    el.classList.add('slot--selected');
   }
 
-  private applyTransform() {
-    if (this.pzWrap) {
-      this.pzWrap.setAttribute(
-        'transform',
-        `translate(${this.panX}, ${this.panY}) scale(${this.scale})`
-      );
-    }
-  }
-  zoomIn() {
-    this.scale = this.clamp(this.scale * 1.2, this.minScale, this.maxScale);
-    this.applyTransform();
-  }
-  zoomOut() {
-    this.scale = this.clamp(this.scale / 1.2, this.minScale, this.maxScale);
-    this.applyTransform();
-  }
-  resetView() {
-    this.scale = 1;
-    this.panX = 0;
-    this.panY = 0;
-    this.applyTransform();
-  }
-  private clamp(v: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, v));
+  applyStatusByLabel() {
+    const id = this.formSlotId().trim();
+    if (!id) return;
+    const st = this.formStatus();
+    const arr = [...this._slots()];
+    const existing = arr.find((s) => s.id === id);
+    if (existing) existing.status = st;
+    else arr.push({ id, status: st, sensorBattery: 80 });
+    this._slots.set(arr);
+    this.activeSelectedId.set(id);
+    this.applyDataToSvg();
   }
 
+  // ====== فهرسة الخانات مرة واحدة
+  private indexSlotsOnce() {
+    const svg = this.svgEl;
+    if (!svg) return;
+    this.slotMap.clear();
+    this.bboxMap.clear();
+
+    svg.querySelectorAll<SVGGElement | SVGGraphicsElement>('[data-slot-id]').forEach((el) => {
+      const id = el.getAttribute('data-slot-id');
+      if (!id) return;
+      this.slotMap.set(id, el);
+      const bb = (el as any).getBBox?.() as DOMRect | undefined;
+      if (bb) this.bboxMap.set(id, bb);
+    });
+  }
+
+  // ====== تطبيق الداتا (ألوان الحالات + تظليل البحث + حَقن sensor-dot)
   private applyDataToSvg() {
-    const host = this.svgHost?.nativeElement;
-    if (!host) return;
-    const svg = host.querySelector('svg');
+    const svg = this.svgEl;
     if (!svg) return;
 
     svg.querySelectorAll('[data-slot-id]').forEach((el) => {
@@ -378,103 +247,36 @@ export class ParkingGuidanceDiagramComponent {
       );
     });
 
+    // تظليل نتائج البحث
     const highlighted = this.filteredIds();
     highlighted.forEach((id) => {
       const el = svg.querySelector(`[data-slot-id="${id}"]`);
       if (el) el.classList.add('slot--highlight');
     });
 
+    // ألوان الحالة + Sensor
     for (const s of this._slots()) {
       const el = svg.querySelector<SVGGElement | SVGRectElement>(`[data-slot-id="${s.id}"]`);
       if (!el) continue;
 
       this.renderer.addClass(el, `slot--${s.status}`);
 
-      const sensor = el.querySelector<SVGCircleElement>('.sensor-dot');
-      if (sensor) sensor.setAttribute('data-battery', String(s.sensorBattery ?? ''));
-
-      const title =
-        el.querySelector('title') ??
-        document.createElementNS('http://www.w3.org/2000/svg', 'title');
-      title.textContent = `الحالة: ${
-        s.status === 'free'
-          ? 'متاح'
-          : s.status === 'occupied'
-          ? 'مشغول'
-          : s.status === 'reserved'
-          ? 'محجوز'
-          : 'ذوي الإعاقة'
-      }${s.plate ? ` | لوحة: ${s.plate}` : ''}${
-        s.sensorBattery != null ? ` | بطارية: ${s.sensorBattery}%` : ''
-      }`;
-      if (!el.querySelector('title')) el.appendChild(title);
+      // sensor-dot + title
+      this.upsertSensorForSlot(el as any, s.id, s.sensorBattery, /*withLabel*/ false);
     }
 
+    // اختيار حالي
     const selected = this.activeSelectedId();
     if (selected) {
       const el = svg.querySelector(`[data-slot-id="${selected}"]`);
       if (el) el.classList.add('slot--selected');
     }
 
-    this.ensureSensors(true);
+    // Click بالماوس لالتقاط الـID
+    this.bindPointerHandlersOnce();
   }
 
-  private highlightSelected(el: Element) {
-    const host = this.svgHost?.nativeElement;
-    const svg = host?.querySelector('svg');
-    if (svg)
-      svg.querySelectorAll('.slot--selected').forEach((e) => e.classList.remove('slot--selected'));
-    el.classList.add('slot--selected');
-  }
-
-  applyStatusByLabel() {
-    const id = this.formSlotId().trim();
-    if (!id) return;
-    const st = this.formStatus();
-    const arr = [...this._slots()];
-    const existing = arr.find((s) => s.id === id);
-    if (existing) {
-      existing.status = st;
-    } else {
-      arr.push({ id, status: st, sensorBattery: 80 });
-    }
-    this._slots.set(arr);
-    this.activeSelectedId.set(id);
-    this.applyDataToSvg();
-  }
-
-  private readInputValue(e: Event): string {
-    const t = e.target as HTMLInputElement | null;
-    return t?.value ?? '';
-  }
-  private readSelectValue(e: Event): string {
-    const t = e.target as HTMLSelectElement | null;
-    return t?.value ?? '';
-  }
-
-  private startSim() {
-    this.timer = setInterval(() => {
-      const copy = [...this._slots()];
-      if (!copy.length) return;
-      const i = Math.floor(Math.random() * copy.length);
-      const s = copy[i];
-      s.status = this.nextStatus(s.status);
-      s.plate = s.status === 'occupied' ? 'ع س ص ٤٥٦٧' : null;
-      s.sensorBattery = Math.max(15, (s.sensorBattery ?? 80) - (Math.random() < 0.2 ? 1 : 0));
-      this._slots.set(copy);
-      this.applyDataToSvg();
-    }, 1300);
-  }
-  private stopSim() {
-    if (this.timer) clearInterval(this.timer);
-  }
-  private nextStatus(x: SlotStatus): SlotStatus {
-    const r = Math.random();
-    if (x === 'free') return r < 0.7 ? 'occupied' : 'free';
-    if (x === 'occupied') return r < 0.5 ? 'free' : 'occupied';
-    if (x === 'reserved') return r < 0.2 ? 'free' : 'reserved';
-    return 'disabled';
-  }
+  // ====== إضافة sensor-dot داخل كل خانة
   private upsertSensorForSlot(
     slotEl: SVGGElement | SVGGraphicsElement,
     id: string,
@@ -497,7 +299,6 @@ export class ParkingGuidanceDiagramComponent {
       dot.setAttribute('stroke-width', '0.75');
       sensorGroup.appendChild(dot);
     }
-
     if (battery != null) dot.setAttribute('data-battery', String(battery));
 
     let label = sensorGroup.querySelector<SVGTextElement>('text.sensor-label');
@@ -517,20 +318,16 @@ export class ParkingGuidanceDiagramComponent {
 
     const bb = (slotEl as any).getBBox?.() as DOMRect | undefined;
     if (!bb) return;
-
     const offset = 6;
     const cx = bb.x + bb.width - offset;
     const cy = bb.y + offset;
-
     dot.setAttribute('cx', String(cx));
     dot.setAttribute('cy', String(cy));
-
     if (label) {
       label.setAttribute('x', String(cx - 2));
       label.setAttribute('y', String(cy + 10));
     }
 
-    // 👇 هنا التعديل المهم: استخدم SVGTitleElement وتعامل مع null قبل appendChild
     let titleEl = sensorGroup.querySelector<SVGTitleElement>('title');
     if (!titleEl) {
       titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title') as SVGTitleElement;
@@ -539,14 +336,292 @@ export class ParkingGuidanceDiagramComponent {
     titleEl.textContent = `ID: ${id}${battery != null ? ` | بطارية: ${battery}%` : ''}`;
   }
 
-  private ensureSensors(withLabel = false) {
-    const host = this.svgHost?.nativeElement;
-    const svg = host?.querySelector('svg');
+  private preparePanZoom() {
+    const svg = this.svgEl;
     if (!svg) return;
-    for (const s of this._slots()) {
-      const el = svg.querySelector<SVGGElement | SVGRectElement>(`[data-slot-id="${s.id}"]`);
-      if (!el) continue;
-      this.upsertSensorForSlot(el as any, s.id, s.sensorBattery, withLabel);
+
+    this.pzWrap =
+      svg.querySelector<SVGGElement>('#pz-wrap') ??
+      document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+    if (!this.pzWrap.id) {
+      this.pzWrap.setAttribute('id', 'pz-wrap');
+      const kids = Array.from(svg.childNodes);
+      for (const k of kids) if (k !== this.pzWrap) this.pzWrap.appendChild(k);
+      svg.appendChild(this.pzWrap);
     }
+
+    const vb = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
+    if (vb.length === 4) {
+      this.viewW = vb[2];
+      this.viewH = vb[3];
+    } else {
+      // fallback
+      const bb = svg.getBBox?.();
+      this.viewW = bb?.width || svg.clientWidth || 1000;
+      this.viewH = bb?.height || svg.clientHeight || 800;
+    }
+
+    const host = this.svgHost?.nativeElement;
+    if (host) {
+      this.ro?.disconnect();
+      this.ro = new ResizeObserver(() => {
+        const rect = host.getBoundingClientRect();
+        this.hostW = rect.width;
+        this.hostH = rect.height;
+        // this.fitView();
+      });
+      this.ro.observe(host);
+      const rect = host.getBoundingClientRect();
+      this.hostW = rect.width;
+      this.hostH = rect.height;
+    }
+
+    this.bindWheel(svg);
+    this.bindMousePan(svg);
+    this.bindPinch(svg);
+
+    this.fitView();
+  }
+
+  private bindWheel(svg: SVGSVGElement) {
+    svg.addEventListener(
+      'wheel',
+      (e: WheelEvent) => {
+        e.preventDefault();
+        const rect = svg.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
+        const factor = 1 + -e.deltaY * 0.0015;
+        this.zoomAt(factor, mx, my);
+      },
+      { passive: false }
+    );
+
+    svg.addEventListener('dblclick', (e: MouseEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      this.zoomAt(1.25, mx, my);
+    });
+  }
+
+  private bindMousePan(svg: SVGSVGElement) {
+    svg.addEventListener('mousedown', (e: MouseEvent) => {
+      const t = e.target as Element;
+      if (t?.closest?.('[data-slot-id]')) return;
+
+      this.isPanning = true;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+      (svg as any).style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e: MouseEvent) => {
+      if (!this.isPanning) return;
+      const dx = e.clientX - this.lastX;
+      const dy = e.clientY - this.lastY;
+      this.lastX = e.clientX;
+      this.lastY = e.clientY;
+      this.panX += dx;
+      this.panY += dy;
+      this.applyTransform();
+    });
+
+    const end = () => {
+      this.isPanning = false;
+      (svg as any).style.cursor = 'default';
+    };
+    window.addEventListener('mouseup', end);
+    svg.addEventListener('mouseleave', end);
+  }
+
+  private bindPinch(svg: SVGSVGElement) {
+    svg.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+
+    svg.addEventListener(
+      'touchstart',
+      (e: TouchEvent) => {
+        if (e.touches.length === 1) {
+          this.isPanning = true;
+          this.lastX = e.touches[0].clientX;
+          this.lastY = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          const [p1, p2] = e.touches;
+          this.touchStartDist = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+          this.touchStartScale = this.scale;
+
+          const rect = svg.getBoundingClientRect();
+          const mx = (p1.clientX + p2.clientX) / 2 - rect.left;
+          const my = (p1.clientY + p2.clientY) / 2 - rect.top;
+          this.touchMid = { x: mx, y: my };
+        }
+      },
+      { passive: false }
+    );
+
+    svg.addEventListener(
+      'touchmove',
+      (e: TouchEvent) => {
+        e.preventDefault();
+        if (e.touches.length === 1 && this.isPanning) {
+          const t = e.touches[0];
+          const dx = t.clientX - this.lastX;
+          const dy = t.clientY - this.lastY;
+          this.lastX = t.clientX;
+          this.lastY = t.clientY;
+          this.panX += dx;
+          this.panY += dy;
+          this.applyTransform();
+        } else if (e.touches.length === 2 && this.touchMid) {
+          const [p1, p2] = e.touches;
+          const dist = Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY);
+          const factor = dist / (this.touchStartDist || dist);
+          const targetScale = this.clamp(
+            this.touchStartScale * factor,
+            this.minScale,
+            this.maxScale
+          );
+          const { x, y } = this.touchMid;
+          const sx = (x - this.panX) / this.scale;
+          const sy = (y - this.panY) / this.scale;
+          this.scale = targetScale;
+          this.panX = x - sx * this.scale;
+          this.panY = y - sy * this.scale;
+          this.applyTransform();
+        }
+      },
+      { passive: false }
+    );
+
+    const endTouch = () => {
+      this.isPanning = false;
+      this.touchMid = undefined;
+    };
+    svg.addEventListener('touchend', endTouch);
+    svg.addEventListener('touchcancel', endTouch);
+  }
+
+  private bindPointerHandlersOnce() {
+    const svg = this.svgEl;
+    if (!svg) return;
+    if ((svg as any).__boundClick__) return;
+    (svg as any).__boundClick__ = true;
+
+    svg.addEventListener('click', (e: MouseEvent) => {
+      const t = e.target as Element;
+      const slotEl = t?.closest?.('[data-slot-id]') as SVGGElement | null;
+      if (slotEl) {
+        const id = slotEl.getAttribute('data-slot-id');
+        if (id) {
+          this.activeSelectedId.set(id);
+          this.formSlotId.set(id);
+          this.highlightSelected(slotEl);
+        }
+      }
+    });
+  }
+
+  private applyTransform() {
+    if (!this.pzWrap || !this.svgEl) return;
+
+    const maxPanX = this.hostW;
+    const maxPanY = this.hostH;
+    const minPanX = -this.viewW * this.scale;
+    const minPanY = -this.viewH * this.scale;
+
+    this.panX = this.clamp(this.panX, minPanX + -0.2 * this.hostW, maxPanX * 0.2);
+    this.panY = this.clamp(this.panY, minPanY + -0.2 * this.hostH, maxPanY * 0.2);
+    this.pzWrap.setAttribute(
+      'transform',
+      `translate(${this.panX}, ${this.panY}) scale(${this.scale})`
+    );
+  }
+
+  private zoomAt(factor: number, mx: number, my: number) {
+    const newScale = this.clamp(this.scale * factor, this.minScale, this.maxScale);
+    const sx = (mx - this.panX) / this.scale;
+    const sy = (my - this.panY) / this.scale;
+    this.scale = newScale;
+    this.panX = mx - sx * this.scale;
+    this.panY = my - sy * this.scale;
+    this.applyTransform();
+  }
+
+  fitView() {
+    const scaleX = this.hostW / this.viewW;
+    const scaleY = this.hostH / this.viewH;
+    const s = Math.min(scaleX, scaleY) * 0.95;
+    this.scale = this.clamp(s, this.minScale, this.maxScale);
+
+    const contentW = this.viewW * this.scale;
+    const contentH = this.viewH * this.scale;
+    this.panX = (this.hostW - contentW) / 2;
+    this.panY = (this.hostH - contentH) / 2;
+    this.applyTransform();
+  }
+
+  centerOnBox(bb: DOMRect, targetScale?: number) {
+    const s = targetScale ? this.clamp(targetScale, this.minScale, this.maxScale) : this.scale;
+    this.scale = s;
+    const cx = bb.x + bb.width / 2;
+    const cy = bb.y + bb.height / 2;
+    this.panX = this.hostW / 2 - cx * this.scale;
+    this.panY = this.hostH / 2 - cy * this.scale;
+    this.applyTransform();
+  }
+
+  zoomIn() {
+    const host = this.svgHost?.nativeElement?.querySelector('svg')?.getBoundingClientRect();
+    const mx = host ? host.left + host.width / 2 : 0;
+    const my = host ? host.top + host.height / 2 : 0;
+    this.zoomAt(1.2, (host?.width ?? 0) / 2, (host?.height ?? 0) / 2);
+  }
+
+  zoomOut() {
+    const host = this.svgHost?.nativeElement?.querySelector('svg')?.getBoundingClientRect();
+    this.zoomAt(1 / 1.2, (host?.width ?? 0) / 2, (host?.height ?? 0) / 2);
+  }
+
+  resetView() {
+    this.fitView();
+  }
+
+  private clamp(v: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, v));
+  }
+
+  zoomToSlot(id: string, targetScale = 2.5) {
+    const bb = this.bboxMap.get(id);
+    if (!bb) return;
+    this.centerOnBox(bb, targetScale);
+    this.activeSelectedId.set(id);
+    this.applyDataToSvg();
+  }
+  toggleSim() {
+    this.simulate.update((v) => !v);
+  }
+  private startSim() {
+    this.timer = setInterval(() => {
+      const copy = [...this._slots()];
+      if (!copy.length) return;
+      const i = Math.floor(Math.random() * copy.length);
+      const s = copy[i];
+      s.status = this.nextStatus(s.status);
+      s.plate = s.status === 'occupied' ? 'ع س ص ٤٥٦٧' : null;
+      s.sensorBattery = Math.max(15, (s.sensorBattery ?? 80) - (Math.random() < 0.2 ? 1 : 0));
+      this._slots.set(copy);
+      this.applyDataToSvg();
+    }, 1300);
+  }
+  private stopSim() {
+    if (this.timer) clearInterval(this.timer);
+  }
+  private nextStatus(x: SlotStatus): SlotStatus {
+    const r = Math.random();
+    if (x === 'free') return r < 0.7 ? 'occupied' : 'free';
+    if (x === 'occupied') return r < 0.5 ? 'free' : 'occupied';
+    if (x === 'reserved') return r < 0.2 ? 'free' : 'reserved';
+    return 'disabled';
   }
 }

@@ -1,0 +1,282 @@
+/* ====== Page base (Compact) ====== */
+.container {
+  padding: 1rem; /* بدل 2rem */
+  background: linear-gradient(180deg, #f9fafb 0%, #fff 100%);
+  font-family: 'Tajawal', 'Segoe UI', sans-serif;
+  font-size: 13px; /* أصغر */
+  line-height: 1.35;
+}
+
+/* ====== Layout ====== */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px; /* بدل 360px */
+  gap: 1rem; /* بدل 1.5rem */
+  align-items: flex-start;
+}
+@media (max-width: 1024px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ====== Wizard Card ====== */
+.main {
+  border-radius: 14px; /* بدل 20px */
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05); /* أخف */
+  transition: box-shadow 0.2s ease;
+  backdrop-filter: blur(6px);
+  background: rgba(255, 255, 255, 0.92);
+}
+.main:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+/* ====== Stepper (Compact) ====== */
+.mat-horizontal-stepper-header-container {
+  background: linear-gradient(90deg, #197b46 0%, #26a168 100%);
+  color: #fff;
+  border-bottom: none;
+  padding: 4px 8px; /* أصغر */
+}
+.mat-step-header {
+  min-height: 36px;
+  padding: 0 6px;
+}
+.mat-step-icon {
+  width: 22px;
+  height: 22px;
+  line-height: 22px;
+  background: rgba(255, 255, 255, 0.2);
+}
+.mat-step-icon-selected {
+  background: #fff !important;
+  color: #197b46 !important;
+}
+.mat-step-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.8);
+}
+.mat-step-label-selected {
+  color: #fff !important;
+  font-weight: 600;
+}
+
+/* ====== Form grid (Compact) ====== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 0.75rem; /* بدل 1.2rem */
+  padding: 0.75rem; /* بدل 1.5rem */
+}
+.grid > * {
+  grid-column: span 6;
+  min-width: 0;
+}
+@media (max-width: 768px) {
+  .grid > * {
+    grid-column: span 12;
+  }
+}
+
+/* ====== Material form fields density ====== */
+.mat-mdc-form-field {
+  width: 100%;
+}
+.mat-mdc-form-field-infix {
+  padding: 8px 10px !important;
+} /* أصغر */
+.mdc-notched-outline__notch {
+  padding: 0 !important;
+}
+.mat-mdc-form-field .mdc-text-field--outlined {
+  --mdc-outlined-text-field-container-shape: 10px;
+}
+.mat-mdc-text-field-wrapper {
+  height: 40px;
+} /* ارتفاع أقل */
+.mat-mdc-form-field-subscript-wrapper {
+  padding: 0 0 4px;
+}
+.mat-mdc-form-field-hint-wrapper,
+.mat-mdc-form-field-error {
+  font-size: 0.75rem;
+}
+
+/* ====== Mat select / datepicker inputs ====== */
+.mat-mdc-select-min-line,
+.mat-mdc-select-value,
+input.mat-mdc-input-element {
+  font-size: 0.9rem;
+}
+
+/* ====== Sections ====== */
+.section {
+  margin: 0.75rem 0 0.25rem;
+  padding: 0 0.75rem;
+}
+.section-title {
+  font-size: 0.9rem; /* بدل 1rem */
+  font-weight: 700;
+  color: #197b46;
+  margin-bottom: 0.5rem;
+}
+.inline {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* ====== Buttons (Compact) ====== */
+button[mat-flat-button],
+button[mat-stroked-button],
+button[mat-raised-button] {
+  border-radius: 8px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.mdc-button {
+  height: 34px;
+  padding: 0 12px;
+  font-size: 0.85rem;
+} /* أصغر */
+button[mat-button] {
+  color: #197b46 !important;
+  font-weight: 600;
+}
+
+/* ====== Summary card (Compact) ====== */
+.summary {
+  position: sticky;
+  top: 12px;
+  height: fit-content;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 3px 12px rgba(25, 123, 70, 0.08);
+  padding: 1rem; /* بدل 1.5rem */
+  border-top: 3px solid #197b46; /* أرفع */
+}
+.sum-title {
+  font-size: 1.1rem; /* بدل 1.4rem */
+  font-weight: 800;
+  color: #197b46;
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+.sum-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0; /* بدل .5rem */
+  border-bottom: 1px dashed #e2e8f0;
+}
+.sum-line:hover {
+  background: #fafafa;
+}
+.sum-line:last-child {
+  border-bottom: 0;
+}
+.muted {
+  color: #6b7280;
+  font-weight: 500;
+}
+.bold {
+  font-weight: 700;
+}
+.color {
+  color: #197b46;
+}
+
+/* ====== Table styling (Compact) ====== */
+.table-wrap {
+  overflow-x: auto;
+  padding: 0 0.75rem;
+}
+.mat-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+.mat-header-cell {
+  font-weight: 700;
+  background: #f4f6f5;
+  color: #197b46;
+}
+.mat-row:hover {
+  background: #f9fafb;
+}
+.mat-mdc-cell,
+.mat-mdc-header-cell {
+  padding: 0.5rem 0.6rem !important;
+  font-size: 0.85rem;
+}
+
+/* ====== Tiers section ====== */
+.tiers {
+  padding: 0 0.75rem;
+}
+.tiers-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f5f7f6;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.tiers-head span {
+  font-weight: 600;
+  color: #197b46;
+}
+
+/* ====== Divider spacing ====== */
+.mat-divider {
+  margin: 0.5rem 0 !important;
+}
+
+/* ====== Animations ====== */
+mat-card.main,
+mat-card.summary {
+  animation: fadeIn 0.45s ease;
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ====== Flags row ====== */
+.flags-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem;
+}
+
+.flags-row mat-slide-toggle {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.flags-row .schema-select {
+  flex: 1 1 220px;
+  min-width: 200px;
+  max-width: 280px;
+}
+
+ @media (max-width: 768px) {
+  .flags-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .flags-row .schema-select {
+    width: 100%;
+  }
+}

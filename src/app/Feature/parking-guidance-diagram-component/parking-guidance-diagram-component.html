@@ -28,11 +28,17 @@
               ></i>
               <span class="ms-1">{{ simulate() ? 'إيقاف' : 'تشغيل' }}</span>
             </button>
+
+            <!-- زر استخراج JSON -->
+            <button class="btn btn-primary btn-sm" (click)="exportJson()" title="استخراج JSON">
+              استخراج JSON
+            </button>
           </div>
         </div>
 
         <div class="card-body p-0">
           <div class="svg-wrap">
+            <!-- نعرض الـSVG بأمان -->
             <div #svgHost class="svg-host" [innerHTML]="sanitizedSvg"></div>
           </div>
         </div>
@@ -73,15 +79,14 @@
               <button class="btn btn-danger w-100" (click)="applyStatusByLabel()">
                 تطبيق على الخريطة
               </button>
-              <small class="text-muted d-block mt-1">
-                يمكنك أيضًا الضغط على أي خانة داخل الخريطة لتحديد الـID تلقائيًا.
-              </small>
+              <small class="text-muted d-block mt-1"
+                >يمكنك أيضًا الضغط على أي خانة داخل الخريطة لتحديد الـID تلقائيًا.</small
+              >
             </div>
           </div>
 
           <hr />
 
-          <!-- KPIs -->
           <h6 class="fw-bold mb-2">إحصائيات</h6>
           <ul class="kpis">
             <li>
@@ -99,7 +104,7 @@
           </ul>
 
           <div class="hint mt-2">
-            ◀ عجلة الماوس للتكبير/التصغير، واسحب بالخريطة للتحريك. دبل كلك للتكبير حول المؤشر.
+            ◀ عجلة الماوس للتكبير/التصغير، واسحب للخريطة للتحريك. دبل كلك للتكبير حول المؤشر.
           </div>
         </div>
       </div>

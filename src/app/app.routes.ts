@@ -56,6 +56,14 @@ export const routes: Routes = [
           ).then((m) => m.ParkingGuidanceDiagramComponent),
       },
       {
+        path: 'configuration',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./Feature/configuration-component/configuration-component').then(
+            (m) => m.ConfigurationComponent
+          ),
+      },
+      {
         path: 'registration',
         canActivate: [authGuard],
         loadComponent: () =>
