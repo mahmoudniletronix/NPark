@@ -97,12 +97,13 @@
                 <mat-slide-toggle formControlName="dateTimeFlag">الوقت/التاريخ</mat-slide-toggle>
                 <mat-slide-toggle formControlName="ticketIdFlag">رقم التذكرة</mat-slide-toggle>
                 <mat-slide-toggle formControlName="feesFlag">الرسوم</mat-slide-toggle>
-                <mat-slide-toggle formControlName="pricingSchemaIdFlag">
-                  Pricing Schema
-                </mat-slide-toggle>
 
                 <!-- Dropdown Pricing Schema-->
-                <mat-form-field appearance="outline" class="schema-select mt-3">
+                <mat-form-field
+                  *ngIf="modeCtrl.value === 'entry'"
+                  appearance="outline"
+                  class="schema-select mt-3"
+                >
                   <mat-label>Pricing Schema</mat-label>
                   <mat-select
                     formControlName="pricingSchemaId"
@@ -121,8 +122,8 @@
             </div>
 
             <!-- Exit tiers -->
-            <div class="section">
-              <div *ngIf="modeCtrl.value === 'exit'" class="tiers">
+            <!-- <div class="section">
+              <div  class="tiers">
                 <div class="tiers-head">
                   <span>شرائح الرسوم</span>
                   <button mat-stroked-button color="primary" type="button" (click)="addTier()">
@@ -174,7 +175,7 @@
 
                 <mat-hint align="start" class="muted">مثال: 0–2، ثم 2–6 … بدون تداخل.</mat-hint>
               </div>
-            </div>
+            </div> -->
 
             <mat-divider class="my-3"></mat-divider>
 
@@ -265,12 +266,6 @@
       <div class="sum-line">
         <span class="muted">الرسوم</span>
         <span class="bold">{{ summaryForView.flags.feesFlag ? 'مُفعّل' : 'مُعطّل' }}</span>
-      </div>
-      <div class="sum-line">
-        <span class="muted">Pricing Schema</span>
-        <span class="bold">
-          {{ summaryForView.flags.pricingSchemaIdFlag ? 'مُفعّل' : 'مُعطّل' }}
-        </span>
       </div>
 
       <div class="sum-line" *ngIf="summaryForView.flags.pricingSchemaIdFlag">

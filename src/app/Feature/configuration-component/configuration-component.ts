@@ -71,6 +71,7 @@ export interface FeeTier {
 })
 export class ConfigurationComponent {
   @Output() submitted = new EventEmitter<ParkingConfigurationDto>();
+  private readonly EMPTY_GUID = '00000000-0000-0000-0000-000000000000';
 
   pricingSchemas: PricingSchemaDto[] = [];
   stepIndex = 0;
@@ -178,6 +179,9 @@ export class ConfigurationComponent {
         ? s2.ticketCard.startDate.toISOString()
         : new Date(s2.ticketCard.startDate).toISOString();
 
+    const hasPricingSchema =
+      !!(s2.pricingSchemaId && s2.pricingSchemaId.trim()) && s2.pricingSchemaId !== this.EMPTY_GUID;
+
     return {
       entryGatesCount: s1.entryGatesCount,
       exitGatesCount: s1.exitGatesCount,
@@ -194,6 +198,7 @@ export class ConfigurationComponent {
         dateTimeFlag: s2.dateTimeFlag,
         ticketIdFlag: s2.ticketIdFlag,
         feesFlag: s2.feesFlag,
+        pricingSchemaIdFlag: hasPricingSchema,
       },
       pricingSchemaId: s2.pricingSchemaId,
     };
@@ -217,8 +222,7 @@ export class ConfigurationComponent {
       ticketIdFlag: !!s2.ticketIdFlag,
       feesFlag: !!s2.feesFlag,
 
-      pricingSchemaId:
-        (s2.pricingSchemaId || '').toString().trim() || '00000000-0000-0000-0000-000000000000',
+      pricingSchemaId: (s2.pricingSchemaId || '').toString().trim() || this.EMPTY_GUID,
     };
 
     return dto;
