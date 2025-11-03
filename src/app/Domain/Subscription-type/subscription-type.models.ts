@@ -16,7 +16,7 @@ export interface AddPricingSchemaCommand {
 }
 
 export interface PricingRow {
-  id: number;
+  id: string;
   name: string;
   durationType: DurationType;
   startTime: string | null;

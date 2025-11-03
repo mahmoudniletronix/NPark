@@ -10,7 +10,7 @@ import { environment } from '../../Shared/environment/environment';
 import { PagedResult } from '../../Domain/PageResult/PagedResult';
 
 type ApiListResponse<T> = T[] | { items: T[] } | { data: T[] };
-export type UpdatePricingSchemaCommand = AddPricingSchemaCommand & { id: number };
+export type UpdatePricingSchemaCommand = AddPricingSchemaCommand & { id: string };
 
 @Injectable({ providedIn: 'root' })
 export class SubscriptionType {
@@ -78,7 +78,7 @@ export class SubscriptionType {
     const repeated = isHours ? !!dto.isRepeated : false;
 
     const payload: UpdatePricingSchemaCommand = {
-      id: Number(dto.id),
+      id: dto.id,
       name: (dto.name ?? '').trim(),
       durationType: dto.durationType,
       startTime: isHours && !repeated ? this.toHms(dto.startTime) : null,

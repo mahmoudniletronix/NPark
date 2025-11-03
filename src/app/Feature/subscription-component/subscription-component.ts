@@ -196,7 +196,8 @@ export class SubscriptionComponent implements OnInit {
     if ((id === null || id === undefined) && v.id !== null && v.id !== undefined) {
       id = v.id;
     }
-    if (id === null || id === undefined || !Number.isFinite(id)) {
+    // فحص String غير فاضي
+    if (!id || typeof id !== 'string' || id.trim().length === 0) {
       throw new Error('Cannot update without a valid id');
     }
 
@@ -207,7 +208,7 @@ export class SubscriptionComponent implements OnInit {
     const endTime = isHours && !isRep ? this.toHms(v.endTime) : null;
 
     return {
-      id: Number(id),
+      id: id, // string
       name: (v.name || '').trim(),
       durationType: v.durationType!,
       startTime: startTime,
@@ -221,7 +222,7 @@ export class SubscriptionComponent implements OnInit {
   }
 
   // ====== OrderPriority uniqueness helpers ======
-  private getTakenPriorities(excludeId?: number | null): Set<number> {
+  private getTakenPriorities(excludeId?: string | null): Set<number> {
     const set = new Set<number>();
     for (const r of this.rows() ?? []) {
       const rid = this.normalizeId(r);
@@ -233,7 +234,7 @@ export class SubscriptionComponent implements OnInit {
     return set;
   }
 
-  private nextAvailablePriority(excludeId?: number | null): number {
+  private nextAvailablePriority(excludeId?: string | null): number {
     const taken = this.getTakenPriorities(excludeId);
     let p = 1;
     while (taken.has(p)) p++;
@@ -301,11 +302,7 @@ export class SubscriptionComponent implements OnInit {
     this.loading.set(true);
     this.api.list(this.page(), this.pageSize(), this.query()).subscribe({
       next: (res) => {
-        const data = (res.data ?? []).map((x: any) => ({
-          ...x,
-          id: this.normalizeId(x) ?? '',
-        }));
-        this.rows.set(data);
+        this.rows.set(res.data ?? []);
         this.totalItems.set(res.totalItems ?? 0);
         this.totalPages.set(res.totalPages ?? 1);
         this.hasNext.set(!!res.hasNextPage);
@@ -354,7 +351,7 @@ export class SubscriptionComponent implements OnInit {
     if (normId === null || normId === undefined) return;
     if (!confirm('هل أنت متأكد من الحذف؟')) return;
     this.saving.set(true);
-    this.api.delete(normId.toString()).subscribe({
+    this.api.delete(normId).subscribe({
       next: () => {
         this.loadRows();
         this.saving.set(false);
@@ -524,10 +521,12 @@ export class SubscriptionComponent implements OnInit {
     this.resetForm();
   }
 
-  private normalizeId(obj: any): number | null {
-    const v = obj?.id ?? obj?.Id ?? obj?.pricingSchemaId ?? obj?.PricingSchemaId ?? null;
-    const n = v != null ? Number(v) : null;
-    return n != null && Number.isFinite(n) ? n : null;
+  private normalizeId(obj: any): string | null {
+    const v =
+      obj?.id ?? obj?.Id ?? obj?.pricingSchemaId ?? obj?.PricingSchemaId ?? null;
+    if (v === null || v === undefined) return null;
+    const s = String(v).trim();
+    return s.length ? s : null;
   }
 
   private focusForm() {
@@ -536,24 +535,17 @@ export class SubscriptionComponent implements OnInit {
   }
 
   edit(r: PricingRow) {
-    const normId = this.normalizeId(r);
-    if (normId === null || normId === undefined) {
-      console.error('Cannot edit: Invalid ID', r);
-      return;
-    }
-
     console.log('Editing row:', r);
-    console.log('Normalized ID:', normId);
 
     const dt = (r.durationType ?? DurationType.Days) as DurationType;
     const isHours = dt === DurationType.Hours;
     const isDays = dt === DurationType.Days;
     const rep = isHours ? !!r.isRepeated : false;
 
-    this.editingRowId.set(normId.toString());
+    this.editingRowId.set(r.id ?? null);
 
     const formValues: any = {
-      id: normId.toString(),
+      id: r.id ?? null,
       name: r.name ?? '',
       durationType: dt,
       price: r.price ?? null,
