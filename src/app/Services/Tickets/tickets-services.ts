@@ -15,14 +15,13 @@ export class TicketsServices {
   private http = inject(HttpClient);
   private base = environment.baseUrl;
 
-  // ===================== Get All Tickets =====================
   getAll(): Observable<TicketDto[]> {
     return this.http.get<any[]>(`${this.base}/Ticket`).pipe(
       map((rows) =>
         (rows ?? []).map((r) => ({
           id: r.id ?? r.Id,
           plate: r.plate ?? r.Plate,
-          action: r.action ?? r.Action, // 'IN' | 'OUT'
+          action: r.action ?? r.Action,
           time: (r.time ?? r.Time ?? r.dateTime ?? r.DateTime) as string,
           gate: r.gate ?? r.Gate ?? '',
         }))
@@ -34,7 +33,6 @@ export class TicketsServices {
     );
   }
 
-  // ===================== Add New Ticket (returns PNG file) =====================
   addTicket(): Observable<IssuedTicketResponse> {
     return this.http
       .post(`${this.base}/Ticket/AddTicket`, {}, { observe: 'response', responseType: 'blob' })
@@ -52,7 +50,6 @@ export class TicketsServices {
       );
   }
 
-  // ===================== Get Ticket By QR =====================
   getTicketByQr(code: string): Observable<TicketDetailsDto> {
     const params = new HttpParams().set('code', code);
     return this.http.get<any>(`${this.base}/Ticket/GetByQr`, { params }).pipe(
@@ -84,7 +81,6 @@ export class TicketsServices {
     );
   }
 
-  // ===================== Collect Ticket =====================
   collect(id: number): Observable<boolean> {
     return this.http.post<any>(`${this.base}/Ticket/Collect/${id}`, {}).pipe(
       map(() => true),

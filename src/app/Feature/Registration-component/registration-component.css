@@ -1,187 +1,211 @@
 /* اتجاه عام */
-.registration.page-rtl {
+.page-rtl {
   direction: rtl;
-  text-align: right;
 }
 
-/* كارت زجاجي */
-.card--glass {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(6px);
-  border: 1px solid #eef0f3;
-  border-radius: 16px;
-}
-
-.card-header {
-  background: linear-gradient(180deg, #fff, #fafbfc);
-  border-bottom: 1px solid #eef0f3;
-  padding: 14px 16px;
-}
-
-.fancy-card .badge.pill {
-  padding: 6px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-}
-.badge--info {
-  background: #ffe9ea;
-  color: #c0272d;
-  border: 1px solid #ffd2d5;
-}
-
-/* عناوين داخلية */
+/* عناوين الأقسام */
 .section-title {
   font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 10px;
-  color: #1f2937;
+  font-size: 1rem;
+  margin: 1rem 0 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.section-title::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bs-danger, #dc3545);
+  display: inline-block;
 }
 
-/* عناصر عامة */
-.form-label {
-  font-weight: 600;
-  color: #374151;
-}
-.form-control {
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  padding: 10px 12px;
-}
-.form-control:focus {
-  border-color: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
-}
-
-/* أزرار */
-.btn {
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-weight: 700;
-}
-.btn-danger {
-  background: #ef4444;
-  border: 1px solid #ef4444;
-  color: #fff;
-}
-.btn-danger:disabled {
-  opacity: 0.6;
-}
-.btn-outline {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  color: #111827;
-}
-.btn-outline:hover {
-  border-color: #cbd5e1;
-}
-
-/* تبويبات النوع */
+/* أزرار نوع الاشتراك */
 .type-tabs {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 .type-tab {
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   background: #fff;
-  padding: 8px 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  cursor: pointer;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  transition: 0.2s;
+  font-weight: 600;
 }
 .type-tab.active {
-  background: #ffe9ea;
-  border-color: #ffc7cb;
-  color: #c0272d;
+  border-color: var(--bs-danger, #dc3545);
+  color: #fff;
+  background: var(--bs-danger, #dc3545);
+}
+.type-tab:focus {
+  outline: 2px solid rgba(220, 53, 69, 0.35);
 }
 
-/* إدخال لوحة السيارة */
+/* لوحة السيارة */
 .plate-input {
   display: flex;
   align-items: center;
-  gap: 8px;
-
-  input {
-    width: 54px;
-    text-align: center;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 10px 8px;
-    font-weight: 700;
-  }
-
-  input:last-child {
-    width: 88px;
-  }
-
-  .sep {
-    color: #9ca3af;
-    font-weight: 700;
-  }
+  gap: 0.4rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e9ecef;
+}
+.plate-input input {
+  width: 2.5rem;
+  text-align: center;
+  font-weight: 700;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.35rem;
+}
+.plate-input .sep {
+  opacity: 0.5;
 }
 
-/* رفع ومعاينة الصورة */
-.upload {
+/* رفع الملفات */
+.upload input[type='file'] {
+  width: 100%;
+}
+
+/* شبكة المستندات */
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+}
+.doc-item {
+  border: 1px solid #eee;
+  border-radius: 14px;
+  padding: 0.6rem;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.doc-thumb {
+  border: 0;
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 0;
+  overflow: hidden;
+  aspect-ratio: 16/10;
+  display: block;
+  cursor: pointer;
+}
+.doc-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.doc-icon {
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-
-  input[type='file'] {
-    display: inline-block;
-  }
-
-  .preview {
-    width: 140px;
-    height: 120px;
-    border: 1px dashed #e5e7eb;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #fafafa;
-
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      display: block;
-    }
-  }
+  justify-content: center;
+  font-size: 2rem;
+  color: #6c757d;
 }
-
-/* تعطيل بصري لحقل الوقت عند عدم الحاجة */
-.disabled {
-  opacity: 0.6;
+.doc-meta {
+  margin-top: 0.5rem;
+}
+.doc-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.doc-sub {
+  font-size: 0.8rem;
+  color: #6c757d;
 }
 
 /* نظرة عامة */
-.overview {
-  min-height: 280px;
-}
-.overview .meta {
+.meta {
+  list-style: none;
   padding: 0;
   margin: 0;
-  list-style: none;
-
-  li {
-    padding: 10px 12px;
-    border: 1px dashed #e5e7eb;
-    background: #fff;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    color: #374151;
-  }
-  span {
-    display: inline-flex;
-    width: 24px;
-    height: 24px;
-    align-items: center;
-    justify-content: center;
-    background: #ffe9ea;
-    color: #c0272d;
-    border-radius: 50%;
-    margin-left: 6px;
-    font-weight: 800;
-  }
+  display: grid;
+  gap: 0.25rem;
+}
+.meta li {
+  display: flex;
+  gap: 0.5rem;
+}
+.meta li span {
+  color: #6c757d;
+  min-width: 110px;
 }
 
-.ms-1 {
-  margin-right: 0.25rem;
+/* تعطيل حقول الوقت عندما لا تكون ساعات */
+.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ===== بوب-أب المعاينة ===== */
+.preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  outline: none;
+}
+.preview-dialog {
+  width: min(900px, 92vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 18px;
+  padding: 1rem;
+  position: relative;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+.close-btn {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  top: 0.5rem;
+  border: 0;
+  background: #f1f3f5;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.preview-head .name {
+  font-weight: 800;
+}
+.preview-head .sub {
+  color: #6c757d;
+  font-size: 0.85rem;
+}
+.preview-body {
+  margin-top: 0.75rem;
+}
+.preview-body img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.file-preview {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #495057;
+}
+.file-preview i {
+  font-size: 3rem;
+  display: block;
 }

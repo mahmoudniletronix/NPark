@@ -72,7 +72,7 @@
             </div>
           </div>
 
-          <!-- مدى زمني (من/إلى): يظهر فقط في الساعات + isRepeated = false -->
+          <!-- مدى زمني (من/إلى): يظهر عندما isRepeated = false (سواء أيام أو ساعات) -->
           <div class="row g-2 mb-3" *ngIf="showRangeWindow()">
             <div class="col-6">
               <label class="form-label">من</label>
@@ -84,7 +84,7 @@
             </div>
             <div class="col-12">
               <div class="invalid-feedback d-block" *ngIf="form.errors?.['rangeRequired']">
-                من/إلى مطلوبان عند اختيار الساعات بدون تكرار.
+                من/إلى مطلوبان عند عدم اختيار التكرار.
               </div>
               <div class="invalid-feedback d-block" *ngIf="form.errors?.['invalidRangeOrder']">
                 يجب أن يكون وقت "إلى" أكبر من "من".
@@ -99,10 +99,16 @@
               type="number"
               class="form-control"
               formControlName="totalHours"
-              min="0"
+              min="1"
               step="1"
               placeholder="مثال: 12"
             />
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.get('totalHours')?.touched && form.get('totalHours')?.invalid"
+            >
+              إجمالي الساعات مطلوب (حد أدنى 1).
+            </div>
           </div>
 
           <!-- إجمالي الأيام: يظهر فقط في الأيام -->
@@ -121,18 +127,6 @@
               *ngIf="form.get('totalDays')?.touched && form.get('totalDays')?.invalid"
             >
               إجمالي الأيام مطلوب (حد أدنى 1).
-            </div>
-          </div>
-
-          <!-- وقت البداية/النهاية (للأيام) -->
-          <div class="row g-2 mb-3" *ngIf="isDays()">
-            <div class="col-6">
-              <label class="form-label">وقت البداية (اليوم)</label>
-              <input type="time" class="form-control" formControlName="startTime" />
-            </div>
-            <div class="col-6">
-              <label class="form-label">وقت النهاية (اليوم)</label>
-              <input type="time" class="form-control" formControlName="endTime" />
             </div>
           </div>
 
@@ -157,6 +151,12 @@
             <div class="col-6">
               <label class="form-label">ترتيب الشريحة</label>
               <input type="number" class="form-control" formControlName="orderPriority" min="1" />
+              <div
+                class="invalid-feedback d-block"
+                *ngIf="form.get('isRepeated')?.value && form.get('orderPriority')?.invalid"
+              >
+                ترتيب الشريحة مطلوب عند اختيار (حساب متكرر).
+              </div>
             </div>
           </div>
         </div>
@@ -207,15 +207,13 @@
                 <th>من</th>
                 <th>إلى</th>
                 <th>السعر</th>
-                <th>سعر التكرار</th>
                 <th>ترتيب</th>
-                <th>حالة</th>
                 <th class="text-end">إجراءات</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let r of filtered(); let i = index" class="row-hover">
-                <td class="text-center">{{ i + 1 }}</td>
+                <td class="text-center">{{ (page() - 1) * pageSize() + (i + 1) }}</td>
                 <td class="fw-semibold">
                   <i class="bi bi-card-checklist ms-2 text-primary"></i>{{ r.name }}
                 </td>
@@ -224,40 +222,14 @@
                     {{ r.durationType === DurationType.Hours ? 'ساعات' : 'أيام' }}
                   </span>
                 </td>
-                <td>
-                  {{
-                    r.durationType === DurationType.Hours && r.isRepeated === false
-                      ? r.startTime || '00:00'
-                      : r.startTime || '-'
-                  }}
-                </td>
-                <td>
-                  {{
-                    r.durationType === DurationType.Hours && r.isRepeated === false
-                      ? r.endTime || '00:00'
-                      : r.endTime || '-'
-                  }}
-                </td>
+                <td>{{ r.isRepeated === false ? r.startTime || '00:00' : '-' }}</td>
+                <td>{{ r.isRepeated === false ? r.endTime || '00:00' : '-' }}</td>
                 <td>
                   <span class="badge pill badge--success">
                     {{ r.price | number : '1.0-2' }} ج
                   </span>
                 </td>
-                <td>
-                  <span class="badge pill badge--info">
-                    {{ r.repeatPrice | number : '1.0-2' }}
-                  </span>
-                </td>
-                <td>{{ r.orderPriority }}</td>
-                <td>
-                  <span
-                    class="badge pill"
-                    [class.badge--active]="r.isActive"
-                    [class.badge--muted]="!r.isActive"
-                  >
-                    {{ r.isActive ? 'مفعل' : 'موقوف' }}
-                  </span>
-                </td>
+                <td>{{ r.orderPriority || '-' }}</td>
                 <td class="text-end d-flex gap-1">
                   <button
                     class="btn btn-sm btn-outline-primary me-1 btn-icon"
@@ -278,12 +250,49 @@
               </tr>
 
               <tr *ngIf="!filtered().length">
-                <td colspan="10" class="text-center text-muted py-4">
+                <td colspan="8" class="text-center text-muted py-4">
                   لا توجد بيانات مطابقة للبحث.
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="card-footer small text-muted d-flex align-items-center justify-content-between">
+          <span>
+            <i class="bi bi-info-circle"></i>
+            إجمالي {{ totalItems() }} — صفحة {{ page() }} من {{ totalPages() }}
+          </span>
+
+          <div class="d-flex align-items-center gap-2">
+            <div class="search-wrap me-2">
+              <i class="bi bi-search"></i>
+              <input
+                #searchBox
+                class="form-control form-control-sm"
+                placeholder="بحث..."
+                [value]="query()"
+                (input)="onSearch(searchBox.value)"
+              />
+            </div>
+
+            <div class="btn-group">
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                [disabled]="!hasPrev()"
+                (click)="goPrev()"
+              >
+                السابق
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                [disabled]="!hasNext()"
+                (click)="goNext()"
+              >
+                التالي
+              </button>
+            </div>
+          </div>
         </div>
 
         <div class="card-footer small text-muted d-flex align-items-center justify-content-between">

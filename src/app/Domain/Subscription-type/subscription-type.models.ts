@@ -1,6 +1,6 @@
 export enum DurationType {
-  Days = 0,
-  Hours = 1,
+  Days = 1,
+  Hours = 2,
 }
 
 export interface AddPricingSchemaCommand {
@@ -10,24 +10,32 @@ export interface AddPricingSchemaCommand {
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  repeatPrice: number | null;
-  orderPriority: number;
-  isActive?: boolean;
+  orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
 }
 
 export interface PricingRow {
-  id?: number;
+  id: number;
   name: string;
   durationType: DurationType;
   startTime: string | null;
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  repeatPrice: number | null;
-  orderPriority: number;
-  isActive: boolean;
+  orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
 }
+export type UpdatePricingSchemaCommand = {
+  id: number;
+  name: string;
+  durationType: DurationType;
+  startTime: string | null;
+  endTime: string | null;
+  price: number;
+  isRepeated: boolean;
+  orderPriority: number | null;
+  totalHours: number | null;
+  totalDays: number | null;
+};

@@ -1,18 +1,17 @@
-<div class="registration page-rtl container-fluid">
+<div class="registration page-rtl container-fluid" dir="rtl" [formGroup]="form">
   <div class="row g-4">
-    <div class="col-12 col-xl-5">
-      <div class="card fancy-card card--glass shadow-sm">
+    <!-- ===== 1) بيانات المشترك ===== -->
+    <div class="col-12 col-lg-4">
+      <div class="card fancy-card card--glass shadow-sm h-100">
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-person-badge-fill"></i>
-            <h5 class="mb-0 fw-bold">تسجيل اشتراك</h5>
+            <h5 class="mb-0 fw-bold">بيانات المشترك</h5>
           </div>
           <span class="badge pill badge--info">جديد</span>
         </div>
 
-        <div class="card-body" [formGroup]="form">
-          <div class="section-title">بيانات المشترك</div>
-
+        <div class="card-body">
           <div class="mb-3">
             <label class="form-label">رقم الكارت</label>
             <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
@@ -23,7 +22,6 @@
 
           <div class="mb-3">
             <label class="form-label d-block">رقم السيارة</label>
-
             <div class="plate-input" formGroupName="plate">
               <input maxlength="1" formControlName="p1" />
               <input maxlength="1" formControlName="p2" />
@@ -31,7 +29,6 @@
               <span class="sep">ـ</span>
               <input maxlength="4" formControlName="p4" />
             </div>
-
             <div
               class="invalid-feedback d-block"
               *ngIf="form.get('plate')?.touched && form.get('plate')?.invalid"
@@ -52,13 +49,11 @@
                 الاسم مطلوب
               </div>
             </div>
-
             <div class="mb-3 col-6">
               <label class="form-label">رقم التليفون</label>
               <input class="form-control" formControlName="phone" placeholder="مثال: 01012345678" />
               <div class="invalid-feedback d-block" *ngIf="hasErr('phone')">رقم هاتف غير صالح</div>
             </div>
-
             <div class="mb-3 col-6">
               <label class="form-label">رقم البطاقة</label>
               <input
@@ -71,19 +66,18 @@
               </div>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <div class="mb-3">
-            <label class="form-label d-block">صورة السيارة</label>
-            <div class="upload">
-              <input type="file" accept="image/*" (change)="onPickImage($event)" />
-              <div class="preview" *ngIf="preview()">
-                <img [src]="preview()" alt="car" />
-              </div>
-            </div>
-          </div>
+    <!-- ===== 2) تفاصيل الاشتراك ===== -->
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm card--glass h-100">
+        <div class="card-header">
+          <h5 class="mb-0 fw-bold">تفاصيل الاشتراك</h5>
+        </div>
 
-          <div class="section-title mt-4">تفاصيل الاشتراك</div>
-
+        <div class="card-body">
           <div class="type-tabs mb-3">
             <button
               type="button"
@@ -91,8 +85,7 @@
               [class.active]="form.get('durationType')?.value === 'Hours'"
               (click)="form.get('durationType')?.setValue('Hours')"
             >
-              بالساعات
-              <i class="bi bi-alarm ms-1"></i>
+              بالساعات <i class="bi bi-alarm ms-1"></i>
             </button>
             <button
               type="button"
@@ -100,8 +93,7 @@
               [class.active]="form.get('durationType')?.value === 'Days'"
               (click)="form.get('durationType')?.setValue('Days')"
             >
-              بالأيام
-              <i class="bi bi-calendar3 ms-1"></i>
+              بالأيام <i class="bi bi-calendar3 ms-1"></i>
             </button>
             <button
               type="button"
@@ -109,8 +101,7 @@
               [class.active]="form.get('durationType')?.value === 'Monthly'"
               (click)="form.get('durationType')?.setValue('Monthly')"
             >
-              اشتراك شهري
-              <i class="bi bi-calendar2-month ms-1"></i>
+              اشتراك شهري <i class="bi bi-calendar2-month ms-1"></i>
             </button>
           </div>
 
@@ -145,7 +136,6 @@
               <label class="form-label">(جنيه) السعر</label>
               <input type="number" class="form-control" formControlName="price" min="0" />
             </div>
-
             <div class="mb-3 col-6">
               <label class="form-label">ترتيب الشريحة</label>
               <input type="number" class="form-control" formControlName="orderPriority" min="1" />
@@ -153,29 +143,111 @@
           </div>
 
           <div class="d-flex gap-2 mt-2">
-            <button class="btn btn-danger" (click)="save()" [disabled]="saving()">
-              <i class="bi bi-save"></i>
-              <span class="ms-1">حفظ</span>
+            <button class="btn btn-danger" type="button" (click)="save()" [disabled]="saving()">
+              <i class="bi bi-save"></i><span class="ms-1">حفظ</span>
             </button>
-
             <button class="btn btn-outline" type="button" (click)="reset()" [disabled]="saving()">
-              <i class="bi bi-arrow-counterclockwise"></i>
-              <span class="ms-1">إعادة ضبط</span>
+              <i class="bi bi-arrow-counterclockwise"></i><span class="ms-1">إعادة ضبط</span>
             </button>
           </div>
+
+          <hr class="my-4" />
+          <h6 class="fw-bold">نظرة عامة</h6>
+          <ul class="meta">
+            <li><span>نوع الاشتراك:</span> {{ form.get('durationType')?.value }}</li>
+            <li>
+              <span>الفترة:</span> {{ form.get('dateFrom')?.value || '—' }} →
+              {{ form.get('dateTo')?.value || '—' }}
+            </li>
+            <li *ngIf="isHours()">
+              <span>الوقت:</span> {{ form.get('timeFrom')?.value }} →
+              {{ form.get('timeTo')?.value }}
+            </li>
+            <li><span>السعر:</span> {{ form.get('price')?.value || '—' }} جنيه</li>
+          </ul>
         </div>
       </div>
     </div>
 
-    <div class="col-12 col-xl-7">
+    <!-- ===== 3) المستندات ===== -->
+    <div class="col-12 col-lg-4">
       <div class="card shadow-sm card--glass h-100">
-        <div class="card-header">
-          <h6 class="mb-0 fw-bold">نظرة عامة</h6>
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0 fw-bold">المستندات</h5>
+          <span class="badge bg-secondary">{{ documents().length }} ملف</span>
         </div>
-        <div class="card-body overview">
-          <ul class="meta"></ul>
+
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label d-block">رفع مستندات (صور/ملفات)</label>
+            <input
+              type="file"
+              multiple
+              (change)="onPickDocuments($event)"
+              accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+            />
+            <small class="text-muted d-block mt-1">يمكن اختيار أكثر من ملف.</small>
+          </div>
+
+          <div class="docs-grid" *ngIf="documents().length; else noDocs">
+            <div class="doc-item" *ngFor="let d of documents(); let i = index">
+              <button class="doc-thumb" type="button" (click)="openPreview(d)">
+                <ng-container *ngIf="d.isImage; else fileIcon">
+                  <img [src]="d.dataUrl" [alt]="d.name" />
+                </ng-container>
+                <ng-template #fileIcon>
+                  <div class="doc-icon"><i class="bi bi-file-earmark-text"></i></div>
+                </ng-template>
+              </button>
+              <div class="doc-meta">
+                <div class="doc-name" [title]="d.name">{{ d.name }}</div>
+                <div class="doc-sub">{{ d.mime }} • {{ humanSize(d.size) }}</div>
+              </div>
+              <button class="btn btn-sm btn-outline-danger w-100 mt-2" (click)="removeDocument(i)">
+                <i class="bi bi-trash3"></i> حذف
+              </button>
+            </div>
+          </div>
+          <ng-template #noDocs>
+            <div class="text-muted">لا توجد مستندات مرفوعة بعد.</div>
+          </ng-template>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== البوب-أب (المعاينة) ===== -->
+  <div
+    class="preview-overlay"
+    *ngIf="previewOpen()"
+    (click)="closePreview($event)"
+    (keydown.escape)="forceClose()"
+    tabindex="0"
+  >
+    <div class="preview-dialog" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="forceClose()" aria-label="إغلاق">
+        <i class="bi bi-x-lg"></i>
+      </button>
+      <ng-container *ngIf="currentPreview(); let p">
+        <div class="preview-head">
+          <div class="name" [title]="p.name">{{ p.name }}</div>
+          <div class="sub">{{ p.mime }} • {{ humanSize(p.size) }}</div>
+        </div>
+        <div class="preview-body">
+          <ng-container *ngIf="p.isImage; else nonImage">
+            <img [src]="p.dataUrl" [alt]="p.name" />
+          </ng-container>
+          <ng-template #nonImage>
+            <div class="file-preview">
+              <i class="bi bi-file-earmark-text"></i>
+              <p class="mt-2">لا يمكن معاينة هذا النوع هنا. يمكنك تنزيله لفتحه محلياً.</p>
+              <a [href]="p.dataUrl" download="{{ p.name }}" class="btn btn-primary">
+                <i class="bi bi-download"></i> تنزيل الملف
+              </a>
+            </div>
+          </ng-template>
+        </div>
+      </ng-container>
     </div>
   </div>
 </div>

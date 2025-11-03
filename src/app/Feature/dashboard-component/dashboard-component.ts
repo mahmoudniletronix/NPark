@@ -54,15 +54,30 @@ export class DashboardComponent {
   private drawStations() {
     if (!this.stationsChartRef || !this.stations) return;
     this.stationsChart?.destroy();
+
     const ctx = this.stationsChartRef.nativeElement.getContext('2d')!;
+
     this.stationsChart = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: ['Full', 'Empty'],
-        datasets: [{ data: [this.stations.full, this.stations.empty] }],
+        datasets: [
+          {
+            data: [this.stations.full, this.stations.empty],
+            backgroundColor: ['#22c55e', '#3b82f6'],
+            hoverBackgroundColor: ['#16a34a', '#2563eb'],
+            borderWidth: 0,
+          },
+        ],
       },
       options: {
-        plugins: { legend: { position: 'bottom' } },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { usePointStyle: true, boxWidth: 10 },
+          },
+        },
+        cutout: '70%',
         responsive: true,
         maintainAspectRatio: false,
       },
