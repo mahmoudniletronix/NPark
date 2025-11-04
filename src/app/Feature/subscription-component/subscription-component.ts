@@ -23,7 +23,6 @@ type FormShape = {
   endTime: FormControl<string | null>;
   price: FormControl<number | null>;
   isRepeated: FormControl<boolean>;
-  orderPriority: FormControl<number | null>;
   totalHours: FormControl<number | null>;
   totalDays: FormControl<number | null>;
   totalYears: FormControl<number | null>;
@@ -67,7 +66,6 @@ export class SubscriptionComponent implements OnInit {
       validators: [Validators.required, Validators.min(0)],
     }),
     isRepeated: this.fb.control<boolean>(false, { nonNullable: true }),
-    orderPriority: this.fb.control<number | null>(null),
     totalHours: this.fb.control<number | null>(null),
     totalDays: this.fb.control<number | null>(1, { validators: [Validators.min(1)] }),
     totalYears: this.fb.control<number | null>(null),
@@ -132,7 +130,6 @@ export class SubscriptionComponent implements OnInit {
 
     this.form.controls.startTime.clearValidators();
     this.form.controls.endTime.clearValidators();
-    this.form.controls.orderPriority.clearValidators();
     this.form.controls.totalDays.clearValidators();
     this.form.controls.totalHours.clearValidators();
     this.form.controls.totalYears.clearValidators();
@@ -146,7 +143,6 @@ export class SubscriptionComponent implements OnInit {
       this.form.controls.startTime.setValue(null, { emitEvent: false });
       this.form.controls.endTime.setValue(null, { emitEvent: false });
       this.form.controls.isRepeated.setValue(false, { emitEvent: false });
-      this.form.controls.orderPriority.setValue(null, { emitEvent: false });
     }
 
     if (dt === DurationType.Hours) {
@@ -155,7 +151,6 @@ export class SubscriptionComponent implements OnInit {
       this.form.controls.totalYears.setValue(null, { emitEvent: false });
 
       if (isRep) {
-        this.form.controls.orderPriority.setValidators([Validators.required, Validators.min(1)]);
         this.form.controls.startTime.setValue(null, { emitEvent: false });
         this.form.controls.endTime.setValue(null, { emitEvent: false });
       } else {
@@ -171,7 +166,6 @@ export class SubscriptionComponent implements OnInit {
       this.form.controls.startTime.setValue(null, { emitEvent: false });
       this.form.controls.endTime.setValue(null, { emitEvent: false });
       this.form.controls.isRepeated.setValue(false, { emitEvent: false });
-      this.form.controls.orderPriority.setValue(null, { emitEvent: false });
     }
 
     this.form.controls.startTime.updateValueAndValidity({ emitEvent: false });
@@ -179,7 +173,6 @@ export class SubscriptionComponent implements OnInit {
     this.form.controls.totalDays.updateValueAndValidity({ emitEvent: false });
     this.form.controls.totalHours.updateValueAndValidity({ emitEvent: false });
     this.form.controls.totalYears.updateValueAndValidity({ emitEvent: false });
-    this.form.controls.orderPriority.updateValueAndValidity({ emitEvent: false });
     this.form.controls.price.updateValueAndValidity({ emitEvent: false });
   }
 
@@ -201,10 +194,8 @@ export class SubscriptionComponent implements OnInit {
       endTime,
       price: Number(v.price ?? 0),
       isRepeated: isHours ? isRep : false,
-      orderPriority: isHours && isRep ? v.orderPriority ?? null : null,
       totalHours: isHours ? Number(v.totalHours ?? 0) : null,
       totalDays: isDays ? Number(v.totalDays ?? 0) : null,
-      // ===== (جديد) totalYears للسنوي
       totalYears: isYears ? Number(v.totalYears ?? 0) : null,
     };
   }
@@ -235,67 +226,10 @@ export class SubscriptionComponent implements OnInit {
       endTime,
       price: Number(v.price ?? 0),
       isRepeated: isHours ? isRep : false,
-      orderPriority: isHours && isRep ? v.orderPriority ?? 1 : null,
       totalHours: isHours ? Number(v.totalHours ?? 0) : null,
       totalDays: isDays ? Number(v.totalDays ?? 0) : null,
-      // ===== (جديد)
       totalYears: isYears ? Number(v.totalYears ?? 0) : null,
     };
-  }
-
-  // ====== OrderPriority uniqueness helpers ======
-  private getTakenPriorities(excludeId?: string | null): Set<number> {
-    const set = new Set<number>();
-    for (const r of this.rows() ?? []) {
-      const rid = this.normalizeId(r);
-      if (excludeId !== undefined && excludeId !== null && rid === excludeId) continue;
-      if (r?.isRepeated && typeof r.orderPriority === 'number' && r.orderPriority > 0) {
-        set.add(r.orderPriority);
-      }
-    }
-    return set;
-  }
-
-  private nextAvailablePriority(excludeId?: string | null): number {
-    const taken = this.getTakenPriorities(excludeId);
-    let p = 1;
-    while (taken.has(p)) p++;
-    return p;
-  }
-
-  private ensureUniqueOrderPriorityForAdd(
-    dto: AddPricingSchemaCommandEx
-  ): AddPricingSchemaCommandEx {
-    if (!dto.isRepeated) {
-      return { ...dto, orderPriority: null };
-    }
-    let p = dto.orderPriority ?? 0;
-    if (typeof p !== 'number' || p <= 0) {
-      p = this.nextAvailablePriority(null);
-    }
-    const taken = this.getTakenPriorities(null);
-    if (taken.has(p)) {
-      p = this.nextAvailablePriority(null);
-    }
-    return { ...dto, orderPriority: p };
-  }
-
-  private ensureUniqueOrderPriorityForUpdate(
-    dto: UpdatePricingSchemaCommandEx
-  ): UpdatePricingSchemaCommandEx {
-    if (!dto.isRepeated) {
-      return { ...dto, orderPriority: null };
-    }
-    const excludeId = dto.id;
-    let p = dto.orderPriority ?? 0;
-    if (typeof p !== 'number' || p <= 0) {
-      p = this.nextAvailablePriority(excludeId);
-    }
-    const taken = this.getTakenPriorities(excludeId);
-    if (taken.has(p)) {
-      p = this.nextAvailablePriority(excludeId);
-    }
-    return { ...dto, orderPriority: p };
   }
 
   // ====== Lifecycle ======
@@ -375,10 +309,8 @@ export class SubscriptionComponent implements OnInit {
       endTime: null,
       price: null,
       isRepeated: false,
-      orderPriority: null,
       totalHours: null,
       totalDays: 1,
-      // ===== (جديد)
       totalYears: null,
     });
     this.editingRowId.set(null);
@@ -427,8 +359,6 @@ export class SubscriptionComponent implements OnInit {
           return;
         }
 
-        dto = this.ensureUniqueOrderPriorityForUpdate(dto);
-
         this.api.update(dto).subscribe({
           next: () => {
             this.page.set(1);
@@ -453,8 +383,6 @@ export class SubscriptionComponent implements OnInit {
           this.saving.set(false);
           return;
         }
-
-        dto = this.ensureUniqueOrderPriorityForAdd(dto);
 
         this.api.add(dto).subscribe({
           next: () => {
@@ -499,11 +427,7 @@ export class SubscriptionComponent implements OnInit {
       if (!dto.totalHours || dto.totalHours < 1) {
         errors.push('إجمالي الساعات مطلوب ويجب أن يكون 1 أو أكثر');
       }
-      if (dto.isRepeated) {
-        if (!dto.orderPriority || dto.orderPriority < 1) {
-          errors.push('ترتيب الشريحة مطلوب عند اختيار حساب متكرر');
-        }
-      } else {
+      if (!dto.isRepeated) {
         if (!dto.startTime || !dto.endTime) {
           errors.push('وقت البداية والنهاية مطلوبان عندما لا يكون الحساب متكرر');
         }
@@ -592,10 +516,8 @@ export class SubscriptionComponent implements OnInit {
       durationType: dt,
       price: r.price ?? null,
       isRepeated: rep,
-      orderPriority: isHours && rep ? r.orderPriority ?? 1 : null,
       totalHours: isHours ? r.totalHours ?? 1 : null,
       totalDays: isDays ? r.totalDays ?? 1 : null,
-      // ===== (جديد)
       totalYears: isYears ? (r as any).totalYears ?? 1 : null,
     };
 

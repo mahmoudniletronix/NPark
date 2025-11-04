@@ -36,6 +36,16 @@
               </mat-error>
             </mat-form-field>
 
+            <!-- NEW: Grace Period -->
+            <mat-form-field appearance="outline">
+              <mat-label>فترة السماح (دقائق)</mat-label>
+              <input matInput type="number" formControlName="gracePeriodMinutes" min="0" required />
+              <mat-hint>عدد الدقائق المسموح بها قبل احتساب الرسوم</mat-hint>
+              <mat-error *ngIf="step1Form.get('gracePeriodMinutes')?.invalid">
+                أدخل رقم ≥ 0
+              </mat-error>
+            </mat-form-field>
+
             <div class="actions">
               <button
                 mat-flat-button
@@ -83,41 +93,107 @@
               </mat-form-field>
             </div>
 
-            <!-- Flags inline row -->
+            <!-- NEW: Gates configs generated from Step 1 counts -->
+            <mat-divider class="my-3"></mat-divider>
             <div class="section">
-              <label class="section-title">حقول الطباعة والإظهار</label>
-
-              <div class="flags-row" [formGroup]="step2Form">
-                <mat-slide-toggle formControlName="dateTimeFlag">الوقت/التاريخ</mat-slide-toggle>
-                <mat-slide-toggle formControlName="ticketIdFlag">رقم التذكرة</mat-slide-toggle>
-                <mat-slide-toggle formControlName="feesFlag">الرسوم</mat-slide-toggle>
-
-                <!-- Dropdown Pricing Schema-->
-                <mat-form-field
-                  *ngIf="modeCtrl.value === 'entry'"
-                  appearance="outline"
-                  class="schema-select mt-3"
+              <label class="section-title">إعدادات بوابات الدخول (LPR)</label>
+              <div formArrayName="entryGates" class="gates-grid">
+                <div
+                  class="gate-row"
+                  *ngFor="let g of entryGatesControls; let i = index"
+                  [formGroupName]="i"
                 >
-                  <mat-label>Pricing Schema</mat-label>
-                  <mat-select
-                    formControlName="pricingSchemaId"
-                    [disabled]="!step2Form.get('pricingSchemaIdFlag')?.value"
-                  >
-                    <mat-option value="">اختر الشريحة...</mat-option>
-                    <mat-option *ngFor="let s of pricingSchemas" [value]="s.id">
-                      {{ s.name }} — {{ s.description || '' }}
-                    </mat-option>
-                  </mat-select>
-                  <mat-error *ngIf="step2Form.get('pricingSchemaId')?.invalid">
-                    يجب اختيار شريحة تسعير صحيحة
-                  </mat-error>
-                </mat-form-field>
+                  <mat-form-field appearance="outline">
+                    <mat-label>رقم البوابة (دخول)</mat-label>
+                    <input matInput type="number" formControlName="gateNumber" min="1" />
+                    <mat-error *ngIf="g.get('gateNumber')?.invalid">رقم ≥ 1</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="ip">
+                    <mat-label>IP كاميرا LPR</mat-label>
+                    <input matInput formControlName="lprIp" placeholder="مثال: 192.168.1.10" />
+                    <mat-error *ngIf="g.get('lprIp')?.invalid">IP غير صالح</mat-error>
+                  </mat-form-field>
+                </div>
               </div>
             </div>
 
-            <!-- Exit tiers -->
-            <!-- <div class="section">
-              <div  class="tiers">
+            <div class="section">
+              <label class="section-title">إعدادات بوابات الخروج (LPR)</label>
+              <div formArrayName="exitGates" class="gates-grid">
+                <div
+                  class="gate-row"
+                  *ngFor="let g of exitGatesControls; let i = index"
+                  [formGroupName]="i"
+                >
+                  <mat-form-field appearance="outline">
+                    <mat-label>رقم البوابة (خروج)</mat-label>
+                    <input matInput type="number" formControlName="gateNumber" min="1" />
+                    <mat-error *ngIf="g.get('gateNumber')?.invalid">رقم ≥ 1</mat-error>
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline" class="ip">
+                    <mat-label>IP كاميرا LPR</mat-label>
+                    <input matInput formControlName="lprIp" placeholder="مثال: 192.168.1.20" />
+                    <mat-error *ngIf="g.get('lprIp')?.invalid">IP غير صالح</mat-error>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+            <label class="section-title">حقول الطباعة والإظهار</label>
+
+            <div class="flags-row" [formGroup]="step2Form">
+              <mat-slide-toggle formControlName="dateTimeFlag">الوقت/التاريخ</mat-slide-toggle>
+              <mat-slide-toggle formControlName="ticketIdFlag">رقم التذكرة</mat-slide-toggle>
+              <mat-slide-toggle formControlName="feesFlag">الرسوم</mat-slide-toggle>
+
+              <!-- Dropdown Pricing Schema-->
+              <mat-form-field
+                *ngIf="modeCtrl.value === 'entry'"
+                appearance="outline"
+                class="schema-select mt-3"
+              >
+                <mat-label>Pricing Schema</mat-label>
+                <mat-select formControlName="pricingSchemaId">
+                  <mat-option value="">اختر الشريحة...</mat-option>
+                  <mat-option *ngFor="let s of pricingSchemas" [value]="s.id">
+                    {{ s.name }} — {{ s.description || '' }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="step2Form.get('pricingSchemaId')?.invalid">
+                  يجب اختيار شريحة تسعير صحيحة
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <mat-divider class="my-3"></mat-divider>
+
+            <div class="grid">
+              <mat-form-field appearance="outline">
+                <mat-label>تاريخ البدء</mat-label>
+                <input matInput [matDatepicker]="dp" formControlName="startDate" />
+                <mat-datepicker-toggle matSuffix [for]="dp"></mat-datepicker-toggle>
+                <mat-datepicker #dp></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>بادئة رقم التذكرة</mat-label>
+                <input matInput formControlName="ticketIdPrefix" placeholder="TK" />
+              </mat-form-field>
+            </div>
+
+            <!-- Fees/tiers (unchanged) -->
+            <ng-container *ngIf="modeCtrl.value === 'entry'; else tiersTpl">
+              <mat-form-field appearance="outline">
+                <mat-label>رسوم الدخول (مرة واحدة)</mat-label>
+                <input matInput type="number" formControlName="onceFee" min="0" />
+              </mat-form-field>
+            </ng-container>
+
+            <ng-template #tiersTpl>
+              <div class="tiers">
                 <div class="tiers-head">
                   <span>شرائح الرسوم</span>
                   <button mat-stroked-button color="primary" type="button" (click)="addTier()">
@@ -125,7 +201,7 @@
                   </button>
                 </div>
 
-                <div class="table-wrap">
+                <div class="table-wrap" formArrayName="tiers">
                   <table mat-table [dataSource]="tiersControls" class="mat-elevation-z1">
                     <ng-container matColumnDef="idx">
                       <th mat-header-cell *matHeaderCellDef>#</th>
@@ -134,21 +210,21 @@
 
                     <ng-container matColumnDef="from">
                       <th mat-header-cell *matHeaderCellDef>من (س)</th>
-                      <td mat-cell *matCellDef="let row; let i = index" [formGroup]="row">
+                      <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
                         <input matInput type="number" formControlName="fromHour" min="0" />
                       </td>
                     </ng-container>
 
                     <ng-container matColumnDef="to">
                       <th mat-header-cell *matHeaderCellDef>إلى (س)</th>
-                      <td mat-cell *matCellDef="let row" [formGroup]="row">
+                      <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
                         <input matInput type="number" formControlName="toHour" min="0" />
                       </td>
                     </ng-container>
 
                     <ng-container matColumnDef="price">
                       <th mat-header-cell *matHeaderCellDef>السعر</th>
-                      <td mat-cell *matCellDef="let row" [formGroup]="row">
+                      <td mat-cell *matCellDef="let row; let i = index" [formGroupName]="i">
                         <input matInput type="number" formControlName="price" min="0" />
                       </td>
                     </ng-container>
@@ -166,10 +242,8 @@
                     <tr mat-row *matRowDef="let r; columns: tierCols"></tr>
                   </table>
                 </div>
-
-                <mat-hint align="start" class="muted">مثال: 0–2، ثم 2–6 … بدون تداخل.</mat-hint>
               </div>
-            </div> -->
+            </ng-template>
 
             <mat-divider class="my-3"></mat-divider>
 
@@ -204,6 +278,11 @@
       </div>
 
       <div class="sum-line">
+        <span class="muted">فترة السماح (دقائق)</span>
+        <span class="bold">{{ summaryForView.gracePeriodMinutes }}</span>
+      </div>
+
+      <div class="sum-line">
         <span class="muted">الوضع</span>
         <span class="bold">{{ summaryForView.mode === 'entry' ? 'Entry' : 'Exit' }}</span>
       </div>
@@ -223,14 +302,14 @@
         <span class="bold">{{ summaryForView.ticketCard.startDate | date : 'yyyy-MM-dd' }}</span>
       </div>
 
-      <ng-container *ngIf="summaryForView.mode === 'entry'; else tiersTpl">
+      <ng-container *ngIf="summaryForView.mode === 'entry'; else tiersSumTpl">
         <div class="sum-line">
           <span class="muted">Fees (once)</span>
           <span class="bold color">{{ summaryForView.ticketCard.fees }}</span>
         </div>
       </ng-container>
 
-      <ng-template #tiersTpl>
+      <ng-template #tiersSumTpl>
         <div class="small muted mb-1">شرائح الرسوم</div>
         <div class="tier" *ngFor="let f of summaryForView.ticketCard.fees; let i = index">
           <span>#{{ i + 1 }}: {{ f.fromHour }}–{{ f.toHour }} س</span>
@@ -265,6 +344,20 @@
       <div class="sum-line" *ngIf="summaryForView.flags.pricingSchemaIdFlag">
         <span>Schema Id</span>
         <span class="bold">{{ summaryForView.pricingSchemaId }}</span>
+      </div>
+
+      <!-- NEW: Gates quick list -->
+      <mat-divider class="my-2"></mat-divider>
+      <div class="small muted">بوابات الدخول</div>
+      <div class="tier" *ngFor="let g of summaryForView.entryGates; let i = index">
+        <span>#{{ g.gateNumber }}</span>
+        <span class="bold">{{ g.lprIp }}</span>
+      </div>
+
+      <div class="small muted mt-2">بوابات الخروج</div>
+      <div class="tier" *ngFor="let g of summaryForView.exitGates; let i = index">
+        <span>#{{ g.gateNumber }}</span>
+        <span class="bold">{{ g.lprIp }}</span>
       </div>
     </mat-card>
   </div>

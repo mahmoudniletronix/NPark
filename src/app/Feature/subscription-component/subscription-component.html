@@ -138,6 +138,7 @@
               إجمالي الأيام مطلوب (حد أدنى 1).
             </div>
           </div>
+
           <!-- Total Years -->
           <div class="mb-3" *ngIf="isYears()">
             <label class="form-label">إجمالي السنوات</label>
@@ -172,17 +173,6 @@
                 *ngIf="form.get('price')?.touched && form.get('price')?.invalid"
               >
                 السعر مطلوب ويجب أن يكون 0 أو أكثر.
-              </div>
-            </div>
-
-            <div class="col-6">
-              <label class="form-label">ترتيب الشريحة</label>
-              <input type="number" class="form-control" formControlName="orderPriority" min="1" />
-              <div
-                class="invalid-feedback d-block"
-                *ngIf="form.get('isRepeated')?.value && form.get('orderPriority')?.invalid"
-              >
-                ترتيب الشريحة مطلوب عند اختيار (حساب متكرر).
               </div>
             </div>
           </div>
@@ -234,7 +224,6 @@
                 <th>من</th>
                 <th>إلى</th>
                 <th>السعر</th>
-                <th>ترتيب</th>
                 <th class="text-end">إجراءات</th>
               </tr>
             </thead>
@@ -256,7 +245,6 @@
                     {{ r.price | number : '1.0-2' }} ج
                   </span>
                 </td>
-                <td>{{ r.orderPriority || '-' }}</td>
                 <td class="text-end d-flex gap-1">
                   <button
                     class="btn btn-sm btn-outline-primary me-1 btn-icon"
@@ -277,7 +265,8 @@
               </tr>
 
               <tr *ngIf="!filtered().length">
-                <td colspan="8" class="text-center text-muted py-4">
+                <!-- قلّلنا colspan من 8 إلى 7 بعد حذف عمود الترتيب -->
+                <td colspan="7" class="text-center text-muted py-4">
                   لا توجد بيانات مطابقة للبحث.
                 </td>
               </tr>

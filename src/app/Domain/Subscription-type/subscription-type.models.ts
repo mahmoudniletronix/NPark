@@ -11,7 +11,7 @@ export interface AddPricingSchemaCommand {
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  orderPriority: number | null;
+  // orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
   totalYears?: number | null;
@@ -25,7 +25,7 @@ export interface PricingRow {
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  orderPriority: number | null;
+  // orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
   totalYears?: number | null;
@@ -38,7 +38,7 @@ export type UpdatePricingSchemaCommand = {
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  orderPriority: number | null;
+  // orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
   totalYears?: number | null;

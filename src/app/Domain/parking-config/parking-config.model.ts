@@ -14,10 +14,25 @@ export enum PrintType {
   Rfid = 1,
 }
 
+// NEW: لكل بوابة
+export interface GateConfigDto {
+  gateNumber: number;
+  lprIp: string;
+}
+
+// NEW: بطاقة الطباعة (لأننا بنرسلها في الـDTO)
+export interface TicketCardDto {
+  startDate: string; // ISO
+  ticketIdPrefix: string; // مثل TK
+}
+
 export interface ParkingConfigurationDto {
   entryGatesCount: number;
   exitGatesCount: number;
   allowedParkingSlots: number;
+
+  // NEW
+  gracePeriodMinutes: number;
 
   priceType: PriceType;
   vehiclePassengerData: VehiclePassengerData;
@@ -28,4 +43,11 @@ export interface ParkingConfigurationDto {
   feesFlag: boolean;
 
   pricingSchemaId: string;
+
+  // NEW
+  ticketCard: TicketCardDto;
+
+  // NEW
+  entryGates: GateConfigDto[];
+  exitGates: GateConfigDto[];
 }

@@ -1,85 +1,108 @@
 <div class="container-fluid dash-theme">
+  <div class="topbar">
+    <h5 class="mb-0 text-muted">Dashboard</h5>
+
+    <button class="btn btn-outline btn-sm" (click)="detectSensorsFromPlan()">
+      <i class="bi bi-broadcast-pin"></i>
+      اكتشاف الحساسات
+    </button>
+  </div>
+
   <div class="row g-3">
     <!-- Stations -->
     <div class="col-12 col-md-4">
       <div class="card kpi kpi-blue h-100">
+        <div class="card-header">
+          <div class="text-muted small">Stations</div>
+        </div>
         <div class="card-body">
-          <div class="text-muted">Stations</div>
           <div class="value">{{ stations?.total || 0 }}</div>
-          <div class="small">
+          <div class="small text-muted">
             Full: {{ stations?.full || 0 }} · Empty: {{ stations?.empty || 0 }}
           </div>
-          <div class="chart-wrap mt-3"><canvas #stationsChart></canvas></div>
+          <div class="chart-wrap mt-3">
+            <canvas #stationsChart></canvas>
+          </div>
         </div>
       </div>
     </div>
-    <button class="btn btn-outline btn-sm" (click)="detectSensorsFromPlan()">
-      اكتشاف الحساسات
-    </button>
 
     <!-- Users -->
     <div class="col-12 col-md-4">
       <div class="card kpi kpi-green h-100 users-card">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-start mb-2">
-            <div>
-              <div class="text-muted">Users</div>
-              <div class="value mb-1">{{ usersTotal() }}</div>
-              <div class="small text-muted">إجمالي المستخدمين (Subscribers + Visitors)</div>
-            </div>
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Users</span>
+            <a routerLink="/users" class="btn btn-sm btn-primary shadow-none text-muted">
+              <i class="bi bi-people"></i> See all users
+            </a>
+          </div>
+        </div>
 
-            <a routerLink="/users" class="btn btn-sm btn-primary shadow-none"> See all users </a>
+        <div class="card-body">
+          <div>
+            <div class="value mb-1">{{ usersTotal() }}</div>
+            <div class="small text-muted">إجمالي المستخدمين (Subscribers + Visitors)</div>
           </div>
 
           <div class="d-flex flex-wrap gap-2 mt-3">
-            <span class="badge pill theme-green-soft">
+            <span class="badge pill theme-green-soft text-muted">
               Subscribers: {{ users?.subscribers || 0 }}
             </span>
-            <span class="badge pill theme-amber-soft"> Visitors: {{ users?.visitors || 0 }} </span>
+            <span class="badge pill theme-amber-soft text-muted">
+              Visitors: {{ users?.visitors || 0 }}
+            </span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- In/Out -->
+    <!-- Live In/Out -->
     <div class="col-12 col-md-4">
       <div class="card kpi kpi-amber h-100">
+        <div class="card-header">
+          <div class="text-muted small">Live In/Out (today)</div>
+        </div>
         <div class="card-body">
-          <div class="text-muted">Live In/Out (today)</div>
-          <div class="chart-wrap mt-2"><canvas #inoutChart></canvas></div>
+          <div class="chart-wrap mt-1">
+            <canvas #inoutChart></canvas>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Tickets table -->
+    <!-- Recent Tickets -->
     <div class="col-12">
-      <div class="card shadow-sm">
-        <div class="card-header bg-white">
+      <div class="card shadow-soft">
+        <div class="card-header">
           <div class="d-flex justify-content-between align-items-center">
             <strong>Recent Tickets</strong>
             <div class="d-flex align-items-center gap-2">
               <span class="text-muted small d-none d-md-inline">Last 10 Records</span>
-              <a routerLink="/tickets" class="btn btn-sm btn-primary">See all tickets</a>
+              <a routerLink="/tickets" class="btn btn-sm btn-primary text-muted">
+                <i class="bi bi-card-list"></i> See all tickets
+              </a>
             </div>
           </div>
         </div>
 
         <div class="table-responsive">
           <table class="table align-middle mb-0">
-            <thead class="table-light">
+            <thead>
               <tr>
-                <th>ID</th>
+                <th style="width: 90px">ID</th>
                 <th>Plate</th>
-                <th>Action</th>
-                <th>Gate</th>
-                <th>Time</th>
+                <th style="width: 120px">Action</th>
+                <th style="width: 100px">Gate</th>
+                <th style="width: 140px">Time</th>
               </tr>
             </thead>
+
             <tbody>
               @for (t of tickets; track t.id) {
               <tr>
-                <td>{{ t.id }}</td>
-                <td>{{ t.plate }}</td>
+                <td class="mono">{{ t.id }}</td>
+                <td class="mono">{{ t.plate }}</td>
                 <td>
                   <span
                     class="badge"
@@ -89,8 +112,8 @@
                     {{ t.action }}
                   </span>
                 </td>
-                <td>{{ t.gate }}</td>
-                <td>{{ t.time | date : 'shortTime' }}</td>
+                <td class="mono">{{ t.gate }}</td>
+                <td class="mono">{{ t.time | date : 'shortTime' }}</td>
               </tr>
               } @if (tickets.length === 0) {
               <tr>

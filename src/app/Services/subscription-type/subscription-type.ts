@@ -58,8 +58,8 @@ export class SubscriptionType {
       totalHours: dto.durationType === DurationType.Hours ? Number(dto.totalHours) || 1 : null,
       totalDays: dto.durationType === DurationType.Days ? Number(dto.totalDays) || 1 : null,
       isRepeated: dto.durationType === DurationType.Hours ? dto.isRepeated : false,
-      orderPriority:
-        dto.durationType === DurationType.Hours && dto.isRepeated ? dto.orderPriority || 1 : null,
+      // orderPriority:
+      //   dto.durationType === DurationType.Hours && dto.isRepeated ? dto.orderPriority || 1 : null,
     };
 
     return this.http.post<PricingRow>(`${this.base}/Add`, payload);
@@ -85,7 +85,7 @@ export class SubscriptionType {
       endTime: isHours && !repeated ? this.toHms(dto.endTime) : null,
       price: Number(dto.price ?? 0),
       isRepeated: repeated,
-      orderPriority: isHours && repeated ? dto.orderPriority ?? 1 : null,
+      // orderPriority: isHours && repeated ? dto.orderPriority ?? 1 : null,
       totalHours: isHours ? Number(dto.totalHours ?? 0) : null,
       totalDays: isDays ? Number(dto.totalDays ?? 0) : null,
     };
