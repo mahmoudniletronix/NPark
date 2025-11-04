@@ -12,6 +12,9 @@ import {
   UpdatePricingSchemaCommand,
 } from '../../Services/subscription-type/subscription-type';
 
+type AddPricingSchemaCommandEx = AddPricingSchemaCommand & { totalYears?: number | null };
+type UpdatePricingSchemaCommandEx = UpdatePricingSchemaCommand & { totalYears?: number | null };
+
 type FormShape = {
   id: FormControl<string | null>;
   name: FormControl<string>;
@@ -23,6 +26,7 @@ type FormShape = {
   orderPriority: FormControl<number | null>;
   totalHours: FormControl<number | null>;
   totalDays: FormControl<number | null>;
+  totalYears: FormControl<number | null>;
 };
 
 @Component({
@@ -65,9 +69,8 @@ export class SubscriptionComponent implements OnInit {
     isRepeated: this.fb.control<boolean>(false, { nonNullable: true }),
     orderPriority: this.fb.control<number | null>(null),
     totalHours: this.fb.control<number | null>(null),
-    totalDays: this.fb.control<number | null>(1, {
-      validators: [Validators.min(1)],
-    }),
+    totalDays: this.fb.control<number | null>(1, { validators: [Validators.min(1)] }),
+    totalYears: this.fb.control<number | null>(null),
   });
 
   filtered = computed(() => {
@@ -76,8 +79,7 @@ export class SubscriptionComponent implements OnInit {
     if (!q) return data;
     return data.filter(
       (r) =>
-        (r.name || '').toLowerCase().includes(q) ||
-        (r.durationType === DurationType.Hours ? 'ساعات' : 'أيام').includes(q)
+        (r.name || '').toLowerCase().includes(q) || this.durationLabel(r.durationType).includes(q)
     );
   });
 
@@ -94,6 +96,10 @@ export class SubscriptionComponent implements OnInit {
   isHours(): boolean {
     return this.form.controls.durationType.value === DurationType.Hours;
   }
+  isYears(): boolean {
+    return this.form.controls.durationType.value === DurationType.Years;
+  }
+
   showIsRepeated(): boolean {
     return this.isHours();
   }
@@ -124,20 +130,19 @@ export class SubscriptionComponent implements OnInit {
     const dt = this.form.controls.durationType.value;
     const isRep = this.form.controls.isRepeated.value;
 
-    // Reset all validators first
     this.form.controls.startTime.clearValidators();
     this.form.controls.endTime.clearValidators();
     this.form.controls.orderPriority.clearValidators();
     this.form.controls.totalDays.clearValidators();
     this.form.controls.totalHours.clearValidators();
+    this.form.controls.totalYears.clearValidators();
 
-    // Price is always required
     this.form.controls.price.setValidators([Validators.required, Validators.min(0)]);
 
     if (dt === DurationType.Days) {
       this.form.controls.totalDays.setValidators([Validators.required, Validators.min(1)]);
-      // Clear hours-related fields
       this.form.controls.totalHours.setValue(null, { emitEvent: false });
+      this.form.controls.totalYears.setValue(null, { emitEvent: false });
       this.form.controls.startTime.setValue(null, { emitEvent: false });
       this.form.controls.endTime.setValue(null, { emitEvent: false });
       this.form.controls.isRepeated.setValue(false, { emitEvent: false });
@@ -146,8 +151,8 @@ export class SubscriptionComponent implements OnInit {
 
     if (dt === DurationType.Hours) {
       this.form.controls.totalHours.setValidators([Validators.required, Validators.min(1)]);
-      // Clear days-related field
       this.form.controls.totalDays.setValue(null, { emitEvent: false });
+      this.form.controls.totalYears.setValue(null, { emitEvent: false });
 
       if (isRep) {
         this.form.controls.orderPriority.setValidators([Validators.required, Validators.min(1)]);
@@ -159,19 +164,31 @@ export class SubscriptionComponent implements OnInit {
       }
     }
 
-    // Update validity
+    if (dt === DurationType.Years) {
+      this.form.controls.totalYears.setValidators([Validators.required, Validators.min(1)]);
+      this.form.controls.totalDays.setValue(null, { emitEvent: false });
+      this.form.controls.totalHours.setValue(null, { emitEvent: false });
+      this.form.controls.startTime.setValue(null, { emitEvent: false });
+      this.form.controls.endTime.setValue(null, { emitEvent: false });
+      this.form.controls.isRepeated.setValue(false, { emitEvent: false });
+      this.form.controls.orderPriority.setValue(null, { emitEvent: false });
+    }
+
     this.form.controls.startTime.updateValueAndValidity({ emitEvent: false });
     this.form.controls.endTime.updateValueAndValidity({ emitEvent: false });
     this.form.controls.totalDays.updateValueAndValidity({ emitEvent: false });
     this.form.controls.totalHours.updateValueAndValidity({ emitEvent: false });
+    this.form.controls.totalYears.updateValueAndValidity({ emitEvent: false });
     this.form.controls.orderPriority.updateValueAndValidity({ emitEvent: false });
     this.form.controls.price.updateValueAndValidity({ emitEvent: false });
   }
 
   // ====== DTO builders ======
-  private buildAddDto(): AddPricingSchemaCommand {
+  private buildAddDto(): AddPricingSchemaCommandEx {
     const v = this.form.getRawValue();
     const isHours = v.durationType === DurationType.Hours;
+    const isDays = v.durationType === DurationType.Days;
+    const isYears = v.durationType === DurationType.Years;
     const isRep = !!v.isRepeated;
 
     const startTime = isHours && !isRep ? this.toHmsOrNull(v.startTime) : null;
@@ -180,44 +197,49 @@ export class SubscriptionComponent implements OnInit {
     return {
       name: (v.name || '').trim(),
       durationType: v.durationType!,
-      startTime: startTime,
-      endTime: endTime,
+      startTime,
+      endTime,
       price: Number(v.price ?? 0),
       isRepeated: isHours ? isRep : false,
       orderPriority: isHours && isRep ? v.orderPriority ?? null : null,
       totalHours: isHours ? Number(v.totalHours ?? 0) : null,
-      totalDays: v.durationType === DurationType.Days ? Number(v.totalDays ?? 0) : null,
+      totalDays: isDays ? Number(v.totalDays ?? 0) : null,
+      // ===== (جديد) totalYears للسنوي
+      totalYears: isYears ? Number(v.totalYears ?? 0) : null,
     };
   }
 
-  private buildUpdateDto(): UpdatePricingSchemaCommand {
+  private buildUpdateDto(): UpdatePricingSchemaCommandEx {
     const v = this.form.getRawValue();
     let id = this.editingRowId();
     if ((id === null || id === undefined) && v.id !== null && v.id !== undefined) {
       id = v.id;
     }
-    // فحص String غير فاضي
     if (!id || typeof id !== 'string' || id.trim().length === 0) {
       throw new Error('Cannot update without a valid id');
     }
 
     const isHours = v.durationType === DurationType.Hours;
+    const isDays = v.durationType === DurationType.Days;
+    const isYears = v.durationType === DurationType.Years;
     const isRep = !!v.isRepeated;
 
     const startTime = isHours && !isRep ? this.toHms(v.startTime) : null;
     const endTime = isHours && !isRep ? this.toHms(v.endTime) : null;
 
     return {
-      id: id, // string
+      id,
       name: (v.name || '').trim(),
       durationType: v.durationType!,
-      startTime: startTime,
-      endTime: endTime,
+      startTime,
+      endTime,
       price: Number(v.price ?? 0),
       isRepeated: isHours ? isRep : false,
       orderPriority: isHours && isRep ? v.orderPriority ?? 1 : null,
       totalHours: isHours ? Number(v.totalHours ?? 0) : null,
-      totalDays: v.durationType === DurationType.Days ? Number(v.totalDays ?? 0) : null,
+      totalDays: isDays ? Number(v.totalDays ?? 0) : null,
+      // ===== (جديد)
+      totalYears: isYears ? Number(v.totalYears ?? 0) : null,
     };
   }
 
@@ -241,7 +263,9 @@ export class SubscriptionComponent implements OnInit {
     return p;
   }
 
-  private ensureUniqueOrderPriorityForAdd(dto: AddPricingSchemaCommand): AddPricingSchemaCommand {
+  private ensureUniqueOrderPriorityForAdd(
+    dto: AddPricingSchemaCommandEx
+  ): AddPricingSchemaCommandEx {
     if (!dto.isRepeated) {
       return { ...dto, orderPriority: null };
     }
@@ -257,8 +281,8 @@ export class SubscriptionComponent implements OnInit {
   }
 
   private ensureUniqueOrderPriorityForUpdate(
-    dto: UpdatePricingSchemaCommand
-  ): UpdatePricingSchemaCommand {
+    dto: UpdatePricingSchemaCommandEx
+  ): UpdatePricingSchemaCommandEx {
     if (!dto.isRepeated) {
       return { ...dto, orderPriority: null };
     }
@@ -295,6 +319,19 @@ export class SubscriptionComponent implements OnInit {
 
   setMode(mode: DurationType) {
     this.form.controls.durationType.setValue(mode, { emitEvent: true });
+  }
+
+  durationLabel(dt: DurationType | null | undefined): string {
+    switch (dt) {
+      case DurationType.Hours:
+        return 'ساعات';
+      case DurationType.Days:
+        return 'أيام';
+      case DurationType.Years:
+        return 'سنوي';
+      default:
+        return '';
+    }
   }
 
   // ====== CRUD ======
@@ -341,6 +378,8 @@ export class SubscriptionComponent implements OnInit {
       orderPriority: null,
       totalHours: null,
       totalDays: 1,
+      // ===== (جديد)
+      totalYears: null,
     });
     this.editingRowId.set(null);
     this.updateTimeAndModeRules();
@@ -460,7 +499,6 @@ export class SubscriptionComponent implements OnInit {
       if (!dto.totalHours || dto.totalHours < 1) {
         errors.push('إجمالي الساعات مطلوب ويجب أن يكون 1 أو أكثر');
       }
-
       if (dto.isRepeated) {
         if (!dto.orderPriority || dto.orderPriority < 1) {
           errors.push('ترتيب الشريحة مطلوب عند اختيار حساب متكرر');
@@ -469,6 +507,10 @@ export class SubscriptionComponent implements OnInit {
         if (!dto.startTime || !dto.endTime) {
           errors.push('وقت البداية والنهاية مطلوبان عندما لا يكون الحساب متكرر');
         }
+      }
+    } else if (dto.durationType === DurationType.Years) {
+      if (!dto.totalYears || dto.totalYears < 1) {
+        errors.push('إجمالي السنوات مطلوب ويجب أن يكون 1 أو أكثر');
       }
     }
 
@@ -522,8 +564,7 @@ export class SubscriptionComponent implements OnInit {
   }
 
   private normalizeId(obj: any): string | null {
-    const v =
-      obj?.id ?? obj?.Id ?? obj?.pricingSchemaId ?? obj?.PricingSchemaId ?? null;
+    const v = obj?.id ?? obj?.Id ?? obj?.pricingSchemaId ?? obj?.PricingSchemaId ?? null;
     if (v === null || v === undefined) return null;
     const s = String(v).trim();
     return s.length ? s : null;
@@ -540,6 +581,7 @@ export class SubscriptionComponent implements OnInit {
     const dt = (r.durationType ?? DurationType.Days) as DurationType;
     const isHours = dt === DurationType.Hours;
     const isDays = dt === DurationType.Days;
+    const isYears = dt === DurationType.Years;
     const rep = isHours ? !!r.isRepeated : false;
 
     this.editingRowId.set(r.id ?? null);
@@ -553,6 +595,8 @@ export class SubscriptionComponent implements OnInit {
       orderPriority: isHours && rep ? r.orderPriority ?? 1 : null,
       totalHours: isHours ? r.totalHours ?? 1 : null,
       totalDays: isDays ? r.totalDays ?? 1 : null,
+      // ===== (جديد)
+      totalYears: isYears ? (r as any).totalYears ?? 1 : null,
     };
 
     if (isHours && !rep) {

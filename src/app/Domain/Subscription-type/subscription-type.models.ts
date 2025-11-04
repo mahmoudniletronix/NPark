@@ -1,6 +1,7 @@
 export enum DurationType {
   Days = 1,
   Hours = 2,
+  Years = 3,
 }
 
 export interface AddPricingSchemaCommand {
@@ -13,6 +14,7 @@ export interface AddPricingSchemaCommand {
   orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
+  totalYears?: number | null;
 }
 
 export interface PricingRow {
@@ -26,6 +28,7 @@ export interface PricingRow {
   orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
+  totalYears?: number | null;
 }
 export type UpdatePricingSchemaCommand = {
   id: number;
@@ -38,4 +41,5 @@ export type UpdatePricingSchemaCommand = {
   orderPriority: number | null;
   totalHours: number | null;
   totalDays: number | null;
+  totalYears?: number | null;
 };

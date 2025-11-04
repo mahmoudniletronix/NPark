@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -7,6 +7,11 @@ import {
   ReactiveFormsModule,
 } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import {
+  PricingSchemaDto,
+  Registrationservice,
+} from '../../Services/registration/registrationservice';
+import { NfcReaderService } from '../../Services/registration/nfc-reader.service';
 
 type DurationType = 'Hours' | 'Days' | 'Monthly';
 
@@ -21,7 +26,7 @@ interface DocumentItem {
   name: string;
   mime: string;
   size: number;
-  dataUrl: string; // data:*/*;base64,...
+  dataUrl: string;
   isImage: boolean;
 }
 
@@ -42,8 +47,9 @@ interface RegistrationPayload {
     fileName: string;
     mime: string;
     size: number;
-    base64: string; // بدون header
+    base64: string;
   }>;
+  pricingSchemaId: string | null;
 }
 
 @Component({
@@ -53,25 +59,43 @@ interface RegistrationPayload {
   templateUrl: './registration-component.html',
   styleUrl: './registration-component.css',
 })
-export class RegistrationComponent {
+export class RegistrationComponent implements OnInit {
   private fb = inject(FormBuilder);
+
+  private pricingSvc = inject(Registrationservice);
 
   saving = signal(false);
 
-  // مستندات
   documents = signal<DocumentItem[]>([]);
   previewOpen = signal(false);
   currentPreview = signal<DocumentItem | null>(null);
 
+  schemas = signal<PricingSchemaDto[]>([]);
+  loadingSchemas = signal(false);
+
+  readingCard = signal(false);
+  private nfc = inject(NfcReaderService);
+
+  plateRequiredValidator(group: AbstractControl) {
+    const p1 = (group.get('p1')?.value || '').trim();
+    const p4 = (group.get('p4')?.value || '').trim();
+    return p1 && p4 ? null : { required: true };
+  }
+
   form: FormGroup = this.fb.group(
     {
-      cardNo: ['', [Validators.required, Validators.pattern(/^\d{6,}$/)]],
-      plate: this.fb.group({
-        p1: ['', [Validators.required, Validators.maxLength(1)]],
-        p2: ['', [Validators.required, Validators.maxLength(1)]],
-        p3: ['', [Validators.required, Validators.maxLength(1)]],
-        p4: ['', [Validators.required, Validators.maxLength(4), Validators.pattern(/^\d{1,4}$/)]],
-      }),
+      cardNo: ['', [Validators.required, Validators.pattern(/^[0-9A-Fa-f]{6,16}$/)]],
+      pricingSchemaId: [null, [Validators.required]],
+
+      plate: this.fb.group(
+        {
+          p1: [''],
+          p2: [''],
+          p3: [''],
+          p4: [''],
+        },
+        { validators: [this.plateRequiredValidator] }
+      ),
       subscriberName: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required, Validators.pattern(/^(\+?\d{7,15})$/)]],
       nationalId: ['', [Validators.required, Validators.pattern(/^\d{10,16}$/)]],
@@ -83,6 +107,7 @@ export class RegistrationComponent {
       timeTo: ['15:30'],
       price: [null],
       orderPriority: [1, [Validators.min(1)]],
+      validators: [timeRangeValidator],
     },
     { validators: [timeRangeValidator] }
   );
@@ -90,7 +115,34 @@ export class RegistrationComponent {
   isHours = computed(() => this.form.get('durationType')?.value === 'Hours');
   isDaysOrMonthly = computed(() => this.form.get('durationType')?.value !== 'Hours');
 
+  async readCard() {
+    if (this.readingCard()) return;
+    this.readingCard.set(true);
+    try {
+      const uid = await this.nfc.readUID();
+      const normalized = String(uid).trim().toUpperCase();
+
+      this.form.get('cardNo')?.setValue(normalized);
+      this.form.get('cardNo')?.markAsDirty();
+      this.form.get('cardNo')?.markAsTouched();
+      this.form.get('cardNo')?.updateValueAndValidity();
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || 'تعذر قراءة الكارت. تأكد من تشغيل قارئ الـ NFC والسماح للاتصال.');
+    } finally {
+      this.readingCard.set(false);
+    }
+  }
+
+  openScanner(inputEl: HTMLInputElement) {
+    try {
+      inputEl.click();
+    } catch {}
+  }
+
   constructor() {
+    this.loadPricingSchemas();
+
     effect(() => {
       const hours = this.isHours();
       const timeFrom = this.form.get('timeFrom')!;
@@ -118,7 +170,19 @@ export class RegistrationComponent {
     });
   }
 
-  // ===== رفع المستندات المتعددة =====
+  ngOnInit(): void {
+    this.loadPricingSchemas();
+  }
+
+  private loadPricingSchemas() {
+    this.loadingSchemas.set(true);
+    this.pricingSvc.getAll().subscribe({
+      next: (list) => this.schemas.set(list ?? []),
+      error: () => this.loadingSchemas.set(false),
+      complete: () => this.loadingSchemas.set(false),
+    });
+  }
+
   async onPickDocuments(ev: Event) {
     const files = (ev.target as HTMLInputElement).files;
     if (!files || !files.length) return;
@@ -134,23 +198,19 @@ export class RegistrationComponent {
         isImage: isImageMime(f.type),
       });
     }
-    // دمج مع الموجود
     this.documents.set([...this.documents(), ...addeds]);
-    // تنظيف الـ input ليستقبل نفس الملف لاحقاً إن لزم
     (ev.target as HTMLInputElement).value = '';
   }
 
   openPreview(d: DocumentItem) {
     this.currentPreview.set(d);
     this.previewOpen.set(true);
-    // لإتاحة Esc
     queueMicrotask(() => {
       const overlay = document.querySelector('.preview-overlay') as HTMLElement | null;
       overlay?.focus();
     });
   }
-  closePreview(evt?: MouseEvent) {
-    // click-outside
+  closePreview(_: MouseEvent) {
     this.previewOpen.set(false);
     this.currentPreview.set(null);
   }
@@ -165,9 +225,8 @@ export class RegistrationComponent {
     this.documents.set(arr);
   }
 
-  // حفظ
   async save() {
-    this.form.markAllAsTouched();
+    this.form.get('plate')?.markAllAsTouched();
     if (this.form.invalid) return;
 
     this.saving.set(true);
@@ -197,9 +256,9 @@ export class RegistrationComponent {
       price: v.price,
       orderPriority: v.orderPriority,
       documents: docsPayload,
+      pricingSchemaId: v.pricingSchemaId,
     };
 
-    // TODO: استبدلها بنداء الـ API الحقيقي
     await fakeDelay(600);
     console.log('Registration payload', payload);
 
@@ -210,6 +269,7 @@ export class RegistrationComponent {
 
   reset() {
     this.form.reset({
+      pricingSchemaId: null,
       durationType: 'Monthly',
       timeFrom: '09:00',
       timeTo: '15:30',

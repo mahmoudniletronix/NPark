@@ -6,7 +6,7 @@ import { LoginRequest, LoginResponse, LoginFirstTimeRequest } from '../../Domain
 
 const TOKEN_KEY = 'auth_token';
 const USER_KEY = 'auth_user';
-const API_BASE = 'http://192.168.1.48:8080/api/auth';
+const API_BASE = 'http://192.168.1.48:80/api/auth';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

@@ -56,10 +56,20 @@
                 <i class="bi bi-calendar3"></i>
                 بالأيام
               </button>
+              <button
+                type="button"
+                class="btn btn-ghost me-2"
+                [class.btn-primary]="form.value.durationType === DurationType.Years"
+                [class.btn-outline-primary]="form.value.durationType !== DurationType.Years"
+                (click)="setMode(DurationType.Years)"
+                title="احتساب سنوي"
+              >
+                <i class="bi bi-calendar3"></i>
+                سنوي
+              </button>
             </div>
           </div>
 
-          <!-- حساب متكرر: يظهر فقط في الساعات -->
           <div class="col-12 d-flex align-items-center mt-2 gap-2" *ngIf="showIsRepeated()">
             <label class="form-label mb-0">حساب متكرر</label>
             <div class="form-check form-switch">
@@ -72,7 +82,6 @@
             </div>
           </div>
 
-          <!-- مدى زمني (من/إلى): يظهر عندما isRepeated = false (سواء أيام أو ساعات) -->
           <div class="row g-2 mb-3" *ngIf="showRangeWindow()">
             <div class="col-6">
               <label class="form-label">من</label>
@@ -92,7 +101,7 @@
             </div>
           </div>
 
-          <!-- إجمالي الساعات: يظهر فقط في الساعات -->
+          <!-- Total hours -->
           <div class="mb-3" *ngIf="isHours()">
             <label class="form-label">إجمالي الساعات</label>
             <input
@@ -111,7 +120,7 @@
             </div>
           </div>
 
-          <!-- إجمالي الأيام: يظهر فقط في الأيام -->
+          <!-- Total days -->
           <div class="mb-3" *ngIf="isDays()">
             <label class="form-label">إجمالي الأيام</label>
             <input
@@ -127,6 +136,24 @@
               *ngIf="form.get('totalDays')?.touched && form.get('totalDays')?.invalid"
             >
               إجمالي الأيام مطلوب (حد أدنى 1).
+            </div>
+          </div>
+          <!-- Total Years -->
+          <div class="mb-3" *ngIf="isYears()">
+            <label class="form-label">إجمالي السنوات</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="totalYears"
+              min="1"
+              step="1"
+              placeholder="مثال: 1"
+            />
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.get('totalYears')?.touched && form.get('totalYears')?.invalid"
+            >
+              إجمالي السنوات مطلوب (حد أدنى 1).
             </div>
           </div>
 
@@ -219,7 +246,7 @@
                 </td>
                 <td>
                   <span class="badge pill badge--secondary">
-                    {{ r.durationType === DurationType.Hours ? 'ساعات' : 'أيام' }}
+                    {{ durationLabel(r.durationType) }}
                   </span>
                 </td>
                 <td>{{ r.isRepeated === false ? r.startTime || '00:00' : '-' }}</td>
@@ -276,20 +303,20 @@
               />
             </div>
 
-            <div class="btn-group">
-              <button
-                class="btn btn-sm btn-outline-secondary"
-                [disabled]="!hasPrev()"
-                (click)="goPrev()"
-              >
-                السابق
-              </button>
+            <div class="btn-group" dir="ltr">
               <button
                 class="btn btn-sm btn-outline-secondary"
                 [disabled]="!hasNext()"
                 (click)="goNext()"
               >
                 التالي
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                [disabled]="!hasPrev()"
+                (click)="goPrev()"
+              >
+                السابق
               </button>
             </div>
           </div>

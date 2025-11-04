@@ -12,22 +12,20 @@
         </div>
 
         <div class="card-body">
-          <div class="mb-3">
+          <!-- <div class="mb-3">
             <label class="form-label">رقم الكارت</label>
             <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
             <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
               برجاء إدخال رقم كارت صحيح
             </div>
-          </div>
+          </div> -->
 
           <div class="mb-3">
             <label class="form-label d-block">رقم السيارة</label>
             <div class="plate-input" formGroupName="plate">
-              <input maxlength="1" formControlName="p1" />
-              <input maxlength="1" formControlName="p2" />
-              <input maxlength="1" formControlName="p3" />
+              <input maxlength="5" class="w-100" formControlName="p1" />
               <span class="sep">ـ</span>
-              <input maxlength="4" formControlName="p4" />
+              <input maxlength="5" class="w-100" formControlName="p4" />
             </div>
             <div
               class="invalid-feedback d-block"
@@ -73,98 +71,55 @@
     <!-- ===== 2) تفاصيل الاشتراك ===== -->
     <div class="col-12 col-lg-4">
       <div class="card shadow-sm card--glass h-100">
-        <div class="card-header">
-          <h5 class="mb-0 fw-bold">تفاصيل الاشتراك</h5>
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <h5 class="mb-0 fw-bold">نوع الاشتراك</h5>
+          <span *ngIf="loadingSchemas()" class="text-muted small">جاري التحميل…</span>
         </div>
 
-        <div class="card-body">
-          <div class="type-tabs mb-3">
-            <button
-              type="button"
-              class="type-tab"
-              [class.active]="form.get('durationType')?.value === 'Hours'"
-              (click)="form.get('durationType')?.setValue('Hours')"
+        <div class="card-body" [formGroup]="form">
+          <div class="mb-3">
+            <label class="form-label">اختر نوع الاشتراك</label>
+            <select class="form-select" formControlName="pricingSchemaId">
+              <option [ngValue]="null" disabled selected>— اختر نوع الاشتراك —</option>
+              <option *ngFor="let s of schemas()" [value]="s.id">{{ s.name }}</option>
+            </select>
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.get('pricingSchemaId')?.invalid && form.touched"
             >
-              بالساعات <i class="bi bi-alarm ms-1"></i>
-            </button>
-            <button
-              type="button"
-              class="type-tab"
-              [class.active]="form.get('durationType')?.value === 'Days'"
-              (click)="form.get('durationType')?.setValue('Days')"
-            >
-              بالأيام <i class="bi bi-calendar3 ms-1"></i>
-            </button>
-            <button
-              type="button"
-              class="type-tab"
-              [class.active]="form.get('durationType')?.value === 'Monthly'"
-              (click)="form.get('durationType')?.setValue('Monthly')"
-            >
-              اشتراك شهري <i class="bi bi-calendar2-month ms-1"></i>
-            </button>
-          </div>
-
-          <div class="row gx-3">
-            <div class="mb-3 col-6">
-              <label class="form-label">من (التاريخ)</label>
-              <input type="date" class="form-control" formControlName="dateFrom" />
-              <div class="invalid-feedback d-block" *ngIf="hasErr('dateFrom')">التاريخ مطلوب</div>
+              اختيار نوع الاشتراك مطلوب
             </div>
-            <div class="mb-3 col-6">
-              <label class="form-label">إلى (التاريخ)</label>
-              <input type="date" class="form-control" formControlName="dateTo" />
-              <div class="invalid-feedback d-block" *ngIf="hasErr('dateTo')">التاريخ مطلوب</div>
-            </div>
-
-            <div class="mb-3 col-6" [class.disabled]="!isHours()">
-              <label class="form-label">من (الساعة)</label>
-              <input type="time" class="form-control" formControlName="timeFrom" />
-            </div>
-            <div class="mb-3 col-6" [class.disabled]="!isHours()">
-              <label class="form-label">إلى (الساعة)</label>
-              <input type="time" class="form-control" formControlName="timeTo" />
-              <div
-                class="invalid-feedback d-block"
-                *ngIf="form.touched && form.errors?.['timerange']"
-              >
-                زمن النهاية يجب أن يكون بعد البداية
-              </div>
-            </div>
-
-            <div class="mb-3 col-6">
-              <label class="form-label">(جنيه) السعر</label>
-              <input type="number" class="form-control" formControlName="price" min="0" />
-            </div>
-            <div class="mb-3 col-6">
-              <label class="form-label">ترتيب الشريحة</label>
-              <input type="number" class="form-control" formControlName="orderPriority" min="1" />
-            </div>
-          </div>
-
-          <div class="d-flex gap-2 mt-2">
-            <button class="btn btn-danger" type="button" (click)="save()" [disabled]="saving()">
-              <i class="bi bi-save"></i><span class="ms-1">حفظ</span>
-            </button>
-            <button class="btn btn-outline" type="button" (click)="reset()" [disabled]="saving()">
-              <i class="bi bi-arrow-counterclockwise"></i><span class="ms-1">إعادة ضبط</span>
-            </button>
           </div>
 
           <hr class="my-4" />
-          <h6 class="fw-bold">نظرة عامة</h6>
-          <ul class="meta">
-            <li><span>نوع الاشتراك:</span> {{ form.get('durationType')?.value }}</li>
-            <li>
-              <span>الفترة:</span> {{ form.get('dateFrom')?.value || '—' }} →
-              {{ form.get('dateTo')?.value || '—' }}
-            </li>
-            <li *ngIf="isHours()">
-              <span>الوقت:</span> {{ form.get('timeFrom')?.value }} →
-              {{ form.get('timeTo')?.value }}
-            </li>
-            <li><span>السعر:</span> {{ form.get('price')?.value || '—' }} جنيه</li>
-          </ul>
+
+          <!-- بيانات الكارت -->
+          <h6 class="fw-bold mb-3">بيانات الكارت</h6>
+
+          <div class="mb-3">
+            <label class="form-label">رقم الكارت</label>
+            <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
+          </div>
+
+          <div class="mb-3">
+            <!-- <label class="form-label">رقم الكارت</label> -->
+            <div class="d-flex gap-2">
+              <!-- <input class="form-control" formControlName="cardNo" placeholder="مثال: 19F7A7B3" /> -->
+              <button
+                class="btn btn-outline-primary"
+                type="button"
+                (click)="readCard()"
+                [disabled]="readingCard()"
+                title="قراءة UID من القارئ"
+              >
+                <i class="bi bi-upc-scan"></i>
+                <span class="ms-1">{{ readingCard() ? 'جاري القراءة…' : 'قراءة الكارت' }}</span>
+              </button>
+            </div>
+            <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
+              رقم الكارت يجب أن يكون أحرف/أرقام هيكس بين 6 و 16.
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -178,15 +133,36 @@
         </div>
 
         <div class="card-body">
-          <div class="mb-3">
-            <label class="form-label d-block">رفع مستندات (صور/ملفات)</label>
+          <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+            <label class="form-label m-0">رفع مستندات</label>
+
+            <!-- رفع ملفات عادي -->
             <input
               type="file"
               multiple
               (change)="onPickDocuments($event)"
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             />
-            <small class="text-muted d-block mt-1">يمكن اختيار أكثر من ملف.</small>
+
+            <!-- زر الماسح (الكاميرا) -->
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              (click)="openScanner(camInput)"
+            >
+              <i class="bi bi-camera"></i>
+              مسح بالمـاسـح/الكاميرا
+            </button>
+
+            <!-- إدخال كاميرا مخفي: يفتح بالكليك على الزر -->
+            <input
+              #camInput
+              type="file"
+              capture="environment"
+              accept="image/*"
+              style="display: none"
+              (change)="onPickDocuments($event)"
+            />
           </div>
 
           <div class="docs-grid" *ngIf="documents().length; else noDocs">
@@ -216,7 +192,6 @@
     </div>
   </div>
 
-  <!-- ===== البوب-أب (المعاينة) ===== -->
   <div
     class="preview-overlay"
     *ngIf="previewOpen()"
