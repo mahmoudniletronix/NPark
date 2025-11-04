@@ -1,11 +1,9 @@
-// خفيفة، Pure TS، تشتغل على SVG inline في الـDOM
 const RX_CODE = /^(?:S|P)\s*\d+\b/i;
 const EN = ['station', 'sensor', 'detector'];
 const AR = ['حساس', 'محطة', 'مستشعر', 'ستيشن'];
 const WORDS = [...EN, ...AR];
 
-type M = [number, number, number, number, number, number]; // a,b,c,d,e,f
-
+type M = [number, number, number, number, number, number];
 const I: M = [1, 0, 0, 1, 0, 0];
 
 function mul(A: M, B: M): M {
@@ -59,7 +57,6 @@ function isStationLike(s?: string | null) {
 export function extractFromInlineSvg(rootSvg: SVGSVGElement, floor = 'B1') {
   const viewBox = rootSvg.getAttribute('viewBox') ?? undefined;
 
-  // build parent map (دون كلفة عالية)
   const parents = new WeakMap<Element, Element | null>();
   (function walk(e: Element, p: Element | null) {
     parents.set(e, p);
@@ -78,16 +75,14 @@ export function extractFromInlineSvg(rootSvg: SVGSVGElement, floor = 'B1') {
       .reduce((acc, node) => mul(acc, parseTransform(node.getAttribute('transform'))), I);
   }
 
-  // === STATIONS: نصوص + أشكال بسيطة
+  // === STATIONS
   const stations: any[] = [];
   rootSvg.querySelectorAll('text, rect, circle, ellipse').forEach((el: Element) => {
     const tag = el.tagName.toLowerCase();
 
-    // TEXT
     if (tag === 'text') {
       const text = (el.textContent ?? '').trim();
       if (!isStationLike(text)) return;
-      // خُد أول tspan x/y وإلا (0,0)
       const tspan = el.querySelector('tspan');
       let x = 0,
         y = 0;
@@ -110,7 +105,6 @@ export function extractFromInlineSvg(rootSvg: SVGSVGElement, floor = 'B1') {
       return;
     }
 
-    // SHAPES by id/class match
     const id = el.getAttribute('id') ?? '';
     const klass = el.getAttribute('class') ?? '';
     const label = id || klass;
@@ -141,6 +135,7 @@ export function extractFromInlineSvg(rootSvg: SVGSVGElement, floor = 'B1') {
     });
   });
 
+  // === LANES
   const lanes: any[] = [];
   rootSvg.querySelectorAll('polyline, path, line').forEach((el: Element, i) => {
     const id = el.getAttribute('id') ?? '';

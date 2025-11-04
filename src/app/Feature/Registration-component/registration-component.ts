@@ -12,45 +12,8 @@ import {
   Registrationservice,
 } from '../../Services/registration/registrationservice';
 import { NfcReaderService } from '../../Services/registration/nfc-reader.service';
-
-type DurationType = 'Hours' | 'Days' | 'Monthly';
-
-interface PlateGroup {
-  p1: string;
-  p2: string;
-  p3: string;
-  p4: string;
-}
-
-interface DocumentItem {
-  name: string;
-  mime: string;
-  size: number;
-  dataUrl: string;
-  isImage: boolean;
-}
-
-interface RegistrationPayload {
-  cardNo: string;
-  plate: PlateGroup;
-  subscriberName: string;
-  phone: string;
-  nationalId: string;
-  durationType: DurationType;
-  dateFrom: string | null;
-  dateTo: string | null;
-  timeFrom: string | null;
-  timeTo: string | null;
-  price: number | null;
-  orderPriority: number | null;
-  documents: Array<{
-    fileName: string;
-    mime: string;
-    size: number;
-    base64: string;
-  }>;
-  pricingSchemaId: string | null;
-}
+import { DocumentItem, PlateGroup } from '../../Domain/registration/registration-model';
+import { DurationType } from '../../Domain/Subscription-type/subscription-type.models';
 
 @Component({
   selector: 'app-registration-component',
@@ -61,8 +24,8 @@ interface RegistrationPayload {
 })
 export class RegistrationComponent implements OnInit {
   private fb = inject(FormBuilder);
-
-  private pricingSvc = inject(Registrationservice);
+  private svc = inject(Registrationservice);
+  private nfc = inject(NfcReaderService);
 
   saving = signal(false);
 
@@ -74,8 +37,8 @@ export class RegistrationComponent implements OnInit {
   loadingSchemas = signal(false);
 
   readingCard = signal(false);
-  private nfc = inject(NfcReaderService);
 
+  // === Validators ===
   plateRequiredValidator(group: AbstractControl) {
     const p1 = (group.get('p1')?.value || '').trim();
     const p4 = (group.get('p4')?.value || '').trim();
@@ -88,57 +51,27 @@ export class RegistrationComponent implements OnInit {
       pricingSchemaId: [null, [Validators.required]],
 
       plate: this.fb.group(
-        {
-          p1: [''],
-          p2: [''],
-          p3: [''],
-          p4: [''],
-        },
+        { p1: [''], p2: [''], p3: [''], p4: [''] },
         { validators: [this.plateRequiredValidator] }
       ),
+
       subscriberName: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required, Validators.pattern(/^(\+?\d{7,15})$/)]],
       nationalId: ['', [Validators.required, Validators.pattern(/^\d{10,16}$/)]],
 
-      durationType: ['Monthly' as DurationType, Validators.required],
+      durationType: [DurationType.Hours, Validators.required],
       dateFrom: [null],
       dateTo: [null],
       timeFrom: ['09:00'],
       timeTo: ['15:30'],
       price: [null],
       orderPriority: [1, [Validators.min(1)]],
-      validators: [timeRangeValidator],
     },
     { validators: [timeRangeValidator] }
   );
 
-  isHours = computed(() => this.form.get('durationType')?.value === 'Hours');
-  isDaysOrMonthly = computed(() => this.form.get('durationType')?.value !== 'Hours');
-
-  async readCard() {
-    if (this.readingCard()) return;
-    this.readingCard.set(true);
-    try {
-      const uid = await this.nfc.readUID();
-      const normalized = String(uid).trim().toUpperCase();
-
-      this.form.get('cardNo')?.setValue(normalized);
-      this.form.get('cardNo')?.markAsDirty();
-      this.form.get('cardNo')?.markAsTouched();
-      this.form.get('cardNo')?.updateValueAndValidity();
-    } catch (err: any) {
-      console.error(err);
-      alert(err?.message || 'تعذر قراءة الكارت. تأكد من تشغيل قارئ الـ NFC والسماح للاتصال.');
-    } finally {
-      this.readingCard.set(false);
-    }
-  }
-
-  openScanner(inputEl: HTMLInputElement) {
-    try {
-      inputEl.click();
-    } catch {}
-  }
+  isHours = computed(() => this.form.get('durationType')?.value === DurationType.Hours);
+  isDaysOrMonthly = computed(() => this.form.get('durationType')?.value !== DurationType.Hours);
 
   constructor() {
     this.loadPricingSchemas();
@@ -176,11 +109,35 @@ export class RegistrationComponent implements OnInit {
 
   private loadPricingSchemas() {
     this.loadingSchemas.set(true);
-    this.pricingSvc.getAll().subscribe({
+    this.svc.getAll().subscribe({
       next: (list) => this.schemas.set(list ?? []),
       error: () => this.loadingSchemas.set(false),
       complete: () => this.loadingSchemas.set(false),
     });
+  }
+
+  async readCard() {
+    if (this.readingCard()) return;
+    this.readingCard.set(true);
+    try {
+      const uid = await this.nfc.readUID();
+      const normalized = String(uid).trim().toUpperCase();
+      this.form.get('cardNo')?.setValue(normalized);
+      this.form.get('cardNo')?.markAsDirty();
+      this.form.get('cardNo')?.markAsTouched();
+      this.form.get('cardNo')?.updateValueAndValidity();
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message || 'تعذر قراءة الكارت. تأكد من تشغيل قارئ الـ NFC.');
+    } finally {
+      this.readingCard.set(false);
+    }
+  }
+
+  openScanner(inputEl: HTMLInputElement) {
+    try {
+      inputEl.click();
+    } catch {}
   }
 
   async onPickDocuments(ev: Event) {
@@ -196,6 +153,7 @@ export class RegistrationComponent implements OnInit {
         size: f.size,
         dataUrl,
         isImage: isImageMime(f.type),
+        file: f,
       });
     }
     this.documents.set([...this.documents(), ...addeds]);
@@ -225,46 +183,71 @@ export class RegistrationComponent implements OnInit {
     this.documents.set(arr);
   }
 
-  async save() {
+  private normalizeLetters(raw: string): string {
+    if (!raw) return '';
+    const letters =
+      raw
+        .replace(/\s+/g, '')
+        .toUpperCase()
+        .match(/[A-Z\u0621-\u064A]/g) ?? [];
+    return letters.join(' ');
+  }
+
+  formatLetters(ctrl: 'p2') {
+    const group = this.form.get('plate');
+    if (!group) return;
+    const c = group.get(ctrl);
+    const val = (c?.value ?? '') as string;
+    const formatted = this.normalizeLetters(val);
+    if (formatted !== val) {
+      c?.setValue(formatted, { emitEvent: false });
+      c?.markAsDirty();
+    }
+  }
+
+  private joinPlate(plate: PlateGroup): string {
+    const p1 = (plate?.p1 ?? '').toString().trim();
+    const p2 = this.normalizeLetters(plate?.p2 ?? '');
+    const p4 = (plate?.p4 ?? '').toString().trim();
+
+    return [p1, p2, p4].filter(Boolean).join(' ');
+  }
+
+  // ====== SUBMIT ======
+  save() {
     this.form.get('plate')?.markAllAsTouched();
     if (this.form.invalid) return;
 
     this.saving.set(true);
     const v = this.form.getRawValue();
 
-    const docsPayload = this.documents().map((d) => {
-      const base64 = d.dataUrl.split(',')[1] || '';
-      return {
-        fileName: d.name,
-        mime: d.mime,
-        size: d.size,
-        base64,
-      };
+    const vehicleNumber = this.joinPlate(v.plate as PlateGroup);
+
+    const fd = new FormData();
+    fd.append('Name', (v.subscriberName ?? '').trim());
+    fd.append('Phone', v.phone);
+    fd.append('NationalId', v.nationalId);
+    fd.append('VehicleNumber', vehicleNumber);
+    fd.append('CardNumber', v.cardNo);
+    fd.append('PricingSchemeId', v.pricingSchemaId);
+
+    const imgs = this.documents().filter((d) => d.isImage && d.file);
+    for (const img of imgs) {
+      fd.append('VehicleImage', img.file as File, img.name);
+    }
+
+    this.svc.addMembership(fd).subscribe({
+      next: () => {
+        alert('تم حفظ الاشتراك بنجاح ✅');
+        this.reset();
+      },
+      error: (err) => {
+        console.error(err);
+        alert('تعذر حفظ الاشتراك. تأكد من الـ API والبيانات.');
+        this.saving.set(false);
+      },
+      complete: () => this.saving.set(false),
     });
-
-    const payload: RegistrationPayload = {
-      cardNo: v.cardNo,
-      plate: v.plate,
-      subscriberName: (v.subscriberName ?? '').trim(),
-      phone: v.phone,
-      nationalId: v.nationalId,
-      durationType: v.durationType,
-      dateFrom: toIsoDateOrNull(v.dateFrom),
-      dateTo: toIsoDateOrNull(v.dateTo),
-      timeFrom: this.isHours() ? v.timeFrom : null,
-      timeTo: this.isHours() ? v.timeTo : null,
-      price: v.price,
-      orderPriority: v.orderPriority,
-      documents: docsPayload,
-      pricingSchemaId: v.pricingSchemaId,
-    };
-
-    await fakeDelay(600);
-    console.log('Registration payload', payload);
-
-    this.saving.set(false);
-    alert('تم حفظ الاشتراك بنجاح ✅');
-    this.reset();
   }
 
   reset() {
@@ -293,13 +276,16 @@ export class RegistrationComponent implements OnInit {
     const mb = kb / 1024;
     return `${mb.toFixed(1)} MB`;
   }
+
+  // private joinPlate(plate: PlateGroup): string {
+  //   const parts = [plate?.p1, plate?.p2, plate?.p3, plate?.p4]
+  //     .map((x) => (x || '').toString().trim())
+  //     .filter(Boolean);
+  //   return parts.join(' ');
+  // }
 }
 
 /* ===== Helpers ===== */
-function toIsoDateOrNull(value: any): string | null {
-  if (!value) return null;
-  return value;
-}
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -311,16 +297,12 @@ function fileToDataUrl(file: File) {
 function isImageMime(mime: string) {
   return !!mime && mime.startsWith('image/');
 }
-function fakeDelay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
 function timeRangeValidator(group: AbstractControl) {
   const type = group.get('durationType')?.value as DurationType;
-  if (type !== 'Hours') return null;
+  if (type !== DurationType.Hours) return null;
   const from = group.get('timeFrom')?.value as string | null;
   const to = group.get('timeTo')?.value as string | null;
   if (!from || !to) return null;
-
   const [fh, fm] = from.split(':').map(Number);
   const [th, tm] = to.split(':').map(Number);
   const start = fh * 60 + fm;

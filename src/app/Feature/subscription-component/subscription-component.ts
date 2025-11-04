@@ -563,7 +563,7 @@ export class SubscriptionComponent implements OnInit {
     this.resetForm();
   }
 
-  private normalizeId(obj: any): string | null {
+  public normalizeId(obj: any): string | null {
     const v = obj?.id ?? obj?.Id ?? obj?.pricingSchemaId ?? obj?.PricingSchemaId ?? null;
     if (v === null || v === undefined) return null;
     const s = String(v).trim();

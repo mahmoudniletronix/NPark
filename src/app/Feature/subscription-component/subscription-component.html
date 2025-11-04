@@ -268,7 +268,7 @@
                   <button
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="remove(r)"
-                    [disabled]="!r?.id"
+                    [disabled]="!normalizeId(r)"
                     title="حذف"
                   >
                     <i class="bi bi-trash3"></i>

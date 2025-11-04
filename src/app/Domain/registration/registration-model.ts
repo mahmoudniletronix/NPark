@@ -1,19 +1,33 @@
-type DurationType = 'Hours' | 'Days' | 'Monthly';
+export type DurationType = 'Hours' | 'Days' | 'Monthly';
 
-interface RegistrationPayload {
-  cardNo: string;
-  plate: { p1: string; p2: string; p3: string; p4: string };
-  subscriberName: string;
-  phone: string;
-  nationalId: string;
-  carImageBase64?: string | null;
+export interface PlateGroup {
+  p1: string;
+  p2: string;
+  p3: string;
+  p4: string;
+}
 
-  durationType: DurationType;
-  dateFrom: string | null;
-  dateTo: string | null;
-  timeFrom: string | null;
-  timeTo: string | null;
+export interface DocumentItem {
+  name: string;
+  mime: string;
+  size: number;
+  dataUrl: string;
+  isImage: boolean;
+  file?: File | null;
+}
 
-  price?: number | null;
-  orderPriority?: number | null;
+export interface PricingSchemaDto {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface AddParkingMembershipCommandFront {
+  Name: string;
+  Phone: string;
+  NationalId: string;
+  VehicleNumber: string;
+  CardNumber: string;
+  PricingSchemeId: string;
+  VehicleImage?: File[];
 }

@@ -9,36 +9,75 @@
           </div>
 
           <div class="controls d-flex align-items-center gap-2">
-            <select class="form-select form-select-sm" (change)="onMapChange($event)">
+            <!-- استخراج JSON -->
+            <button
+              type="button"
+              class="btn btn-primary btn-sm"
+              (click)="exportJson()"
+              [disabled]="!svgEl"
+              title="استخراج JSON"
+            >
+              استخراج JSON
+            </button>
+
+            <!-- زووم وتحكم -->
+            <div class="btn-group">
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                (click)="zoomOut()"
+                [disabled]="!svgEl"
+                title="تصغير"
+              >
+                −
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                (click)="resetView()"
+                [disabled]="!svgEl"
+                title="إعادة"
+              >
+                ⟳
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline btn-sm"
+                (click)="zoomIn()"
+                [disabled]="!svgEl"
+                title="تكبير"
+              >
+                +
+              </button>
+            </div>
+
+            <select
+              class="form-select form-select-sm"
+              (change)="onMapChange($event)"
+              [disabled]="!svgEl"
+            >
               <option value="B1">المخطط B1</option>
               <option value="B2">المخطط B2</option>
             </select>
 
-            <div class="btn-group">
-              <button class="btn btn-outline btn-sm" (click)="zoomOut()" title="تصغير">−</button>
-              <button class="btn btn-outline btn-sm" (click)="resetView()" title="إعادة">⟳</button>
-              <button class="btn btn-outline btn-sm" (click)="zoomIn()" title="تكبير">+</button>
-            </div>
-
-            <button class="btn btn-outline btn-sm" (click)="toggleSim()">
+            <!-- <button
+              type="button"
+              class="btn btn-outline btn-sm"
+              (click)="toggleSim()"
+              [disabled]="!svgEl"
+            >
               <i
                 class="bi"
                 [class.bi-play-circle]="!simulate()"
                 [class.bi-pause-circle]="simulate()"
               ></i>
               <span class="ms-1">{{ simulate() ? 'إيقاف' : 'تشغيل' }}</span>
-            </button>
-
-            <!-- زر استخراج JSON -->
-            <button class="btn btn-primary btn-sm" (click)="exportJson()" title="استخراج JSON">
-              استخراج JSON
-            </button>
+            </button> -->
           </div>
         </div>
 
         <div class="card-body p-0">
           <div class="svg-wrap">
-            <!-- نعرض الـSVG بأمان -->
             <div #svgHost class="svg-host" [innerHTML]="sanitizedSvg"></div>
           </div>
         </div>
@@ -79,9 +118,9 @@
               <button class="btn btn-danger w-100" (click)="applyStatusByLabel()">
                 تطبيق على الخريطة
               </button>
-              <small class="text-muted d-block mt-1"
-                >يمكنك أيضًا الضغط على أي خانة داخل الخريطة لتحديد الـID تلقائيًا.</small
-              >
+              <small class="text-muted d-block mt-1">
+                يمكنك أيضًا الضغط على أي خانة داخل الخريطة لتحديد الـID تلقائيًا.
+              </small>
             </div>
           </div>
 

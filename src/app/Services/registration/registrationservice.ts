@@ -11,11 +11,16 @@ export interface PricingSchemaDto {
   providedIn: 'root',
 })
 export class Registrationservice {
-  private base = `${environment.baseUrl}/PricingSchema`;
+  private pricingBase = `${environment.baseUrl}/PricingSchema`;
+  private membershipsBase = `${environment.baseUrl}/ParkingMemberships`;
 
   constructor(private http: HttpClient) {}
 
   getAll(): Observable<PricingSchemaDto[]> {
-    return this.http.get<PricingSchemaDto[]>(`${this.base}/GetWithoudPagination`);
+    return this.http.get<PricingSchemaDto[]>(`${this.pricingBase}/GetWithoudPagination`);
+  }
+
+  addMembership(fd: FormData) {
+    return this.http.post(`${this.membershipsBase}/Add`, fd);
   }
 }

@@ -11,6 +11,7 @@ import {
   signal,
   ViewChild,
   AfterViewInit,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -35,19 +36,18 @@ interface Slot {
   templateUrl: './parking-guidance-diagram-component.html',
   styleUrl: './parking-guidance-diagram-component.css',
 })
-export class ParkingGuidanceDiagramComponent implements AfterViewInit {
+export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy {
   @Input() floor = 'B1';
   @Output() detected = new EventEmitter<ExtractResult>();
 
-  /** ⚠️ لم نعد نستخدم hostRef لحقن الـSVG */
   @ViewChild('svgHost', { static: true }) svgHost?: ElementRef<HTMLDivElement>;
 
-  // === DI
+  // DI
   private http = inject(HttpClient);
   private renderer = inject(Renderer2);
   private sanitizer = inject(DomSanitizer);
 
-  // === SVG state
+  // SVG state
   svgEl?: SVGSVGElement;
   sanitizedSvg: SafeHtml = '';
   svgMarkup = signal<string>('');
@@ -57,12 +57,11 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
   private readonly B2_URL = 'assets/parking/08-26-B2[نسخة_للادارى].svg';
   svgUrl = signal<string>(this.B1_URL);
 
-  // === Extracted
+  // Extracted
   stations = signal<Station[]>([]);
   lanes = signal<Lane[]>([]);
 
-  // === اختيار/بحث
-  selectedId = signal<string | null>(null);
+  // اختيار/بحث
   search = signal<string>('');
   filteredIds = computed(() => {
     const q = this.search().trim().toLowerCase();
@@ -74,7 +73,7 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     );
   });
 
-  // === كاونتر الحالات
+  // كاونتر الحالات
   private _slots = signal<Slot[]>([
     { id: 'L1-A1', status: 'free', sensorBattery: 88 },
     { id: 'L1-A2', status: 'occupied', plate: 'س م ن ١٢٣٤', sensorBattery: 72 },
@@ -91,12 +90,18 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
   formStatus = signal<SlotStatus>('free');
   activeSelectedId = signal<string | null>(null);
 
-  // === محاكاة
+  // محاكاة
   simulate = signal(false);
   private timer: any;
 
-  // === Zoom & Pan
+  // Zoom & Pan
   private pzWrap?: SVGGElement;
+  private wheelBound?: (e: WheelEvent) => void;
+  private dblClickBound?: (e: MouseEvent) => void;
+  private mouseDownBound?: (e: MouseEvent) => void;
+  private mouseMoveBound?: (e: MouseEvent) => void;
+  private mouseUpBound?: (e: MouseEvent) => void;
+
   scale = 1;
   minScale = 0.4;
   maxScale = 6;
@@ -126,7 +131,9 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       const url = this.svgUrl();
       this.loadSvg(url);
     });
+
     effect(() => this.applyDataToSvg());
+
     effect(() => {
       if (this.simulate()) this.startSim();
       else this.stopSim();
@@ -137,9 +144,19 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     this.loadSvg(this.svgUrl());
   }
 
-  // ====== تحميل الـSVG وتطعيمه في الـDOM بأمان
+  ngOnDestroy(): void {
+    this.stopSim();
+    this.ro?.disconnect();
+    this.detachGlobalHandlers();
+  }
+
+  // ====== تحميل الـSVG
   private async loadSvg(url: string) {
     if (!url) return;
+
+    // فضّل إلغاء ربط الأحداث القديمة قبل حقن ملف جديد
+    this.detachGlobalHandlers();
+
     const svgText = await this.http.get(url, { responseType: 'text' }).toPromise();
     if (!svgText) return;
 
@@ -153,10 +170,11 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
 
       this.svgEl = found;
 
+      // إعادة تهيئة
+      (this.svgEl as any).__boundClick__ = false;
+
       this.preparePanZoom();
-
       this.indexSlotsOnce();
-
       this.applyDataToSvg();
     });
   }
@@ -165,17 +183,21 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     const key = (e.target as HTMLSelectElement).value;
     this.switchSvg(key);
   }
+
   switchSvg(mapKey: string) {
     this.svgUrl.set(mapKey === 'B2' ? this.B2_URL : this.B1_URL);
+    this.activeSelectedId.set(null);
   }
 
   onSearchInput(e: Event) {
     this.search.set((e.target as HTMLInputElement).value ?? '');
     this.applyDataToSvg();
   }
+
   onSlotIdInput(e: Event) {
     this.formSlotId.set((e.target as HTMLInputElement).value ?? '');
   }
+
   onStatusChange(e: Event) {
     this.formStatus.set((e.target as HTMLSelectElement).value as SlotStatus);
   }
@@ -194,7 +216,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     a.click();
   }
 
-  // ====== تمييز خانة مختارة
   private highlightSelected(el: Element) {
     const svg = this.svgEl;
     if (!svg) return;
@@ -213,9 +234,9 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     this._slots.set(arr);
     this.activeSelectedId.set(id);
     this.applyDataToSvg();
+    this.zoomToSlot(id, 2.2); // سلوك لطيف: ركّز على الخانة بعد التعديل
   }
 
-  // ====== فهرسة الخانات مرة واحدة
   private indexSlotsOnce() {
     const svg = this.svgEl;
     if (!svg) return;
@@ -231,7 +252,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     });
   }
 
-  // ====== تطبيق الداتا (ألوان الحالات + تظليل البحث + حَقن sensor-dot)
   private applyDataToSvg() {
     const svg = this.svgEl;
     if (!svg) return;
@@ -247,21 +267,18 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       );
     });
 
-    // تظليل نتائج البحث
+    // تظليل البحث
     const highlighted = this.filteredIds();
     highlighted.forEach((id) => {
       const el = svg.querySelector(`[data-slot-id="${id}"]`);
       if (el) el.classList.add('slot--highlight');
     });
 
-    // ألوان الحالة + Sensor
+    // ألوان الحالة + sensor-dot
     for (const s of this._slots()) {
       const el = svg.querySelector<SVGGElement | SVGRectElement>(`[data-slot-id="${s.id}"]`);
       if (!el) continue;
-
       this.renderer.addClass(el, `slot--${s.status}`);
-
-      // sensor-dot + title
       this.upsertSensorForSlot(el as any, s.id, s.sensorBattery, /*withLabel*/ false);
     }
 
@@ -272,11 +289,10 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       if (el) el.classList.add('slot--selected');
     }
 
-    // Click بالماوس لالتقاط الـID
+    // Bind click مرة واحدة
     this.bindPointerHandlersOnce();
   }
 
-  // ====== إضافة sensor-dot داخل كل خانة
   private upsertSensorForSlot(
     slotEl: SVGGElement | SVGGraphicsElement,
     id: string,
@@ -336,10 +352,12 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     titleEl.textContent = `ID: ${id}${battery != null ? ` | بطارية: ${battery}%` : ''}`;
   }
 
+  // ====== Pan & Zoom
   private preparePanZoom() {
     const svg = this.svgEl;
     if (!svg) return;
 
+    // أنشئ / استخدم غلاف التحريك/التكبير
     this.pzWrap =
       svg.querySelector<SVGGElement>('#pz-wrap') ??
       document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -351,17 +369,19 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       svg.appendChild(this.pzWrap);
     }
 
+    // ضبط الـviewBox
     const vb = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
-    if (vb.length === 4) {
+    if (vb.length === 4 && vb.every((n) => !Number.isNaN(n))) {
       this.viewW = vb[2];
       this.viewH = vb[3];
     } else {
-      // fallback
       const bb = svg.getBBox?.();
       this.viewW = bb?.width || svg.clientWidth || 1000;
       this.viewH = bb?.height || svg.clientHeight || 800;
+      svg.setAttribute('viewBox', `0 0 ${this.viewW} ${this.viewH}`);
     }
 
+    // قياس حاوية الـSVG
     const host = this.svgHost?.nativeElement;
     if (host) {
       this.ro?.disconnect();
@@ -369,7 +389,7 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
         const rect = host.getBoundingClientRect();
         this.hostW = rect.width;
         this.hostH = rect.height;
-        // this.fitView();
+        this.fitView(); // أعِد الضبط عند تغيير الحجم
       });
       this.ro.observe(host);
       const rect = host.getBoundingClientRect();
@@ -377,47 +397,55 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       this.hostH = rect.height;
     }
 
+    // اربط الأحداث (ماوس + كيبورد + تاتش)
     this.bindWheel(svg);
     this.bindMousePan(svg);
     this.bindPinch(svg);
 
+    // بداية مناسبة
     this.fitView();
   }
 
   private bindWheel(svg: SVGSVGElement) {
-    svg.addEventListener(
-      'wheel',
-      (e: WheelEvent) => {
-        e.preventDefault();
-        const rect = svg.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
-        const factor = 1 + -e.deltaY * 0.0015;
-        this.zoomAt(factor, mx, my);
-      },
-      { passive: false }
-    );
+    // امسح إن كان فيه ربط سابق
+    this.wheelBound && svg.removeEventListener('wheel', this.wheelBound as any);
+    this.dblClickBound && svg.removeEventListener('dblclick', this.dblClickBound as any);
 
-    svg.addEventListener('dblclick', (e: MouseEvent) => {
+    this.wheelBound = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = svg.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const factor = 1 + -e.deltaY * 0.0015;
+      this.zoomAt(factor, mx, my);
+    };
+    this.dblClickBound = (e: MouseEvent) => {
       const rect = svg.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
       this.zoomAt(1.25, mx, my);
-    });
+    };
+
+    svg.addEventListener('wheel', this.wheelBound, { passive: false });
+    svg.addEventListener('dblclick', this.dblClickBound);
   }
 
   private bindMousePan(svg: SVGSVGElement) {
-    svg.addEventListener('mousedown', (e: MouseEvent) => {
-      const t = e.target as Element;
-      if (t?.closest?.('[data-slot-id]')) return;
+    // امسح إن كان فيه ربط سابق
+    this.mouseDownBound && svg.removeEventListener('mousedown', this.mouseDownBound);
+    this.mouseMoveBound && window.removeEventListener('mousemove', this.mouseMoveBound);
+    this.mouseUpBound && window.removeEventListener('mouseup', this.mouseUpBound);
 
+    this.mouseDownBound = (e: MouseEvent) => {
+      const t = e.target as Element;
+      if (t?.closest?.('[data-slot-id]')) return; // ما نحركش لو ضغط على خانة
       this.isPanning = true;
       this.lastX = e.clientX;
       this.lastY = e.clientY;
       (svg as any).style.cursor = 'grabbing';
-    });
+    };
 
-    window.addEventListener('mousemove', (e: MouseEvent) => {
+    this.mouseMoveBound = (e: MouseEvent) => {
       if (!this.isPanning) return;
       const dx = e.clientX - this.lastX;
       const dy = e.clientY - this.lastY;
@@ -426,14 +454,17 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       this.panX += dx;
       this.panY += dy;
       this.applyTransform();
-    });
+    };
 
-    const end = () => {
+    this.mouseUpBound = () => {
       this.isPanning = false;
       (svg as any).style.cursor = 'default';
     };
-    window.addEventListener('mouseup', end);
-    svg.addEventListener('mouseleave', end);
+
+    svg.addEventListener('mousedown', this.mouseDownBound);
+    window.addEventListener('mousemove', this.mouseMoveBound);
+    window.addEventListener('mouseup', this.mouseUpBound);
+    svg.addEventListener('mouseleave', this.mouseUpBound);
   }
 
   private bindPinch(svg: SVGSVGElement) {
@@ -502,29 +533,19 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     svg.addEventListener('touchcancel', endTouch);
   }
 
-  private bindPointerHandlersOnce() {
-    const svg = this.svgEl;
-    if (!svg) return;
-    if ((svg as any).__boundClick__) return;
-    (svg as any).__boundClick__ = true;
-
-    svg.addEventListener('click', (e: MouseEvent) => {
-      const t = e.target as Element;
-      const slotEl = t?.closest?.('[data-slot-id]') as SVGGElement | null;
-      if (slotEl) {
-        const id = slotEl.getAttribute('data-slot-id');
-        if (id) {
-          this.activeSelectedId.set(id);
-          this.formSlotId.set(id);
-          this.highlightSelected(slotEl);
-        }
-      }
-    });
+  private detachGlobalHandlers() {
+    if (!this.svgEl) return;
+    this.wheelBound && this.svgEl.removeEventListener('wheel', this.wheelBound);
+    this.dblClickBound && this.svgEl.removeEventListener('dblclick', this.dblClickBound);
+    this.mouseDownBound && this.svgEl.removeEventListener('mousedown', this.mouseDownBound);
+    this.mouseMoveBound && window.removeEventListener('mousemove', this.mouseMoveBound);
+    this.mouseUpBound && window.removeEventListener('mouseup', this.mouseUpBound);
   }
 
   private applyTransform() {
     if (!this.pzWrap || !this.svgEl) return;
 
+    // حدود بسيطة تمنع الطيران بعيدًا
     const maxPanX = this.hostW;
     const maxPanY = this.hostH;
     const minPanX = -this.viewW * this.scale;
@@ -532,6 +553,7 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
 
     this.panX = this.clamp(this.panX, minPanX + -0.2 * this.hostW, maxPanX * 0.2);
     this.panY = this.clamp(this.panY, minPanY + -0.2 * this.hostH, maxPanY * 0.2);
+
     this.pzWrap.setAttribute(
       'transform',
       `translate(${this.panX}, ${this.panY}) scale(${this.scale})`
@@ -546,6 +568,33 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     this.panX = mx - sx * this.scale;
     this.panY = my - sy * this.scale;
     this.applyTransform();
+  }
+
+  // ====== أزرار التكبير/التصغير (حول مركز الـSVG)
+  private svgCenter(): { mx: number; my: number } {
+    const svg = this.svgEl;
+    if (!svg) return { mx: this.hostW / 2, my: this.hostH / 2 };
+    const w = svg.clientWidth || this.viewW;
+    const h = svg.clientHeight || this.viewH;
+    return { mx: w / 2, my: h / 2 };
+  }
+
+  zoomIn(step = 1.2) {
+    const { mx, my } = this.svgCenter();
+    this.zoomAt(step, mx, my);
+  }
+
+  zoomOut(step = 1.2) {
+    const { mx, my } = this.svgCenter();
+    this.zoomAt(1 / step, mx, my);
+  }
+
+  resetView() {
+    this.fitView();
+  }
+
+  private clamp(v: number, min: number, max: number) {
+    return Math.max(min, Math.min(max, v));
   }
 
   fitView() {
@@ -566,29 +615,9 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     this.scale = s;
     const cx = bb.x + bb.width / 2;
     const cy = bb.y + bb.height / 2;
-    this.panX = this.hostW / 2 - cx * this.scale;
-    this.panY = this.hostH / 2 - cy * this.scale;
+    this.panX = (this.svgEl?.clientWidth || this.hostW) / 2 - cx * this.scale;
+    this.panY = (this.svgEl?.clientHeight || this.hostH) / 2 - cy * this.scale;
     this.applyTransform();
-  }
-
-  zoomIn() {
-    const host = this.svgHost?.nativeElement?.querySelector('svg')?.getBoundingClientRect();
-    const mx = host ? host.left + host.width / 2 : 0;
-    const my = host ? host.top + host.height / 2 : 0;
-    this.zoomAt(1.2, (host?.width ?? 0) / 2, (host?.height ?? 0) / 2);
-  }
-
-  zoomOut() {
-    const host = this.svgHost?.nativeElement?.querySelector('svg')?.getBoundingClientRect();
-    this.zoomAt(1 / 1.2, (host?.width ?? 0) / 2, (host?.height ?? 0) / 2);
-  }
-
-  resetView() {
-    this.fitView();
-  }
-
-  private clamp(v: number, min: number, max: number) {
-    return Math.max(min, Math.min(max, v));
   }
 
   zoomToSlot(id: string, targetScale = 2.5) {
@@ -598,9 +627,11 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
     this.activeSelectedId.set(id);
     this.applyDataToSvg();
   }
+
   toggleSim() {
     this.simulate.update((v) => !v);
   }
+
   private startSim() {
     this.timer = setInterval(() => {
       const copy = [...this._slots()];
@@ -614,14 +645,36 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit {
       this.applyDataToSvg();
     }, 1300);
   }
+
   private stopSim() {
     if (this.timer) clearInterval(this.timer);
   }
+
   private nextStatus(x: SlotStatus): SlotStatus {
     const r = Math.random();
     if (x === 'free') return r < 0.7 ? 'occupied' : 'free';
     if (x === 'occupied') return r < 0.5 ? 'free' : 'occupied';
     if (x === 'reserved') return r < 0.2 ? 'free' : 'reserved';
     return 'disabled';
+  }
+
+  private bindPointerHandlersOnce() {
+    const svg = this.svgEl;
+    if (!svg) return;
+    if ((svg as any).__boundClick__) return;
+    (svg as any).__boundClick__ = true;
+
+    svg.addEventListener('click', (e: MouseEvent) => {
+      const t = e.target as Element;
+      const slotEl = t?.closest?.('[data-slot-id]') as SVGGElement | null;
+      if (slotEl) {
+        const id = slotEl.getAttribute('data-slot-id');
+        if (id) {
+          this.activeSelectedId.set(id);
+          this.formSlotId.set(id);
+          this.highlightSelected(slotEl);
+        }
+      }
+    });
   }
 }

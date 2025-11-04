@@ -161,3 +161,13 @@ svg [data-slot-id].slot--disabled > g.sensor > .sensor-dot {
   stroke: #fff;
   stroke-width: 1;
 }
+.card-header .btn,
+.card-header .form-select {
+  pointer-events: auto;
+}
+
+.card-header .btn[disabled],
+.card-header .form-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

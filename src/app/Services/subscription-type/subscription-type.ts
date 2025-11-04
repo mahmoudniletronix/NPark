@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable, throwError } from 'rxjs';
 import {
   AddPricingSchemaCommand,
   DurationType,
@@ -93,7 +93,52 @@ export class SubscriptionType {
     return this.http.put<PricingRow>(`${this.base}/Update`, payload);
   }
 
-  delete(id: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/Delete/${id}`, {});
+  delete(id: string | number): Observable<void> {
+    const sid = encodeURIComponent(String(id).trim());
+
+    // 1) الأغلب: DELETE /Delete?id=...
+    const tryDeleteQuery = this.http.delete<void>(`${this.base}/Delete`, {
+      params: new HttpParams().set('id', String(id).trim()),
+    });
+
+    // 2) بدائل شائعة:
+    const tryDeletePath = () => this.http.delete<void>(`${this.base}/Delete/${sid}`);
+    const tryPostPath = () => this.http.post<void>(`${this.base}/Delete/${sid}`, {});
+    const tryPostQuery = () =>
+      this.http.post<void>(`${this.base}/Delete`, null, {
+        params: new HttpParams().set('id', String(id).trim()),
+      });
+    const tryPostBody = () =>
+      this.http.post<void>(`${this.base}/Delete`, { id: String(id).trim() });
+
+    return tryDeleteQuery.pipe(
+      catchError((err1) => {
+        if (err1?.status === 404 || err1?.status === 405) {
+          return tryDeletePath().pipe(
+            catchError((err2) => {
+              if (err2?.status === 404 || err2?.status === 405) {
+                return tryPostPath().pipe(
+                  catchError((err3) => {
+                    if (err3?.status === 404 || err3?.status === 405) {
+                      return tryPostQuery().pipe(
+                        catchError((err4) => {
+                          if (err4?.status === 404 || err4?.status === 405) {
+                            return tryPostBody();
+                          }
+                          return throwError(() => err4);
+                        })
+                      );
+                    }
+                    return throwError(() => err3);
+                  })
+                );
+              }
+              return throwError(() => err2);
+            })
+          );
+        }
+        return throwError(() => err1);
+      })
+    );
   }
 }

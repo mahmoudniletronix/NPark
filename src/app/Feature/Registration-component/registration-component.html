@@ -1,6 +1,11 @@
-<div class="registration page-rtl container-fluid" dir="rtl" [formGroup]="form">
+<form
+  class="registration page-rtl container-fluid"
+  dir="rtl"
+  [formGroup]="form"
+  (ngSubmit)="save()"
+  novalidate
+>
   <div class="row g-4">
-    <!-- ===== 1) بيانات المشترك ===== -->
     <div class="col-12 col-lg-4">
       <div class="card fancy-card card--glass shadow-sm h-100">
         <div class="card-header d-flex align-items-center justify-content-between">
@@ -12,21 +17,29 @@
         </div>
 
         <div class="card-body">
-          <!-- <div class="mb-3">
-            <label class="form-label">رقم الكارت</label>
-            <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
-            <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
-              برجاء إدخال رقم كارت صحيح
-            </div>
-          </div> -->
-
-          <div class="mb-3">
+          <div class="mb-3" formGroupName="plate">
             <label class="form-label d-block">رقم السيارة</label>
-            <div class="plate-input" formGroupName="plate">
-              <input maxlength="5" class="w-100" formControlName="p1" />
+
+            <div class="plate-input">
+              <input
+                maxlength="5"
+                class="w-100"
+                formControlName="p4"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                placeholder="5678"
+              />
               <span class="sep">ـ</span>
-              <input maxlength="5" class="w-100" formControlName="p4" />
+
+              <input
+                maxlength="7"
+                class="w-100 text-center"
+                formControlName="p2"
+                (input)="formatLetters('p2')"
+                placeholder="أ ب ج"
+              />
             </div>
+
             <div
               class="invalid-feedback d-block"
               *ngIf="form.get('plate')?.touched && form.get('plate')?.invalid"
@@ -44,7 +57,7 @@
                 placeholder="مثال: حسام خالد"
               />
               <div class="invalid-feedback d-block" *ngIf="hasErr('subscriberName')">
-                الاسم مطلوب
+                الاسم مطلوب (3 أحرف فأكثر)
               </div>
             </div>
             <div class="mb-3 col-6">
@@ -76,16 +89,16 @@
           <span *ngIf="loadingSchemas()" class="text-muted small">جاري التحميل…</span>
         </div>
 
-        <div class="card-body" [formGroup]="form">
+        <div class="card-body">
           <div class="mb-3">
             <label class="form-label">اختر نوع الاشتراك</label>
             <select class="form-select" formControlName="pricingSchemaId">
-              <option [ngValue]="null" disabled selected>— اختر نوع الاشتراك —</option>
+              <option [ngValue]="null" disabled>— اختر نوع الاشتراك —</option>
               <option *ngFor="let s of schemas()" [value]="s.id">{{ s.name }}</option>
             </select>
             <div
               class="invalid-feedback d-block"
-              *ngIf="form.get('pricingSchemaId')?.invalid && form.touched"
+              *ngIf="form.get('pricingSchemaId')?.touched && form.get('pricingSchemaId')?.invalid"
             >
               اختيار نوع الاشتراك مطلوب
             </div>
@@ -99,12 +112,13 @@
           <div class="mb-3">
             <label class="form-label">رقم الكارت</label>
             <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
+            <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
+              رقم الكارت يجب أن يكون أحرف/أرقام هيكس بين 6 و 16.
+            </div>
           </div>
 
           <div class="mb-3">
-            <!-- <label class="form-label">رقم الكارت</label> -->
             <div class="d-flex gap-2">
-              <!-- <input class="form-control" formControlName="cardNo" placeholder="مثال: 19F7A7B3" /> -->
               <button
                 class="btn btn-outline-primary"
                 type="button"
@@ -115,9 +129,6 @@
                 <i class="bi bi-upc-scan"></i>
                 <span class="ms-1">{{ readingCard() ? 'جاري القراءة…' : 'قراءة الكارت' }}</span>
               </button>
-            </div>
-            <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
-              رقم الكارت يجب أن يكون أحرف/أرقام هيكس بين 6 و 16.
             </div>
           </div>
         </div>
@@ -136,7 +147,6 @@
           <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
             <label class="form-label m-0">رفع مستندات</label>
 
-            <!-- رفع ملفات عادي -->
             <input
               type="file"
               multiple
@@ -144,7 +154,6 @@
               accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
             />
 
-            <!-- زر الماسح (الكاميرا) -->
             <button
               type="button"
               class="btn btn-outline-primary btn-sm"
@@ -154,7 +163,6 @@
               مسح بالمـاسـح/الكاميرا
             </button>
 
-            <!-- إدخال كاميرا مخفي: يفتح بالكليك على الزر -->
             <input
               #camInput
               type="file"
@@ -192,6 +200,7 @@
     </div>
   </div>
 
+  <!-- Preview Overlay -->
   <div
     class="preview-overlay"
     *ngIf="previewOpen()"
@@ -225,4 +234,13 @@
       </ng-container>
     </div>
   </div>
-</div>
+
+  <div class="d-flex gap-2 justify-content-end mt-3">
+    <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
+      {{ saving() ? 'جاري الحفظ...' : 'حفظ الاشتراك' }}
+    </button>
+    <!-- <button type="button" class="btn btn-outline-secondary" (click)="reset()" [disabled]="saving()">
+      مسح
+    </button> -->
+  </div>
+</form>
