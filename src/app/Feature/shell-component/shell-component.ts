@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnDestroy } from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { PanelMenuModule } from 'primeng/panelmenu';
 import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-shell-component',
@@ -10,7 +11,17 @@ import { RouterModule } from '@angular/router';
   templateUrl: './shell-component.html',
   styleUrl: './shell-component.css',
 })
-export class ShellComponent {
+export class ShellComponent implements OnDestroy {
+  gateOpen = false;
+  private sub?: Subscription;
+  constructor(private router: Router) {
+    this.sub = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        this.gateOpen = false;
+      }
+    });
+  }
+
   items = [
     { label: 'Overview', routerLink: ['/'], icon: 'pi pi-home' },
     {
@@ -24,4 +35,11 @@ export class ShellComponent {
     { separator: true },
     { label: 'Settings', routerLink: ['/settings'], icon: 'pi pi-cog' },
   ];
+
+  toggleGate() {
+    this.gateOpen = !this.gateOpen;
+  }
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
 }

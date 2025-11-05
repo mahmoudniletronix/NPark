@@ -1,0 +1,131 @@
+.exit-theme {
+  --surface: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --border: #e5e7eb;
+  --shadow: 0 8px 30px rgba(2, 6, 23, 0.08);
+  --glow: 0 0 0 4px rgba(225, 29, 72, 0.08);
+  --grad1: linear-gradient(135deg, #fff5f7 0%, #f0f9ff 100%);
+  --accent: #ef4444;
+  --accent-2: #0ea5e9;
+}
+
+.card.shadow-soft {
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.card-header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.card-footer {
+  border-top: 1px solid var(--border);
+}
+
+.glass {
+  background: radial-gradient(800px 400px at -10% -20%, #ffe4e6 0%, transparent 60%) no-repeat,
+    radial-gradient(700px 400px at 120% 10%, #e0f2fe 0%, transparent 60%) no-repeat, var(--surface);
+}
+
+.chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  background: #fff;
+}
+
+.chip--exit {
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.helper {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 8px;
+  color: var(--muted);
+  min-height: 220px;
+}
+
+.big-icon {
+  font-size: 48px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 16px;
+  border: 1px dashed var(--border);
+  box-shadow: var(--glow);
+}
+
+.helper-text .title {
+  font-weight: 700;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.helper-text .sub {
+  font-size: 13px;
+}
+
+.summary .label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.summary .value {
+  font-weight: 600;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
+  letter-spacing: 0.2px;
+}
+
+.total.box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  margin-top: 6px;
+}
+
+.total .amount {
+  font-weight: 800;
+  font-size: 20px;
+  color: #14532d;
+}
+
+.badge.pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.theme-red {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.soft {
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  background: linear-gradient(0deg, rgba(14, 165, 233, 0.04), rgba(14, 165, 233, 0.04));
+}

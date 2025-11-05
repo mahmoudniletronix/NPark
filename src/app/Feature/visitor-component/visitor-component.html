@@ -1,0 +1,249 @@
+<div class="visitors-theme container-fluid page-rtl">
+  <div class="row g-4">
+    <!-- ===== Block 1: All data ===== -->
+    <div class="col-12 col-xl-4">
+      <div class="card fancy-card shadow-soft h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-collection"></i>
+            <h5 class="mb-0 fw-bold">All Records</h5>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge pill badge--info">Block 1</span>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <!-- Toolbar (sticky) -->
+          <div class="toolbar sticky-top">
+            <div class="search">
+              <i class="bi bi-search"></i>
+              <input
+                class="form-control"
+                placeholder="Search..."
+                [ngModel]="q()"
+                (ngModelChange)="q.set($event)"
+              />
+            </div>
+            <button class="btn btn-outline-secondary btn-icon" (click)="fetch()" title="Reload">
+              <i class="bi bi-arrow-repeat"></i>
+            </button>
+          </div>
+
+          <div *ngIf="loading()" class="text-center py-4">
+            <div class="spinner-border"></div>
+          </div>
+          <!-- <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div> -->
+
+          <div class="list-wrap">
+            <ul class="list-unstyled list-grid">
+              <li
+                *ngFor="let item of filtered(); trackBy: trackById"
+                class="list-row"
+                [class.active]="isActive(item)"
+              >
+                <button class="row-main" (click)="select(item)">
+                  <div class="row-title">
+                    <span class="name">{{ item.name }}</span>
+                    <span class="muted">#{{ item.id | slice : 0 : 8 }}</span>
+                  </div>
+                  <div class="row-meta">
+                    <span class="chip chip--soft">{{ badgeFor(item) }}</span>
+                    <span class="chip chip--price">$ {{ item.price }}</span>
+                    <span class="chip" [class.ok]="item.isRepeated" [class.no]="!item.isRepeated">
+                      {{ item.isRepeated ? 'Repeated' : 'One-time' }}
+                    </span>
+                  </div>
+                </button>
+
+                <div class="row-actions">
+                  <button
+                    class="btn btn-sm btn-outline-secondary btn-icon"
+                    title="Details"
+                    (click)="select(item)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    class="btn btn-sm btn-primary arrow-btn"
+                    title="Send to Block 2"
+                    (click)="addToPicked(item)"
+                  >
+                    <i class="bi bi-arrow-left"></i>
+                  </button>
+                </div>
+              </li>
+            </ul>
+
+            <div *ngIf="!loading() && filtered().length === 0" class="empty-state">
+              <i class="bi bi-inboxes"></i>
+              <div>No results</div>
+              <small class="muted">Try another keyword</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Block 2: Picked + Order ===== -->
+    <div class="col-12 col-xl-4">
+      <div class="card fancy-card shadow-soft h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-list-ol"></i>
+            <h5 class="mb-0 fw-bold">Selected & Order</h5>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge pill badge--warning">Block 2</span>
+            <button
+              class="btn btn-sm btn-outline-danger"
+              (click)="clearPicked()"
+              [disabled]="picked().length === 0"
+              title="Clear"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div cdkDropList (cdkDropListDropped)="dropReorder($event)" class="picked-list">
+            <div
+              class="picked-row"
+              *ngFor="let p of picked(); let i = index; trackBy: trackById"
+              cdkDrag
+              [class.active]="isActive(p)"
+            >
+              <div class="drag-handle" cdkDragHandle title="Drag to reorder">
+                <i class="bi bi-grip-vertical"></i>
+              </div>
+
+              <button class="picked-main" (click)="select(p)">
+                <span class="order-badge">{{ i + 1 }}</span>
+                <div class="content">
+                  <div class="title">{{ p.name }}</div>
+                  <div class="meta">
+                    <span class="chip chip--soft">{{ badgeFor(p) }}</span>
+                    <span class="chip chip--price">$ {{ p.price }}</span>
+                  </div>
+                </div>
+              </button>
+
+              <div class="qty-controls d-flex align-items-center gap-2">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="dec(p)"
+                  title="Decrease"
+                >
+                  −
+                </button>
+
+                <input
+                  class="form-control form-control-sm text-center"
+                  type="number"
+                  min="0"
+                  [ngModel]="qty()[p.id] || 0"
+                  (ngModelChange)="onQtyChange(p, $event)"
+                  readonly
+                  style="width: 70px"
+                />
+
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  (click)="inc(p)"
+                  title="Increase"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="picked().length === 0" class="empty">
+              <i class="bi bi-arrow-left-right me-2"></i>
+              Drag or send items here to build your order
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mb-3">
+          <button
+            class="btn btn-primary px-4"
+            [disabled]="picked().length === 0"
+            (click)="submitOrder()"
+          >
+            <i class="bi bi-send me-1"></i>
+            Add Order
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Block 3: Details ===== -->
+    <div class="col-12 col-xl-4">
+      <div class="card fancy-card shadow-soft h-100">
+        <div class="card-header d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle"></i>
+            <h5 class="mb-0 fw-bold">Details</h5>
+          </div>
+          <span class="badge pill badge--success">Block 3</span>
+        </div>
+
+        <div class="card-body">
+          <ng-container *ngIf="active(); else noSel">
+            <div class="details">
+              <div class="hero">
+                <div class="hero-title">
+                  {{ active()!.name }}
+                  <span class="hero-tag">Pricing</span>
+                </div>
+                <div class="hero-sub">#{{ active()!.id }}</div>
+              </div>
+
+              <div class="grid">
+                <div class="kv">
+                  <div class="k"><i class="bi bi-cash-coin"></i> Price</div>
+                  <div class="v">$ {{ active()!.price }}</div>
+                </div>
+                <div class="kv">
+                  <div class="k"><i class="bi bi-clock-history"></i> Type</div>
+                  <div class="v">{{ mapDuration(active()!.durationType) }}</div>
+                </div>
+                <div class="kv">
+                  <div class="k"><i class="bi bi-123"></i> Total</div>
+                  <div class="v">{{ active()!.totalHours ?? '—' }}</div>
+                </div>
+                <div class="kv">
+                  <div class="k"><i class="bi bi-repeat"></i> Repeated</div>
+                  <div class="v">
+                    <span
+                      class="chip"
+                      [class.ok]="active()!.isRepeated"
+                      [class.no]="!active()!.isRepeated"
+                    >
+                      {{ active()!.isRepeated ? 'Yes' : 'No' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="hint">
+                <i class="bi bi-info-circle me-1"></i>
+                Click items in Block 1 or 2 to update this panel.
+              </div>
+            </div>
+          </ng-container>
+
+          <ng-template #noSel>
+            <div class="no-sel">
+              <i class="bi bi-hand-index-thumb"></i>
+              <p>Select a record to see its full details here.</p>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

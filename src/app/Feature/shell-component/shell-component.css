@@ -1,6 +1,5 @@
 :host {
   display: block;
-  /* height: 100vh; */
 }
 
 .app-sidebar {
@@ -46,4 +45,35 @@
   .app-sidebar {
     width: 220px;
   }
+}
+.app-sidebar {
+  width: 260px;
+  background: #0b1220;
+  min-height: 100vh;
+}
+
+.nav-link {
+  cursor: pointer;
+}
+
+.submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  margin-bottom: 6px;
+}
+
+.btn-toggle {
+  background: transparent;
+  border: none;
+  padding: 0.375rem 0.5rem;
+  width: 100%;
+  text-align: left;
+}
+
+.nav-link.active {
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
 }

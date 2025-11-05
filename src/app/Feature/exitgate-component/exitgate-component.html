@@ -1,61 +1,81 @@
-<div class="tickets-theme container-fluid">
+<div class="exit-theme container-fluid">
   <!-- Split layout -->
   <div class="row g-3 mb-3">
-    <!-- Left: QR & actions -->
+    <!-- Left: Ticket summary / helper -->
     <div class="col-12 col-lg-6">
-      <div class="card h-100 shadow-soft glass-entry">
+      <div class="card h-100 shadow-soft glass">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-            <i class="bi bi-door-open"></i> Issue Ticket
+            <i class="bi bi-box-arrow-right"></i> Exit Ticket
           </h5>
-          <span class="chip chip--entry">ENTRY</span>
+          <span class="chip chip--exit">EXIT</span>
         </div>
 
-        <div class="card-body d-flex flex-column align-items-center justify-content-center">
-          <div class="qr-preview">
-            <ng-container *ngIf="currentIssuedQr; else noQr">
-              <!-- لو الـ API بيرجع Base64 image -->
-              <img
-                *ngIf="currentIssuedQrType === 'image'"
-                [src]="currentIssuedQr"
-                alt="Ticket QR"
-                class="img-fluid rounded border"
-              />
-              <!-- لو بيرجع نص QR فنحوّله عبر data url -->
-              <img
-                *ngIf="currentIssuedQrType === 'text'"
-                [src]="qrDataUrl(currentIssuedQr!)"
-                alt="Ticket QR"
-                class="img-fluid rounded border"
-              />
-            </ng-container>
-            <ng-template #noQr>
-              <div class="placeholder text-muted text-center">
-                <div class="bi bi-qr-code display-6 d-block mb-2"></div>
-                <div>No ticket yet — click “Add New Ticket”</div>
+        <div class="card-body d-flex flex-column justify-content-center">
+          <!-- Before scan -->
+          <div *ngIf="!scannedTicket" class="helper">
+            <div class="big-icon">
+              <i class="bi bi-qr-code-scan"></i>
+            </div>
+            <div class="helper-text">
+              <div class="title">Ready to collect</div>
+              <div class="sub">امسح التذكرة من اليمين لعرض التفاصيل والتحصيل</div>
+            </div>
+          </div>
+
+          <!-- After scan: compact summary -->
+          <div *ngIf="scannedTicket as t" class="summary">
+            <div class="row g-3">
+              <div class="col-6">
+                <div class="label">ID</div>
+                <div class="value mono">{{ t.id }}</div>
               </div>
-            </ng-template>
-          </div>
+              <div class="col-6">
+                <div class="label">Plate</div>
+                <div class="value mono">{{ t.plate }}</div>
+              </div>
+              <div class="col-6">
+                <div class="label">Start</div>
+                <div class="value">{{ t.dateTime | date : 'short' }}</div>
+              </div>
+              <div class="col-6">
+                <div class="label">End</div>
+                <div class="value">{{ t.endDate | date : 'short' }}</div>
+              </div>
+              <div class="col-6">
+                <div class="label">Price</div>
+                <div class="value">{{ t.price | number : '1.2-2' }}</div>
+              </div>
+              <div class="col-6">
+                <div class="label">Exceed</div>
+                <div class="value">{{ t.exceedPrice | number : '1.2-2' }}</div>
+              </div>
+              <div class="col-12">
+                <div class="total box">
+                  <div>الإجمالي المستحق</div>
+                  <div class="amount">{{ t.totalPrice | number : '1.2-2' }}</div>
+                </div>
+              </div>
+            </div>
 
-          <div class="mt-3 small text-muted" *ngIf="lastIssuedTicketId">
-            Ticket ID: <span class="mono">{{ lastIssuedTicketId }}</span>
+            <div class="d-flex justify-content-end mt-3">
+              <button
+                class="btn btn-success btn-lg px-4"
+                (click)="collect(t)"
+                [disabled]="collecting"
+              >
+                <span *ngIf="!collecting" class="d-inline-flex align-items-center gap-2">
+                  <i class="bi bi-cash-coin"></i> Close & Collect
+                </span>
+                <span *ngIf="collecting" class="spinner-border spinner-border-sm"></span>
+              </button>
+            </div>
           </div>
+        </div>
 
-          <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-sm btn-primary" (click)="addNewTicket()" [disabled]="adding">
-              <span *ngIf="!adding" class="d-inline-flex align-items-center gap-1">
-                <i class="bi bi-plus-circle"></i> Add New Ticket
-              </span>
-              <span *ngIf="adding" class="spinner-border spinner-border-sm"></span>
-            </button>
-            <button
-              class="btn btn-sm btn-outline-secondary"
-              (click)="printTicket()"
-              [disabled]="!currentIssuedQr"
-            >
-              <i class="bi bi-printer"></i> Print Ticket
-            </button>
-          </div>
+        <div class="card-footer small text-muted d-flex align-items-center gap-2">
+          <i class="bi bi-info-circle"></i>
+          في وضع الخروج لا يمكن إصدار تذاكر جديدة — فقط تحصيل وإغلاق.
         </div>
       </div>
     </div>
@@ -65,13 +85,12 @@
       <div class="card h-100 shadow-soft">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-            <i class="bi bi-upc-scan"></i> Scan & Admit
+            <i class="bi bi-upc-scan"></i> Scan & Collect
           </h5>
           <div class="small text-muted">Scanner ready</div>
         </div>
 
         <div class="card-body">
-          <!-- مدخل سكانر: أي ماسح QR/باركود بيدخّل النص كأنه كيبورد -->
           <label class="form-label small fw-semibold">Scan QR / Paste Code</label>
           <input
             #scanBox
@@ -90,9 +109,9 @@
             <span class="ms-2">Fetching ticket details...</span>
           </div>
 
-          <!-- Ticket details -->
-          <div *ngIf="scannedTicket as t" class="mt-3">
-            <div class="card border-0 shadow-sm soft-entry">
+          <!-- Detailed card -->
+          <div *ngIf="!scanning && scannedTicket as t" class="mt-3">
+            <div class="card border-0 soft">
               <div class="card-body">
                 <div class="row g-2">
                   <div class="col-6">
@@ -129,9 +148,7 @@
               </div>
               <div class="card-footer bg-transparent d-flex justify-content-end">
                 <button class="btn btn-success" (click)="collect(t)" [disabled]="collecting">
-                  <span *ngIf="!collecting" class="d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-check-circle"></i> Admit
-                  </span>
+                  <span *ngIf="!collecting">تحصيل</span>
                   <span *ngIf="collecting" class="spinner-border spinner-border-sm"></span>
                 </button>
               </div>
@@ -140,18 +157,16 @@
 
           <!-- Empty state -->
           <div *ngIf="!scannedTicket && !scanning" class="text-muted mt-3">
-            Scan a ticket to admit entry.
+            Scan a ticket to show its details and collect payment.
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Filters + table -->
+  <!-- Filters + table (Exit locked to OUT) -->
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0 fw-bold d-flex align-items-center gap-2">
-      <i class="bi bi-arrow-right-circle"></i> Tickets — Entry
-    </h4>
+    <h4 class="mb-0 fw-bold">Tickets — Exit</h4>
     <div class="d-flex gap-2">
       <input
         class="form-control form-control-sm"
@@ -165,10 +180,9 @@
         style="width: 140px"
         [(ngModel)]="action"
         (ngModelChange)="applyFilters()"
-        title="Default is IN"
+        [disabled]="true"
+        title="Exit gate is OUT only"
       >
-        <option value="">All actions</option>
-        <option value="IN">IN</option>
         <option value="OUT">OUT</option>
       </select>
       <select
@@ -200,13 +214,7 @@
             <td>{{ t.id }}</td>
             <td class="mono">{{ t.plate }}</td>
             <td>
-              <span
-                class="badge pill"
-                [class.theme-green]="t.action === 'IN'"
-                [class.theme-red]="t.action === 'OUT'"
-              >
-                {{ t.action }}
-              </span>
+              <span class="badge pill theme-red">OUT</span>
             </td>
             <td>{{ t.gate }}</td>
             <td>{{ t.time | date : 'short' }}</td>

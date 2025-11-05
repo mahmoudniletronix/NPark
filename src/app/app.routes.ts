@@ -34,11 +34,32 @@ export const routes: Routes = [
         path: 'users',
         loadComponent: () => import('./Feature/users/users').then((m) => m.Users),
       },
+
+      // ✅ Tickets parent with sub-routes
       {
         path: 'tickets',
-        loadComponent: () =>
-          import('./Feature/ticket-component/ticket-component').then((m) => m.TicketComponent),
+        canActivate: [authGuard],
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            redirectTo: 'entry',
+          },
+          {
+            path: 'entry',
+            data: { mode: 'entry' },
+            loadComponent: () =>
+              import('./Feature/ticket-component/ticket-component').then((m) => m.TicketComponent),
+          },
+          {
+            path: 'exit',
+            data: { mode: 'exit' },
+            loadComponent: () =>
+              import('./Feature/ticket-component/ticket-component').then((m) => m.TicketComponent),
+          },
+        ],
       },
+
       {
         path: 'subscription',
         canActivate: [authGuard],
@@ -70,6 +91,20 @@ export const routes: Routes = [
           import('./Feature/Registration-component/registration-component').then(
             (m) => m.RegistrationComponent
           ),
+      },
+      {
+        path: 'exitgate',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./Feature/exitgate-component/exitgate-component').then(
+            (m) => m.ExitgateComponent
+          ),
+      },
+      {
+        path: 'visitor',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./Feature/visitor-component/visitor-component').then((m) => m.VisitorComponent),
       },
     ],
   },

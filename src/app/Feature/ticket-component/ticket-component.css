@@ -4,6 +4,12 @@
   border-radius: 12px;
 }
 
+/* لمسة خلفية لطيفة تدل على الـ Entry */
+.glass-entry {
+  background: radial-gradient(900px 420px at -10% -20%, #ecfdf5 0%, transparent 60%) no-repeat,
+    radial-gradient(740px 460px at 110% 10%, #eff6ff 0%, transparent 60%) no-repeat, #ffffff;
+}
+
 .qr-preview {
   min-height: 320px;
   width: 100%;
@@ -34,20 +40,46 @@
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 }
 
+/* Entry chip */
+.chip {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #065f46;
+}
+
+.chip--entry {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #047857;
+}
+
 .badge.pill {
   border-radius: 20px;
   padding: 6px 10px;
   font-weight: 600;
+  border: 1px solid #e5e7eb;
+  background: #fff;
 }
 
 .theme-green {
-  background: #eaf7ea;
-  color: #1f7a1f;
+  background: rgba(16, 185, 129, 0.1);
+  color: #047857;
+  border-color: rgba(16, 185, 129, 0.25);
 }
 
 .theme-red {
-  background: #fdeaea;
+  background: rgba(239, 68, 68, 0.1);
   color: #b3261e;
+  border-color: rgba(239, 68, 68, 0.25);
+}
+
+.soft-entry {
+  border: 1px dashed #e5e7eb;
+  border-radius: 12px;
+  background: linear-gradient(0deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.06));
 }
 
 .table-head {

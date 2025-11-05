@@ -14,7 +14,7 @@
         </div>
 
         <div class="card-body" [formGroup]="form">
-          <!-- الاسم -->
+          <!-- Field: Name -->
           <div class="mb-3">
             <label class="form-label">اسم الشريحة</label>
             <input
@@ -30,7 +30,7 @@
             </div>
           </div>
 
-          <!-- نوع المدة -->
+          <!-- Field: Duration Type (Hours, Days, Year) -->
           <div class="mb-3">
             <label class="form-label">نوع المدة</label>
             <div class="btn-group w-100 mode-toggle" role="group">
@@ -45,6 +45,7 @@
                 <i class="bi bi-clock"></i>
                 بالساعات
               </button>
+
               <button
                 type="button"
                 class="btn btn-ghost"
@@ -56,20 +57,23 @@
                 <i class="bi bi-calendar3"></i>
                 بالأيام
               </button>
+
+              <!-- New: Year -->
               <button
                 type="button"
                 class="btn btn-ghost me-2"
-                [class.btn-primary]="form.value.durationType === DurationType.Years"
-                [class.btn-outline-primary]="form.value.durationType !== DurationType.Years"
-                (click)="setMode(DurationType.Years)"
-                title="احتساب سنوي"
+                [class.btn-primary]="form.value.durationType === DurationType.Year"
+                [class.btn-outline-primary]="form.value.durationType !== DurationType.Year"
+                (click)="setMode(DurationType.Year)"
+                title="احتساب بالسنة"
               >
-                <i class="bi bi-calendar3"></i>
-                سنوي
+                <i class="bi bi-calendar-check"></i>
+                بالسنة
               </button>
             </div>
           </div>
 
+          <!-- Toggle: Repeated (only for Hours) -->
           <div class="col-12 d-flex align-items-center mt-2 gap-2" *ngIf="showIsRepeated()">
             <label class="form-label mb-0">حساب متكرر</label>
             <div class="form-check form-switch">
@@ -82,6 +86,7 @@
             </div>
           </div>
 
+          <!-- Time Window: shown only when Hours + not repeated -->
           <div class="row g-2 mb-3" *ngIf="showRangeWindow()">
             <div class="col-6">
               <label class="form-label">من</label>
@@ -91,17 +96,9 @@
               <label class="form-label">إلى</label>
               <input type="time" class="form-control" formControlName="endTime" />
             </div>
-            <div class="col-12">
-              <div class="invalid-feedback d-block" *ngIf="form.errors?.['rangeRequired']">
-                من/إلى مطلوبان عند عدم اختيار التكرار.
-              </div>
-              <div class="invalid-feedback d-block" *ngIf="form.errors?.['invalidRangeOrder']">
-                يجب أن يكون وقت "إلى" أكبر من "من".
-              </div>
-            </div>
           </div>
 
-          <!-- Total hours -->
+          <!-- Field: Total Hours (Hours only) -->
           <div class="mb-3" *ngIf="isHours()">
             <label class="form-label">إجمالي الساعات</label>
             <input
@@ -120,7 +117,7 @@
             </div>
           </div>
 
-          <!-- Total days -->
+          <!-- Field: Total Days (Days only) -->
           <div class="mb-3" *ngIf="isDays()">
             <label class="form-label">إجمالي الأيام</label>
             <input
@@ -139,25 +136,7 @@
             </div>
           </div>
 
-          <!-- Total Years -->
-          <div class="mb-3" *ngIf="isYears()">
-            <label class="form-label">إجمالي السنوات</label>
-            <input
-              type="number"
-              class="form-control"
-              formControlName="totalYears"
-              min="1"
-              step="1"
-              placeholder="مثال: 1"
-            />
-            <div
-              class="invalid-feedback d-block"
-              *ngIf="form.get('totalYears')?.touched && form.get('totalYears')?.invalid"
-            >
-              إجمالي السنوات مطلوب (حد أدنى 1).
-            </div>
-          </div>
-
+          <!-- Field: Price -->
           <div class="row g-2">
             <div class="col-6">
               <label class="form-label">(جنيه) السعر</label>
@@ -178,6 +157,7 @@
           </div>
         </div>
 
+        <!-- Form Actions -->
         <div class="card-footer d-flex gap-2 justify-content-end">
           <button class="btn btn-light btn-soft" type="button" (click)="resetForm()">
             <i class="bi bi-arrow-repeat"></i> إعادة ضبط
@@ -202,6 +182,7 @@
             <i class="bi bi-table"></i>
             <h6 class="mb-0">قائمة الشرائح</h6>
           </div>
+          <!-- Top Search -->
           <div class="search-wrap">
             <i class="bi bi-search"></i>
             <input
@@ -214,6 +195,7 @@
           </div>
         </div>
 
+        <!-- Table -->
         <div class="card-body p-0 table-responsive">
           <table class="table table-hover align-middle mb-0 table-striped table-modern">
             <thead class="table-light sticky-top">
@@ -238,8 +220,8 @@
                     {{ durationLabel(r.durationType) }}
                   </span>
                 </td>
-                <td>{{ r.isRepeated === false ? r.startTime || '00:00' : '-' }}</td>
-                <td>{{ r.isRepeated === false ? r.endTime || '00:00' : '-' }}</td>
+                <td>{{ showTimeForRow(r) ? r.startTime || '00:00' : '-' }}</td>
+                <td>{{ showTimeForRow(r) ? r.endTime || '00:00' : '-' }}</td>
                 <td>
                   <span class="badge pill badge--success">
                     {{ r.price | number : '1.0-2' }} ج
@@ -264,8 +246,8 @@
                 </td>
               </tr>
 
+              <!-- Empty State -->
               <tr *ngIf="!filtered().length">
-                <!-- قلّلنا colspan من 8 إلى 7 بعد حذف عمود الترتيب -->
                 <td colspan="7" class="text-center text-muted py-4">
                   لا توجد بيانات مطابقة للبحث.
                 </td>
@@ -274,6 +256,7 @@
           </table>
         </div>
 
+        <!-- Footer: Pagination + Search -->
         <div class="card-footer small text-muted d-flex align-items-center justify-content-between">
           <span>
             <i class="bi bi-info-circle"></i>
@@ -311,6 +294,7 @@
           </div>
         </div>
 
+        <!-- Footer: Back link -->
         <div class="card-footer small text-muted d-flex align-items-center justify-content-between">
           <span><i class="bi bi-info-circle"></i> يظهر آخر {{ filtered().length }} شريحة.</span>
           <a routerLink="/dashboard" class="link-underline link-underline-opacity-0">

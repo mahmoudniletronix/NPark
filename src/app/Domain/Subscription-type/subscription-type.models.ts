@@ -1,23 +1,25 @@
 export enum DurationType {
   Days = 1,
   Hours = 2,
-  Years = 3,
+  Year = 3,
 }
 
-export interface AddPricingSchemaCommand {
+export interface PricingSchemaAddDto {
   name: string;
   durationType: DurationType;
   startTime: string | null;
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  // orderPriority: number | null;
-  totalHours: number | null;
   totalDays: number | null;
-  totalYears?: number | null;
+  totalHours: number | null;
 }
 
-export interface PricingRow {
+export interface PricingSchemaUpdateDto extends PricingSchemaAddDto {
+  id: string;
+}
+
+export interface PricingSchemaRow {
   id: string;
   name: string;
   durationType: DurationType;
@@ -25,21 +27,6 @@ export interface PricingRow {
   endTime: string | null;
   price: number;
   isRepeated: boolean;
-  // orderPriority: number | null;
-  totalHours: number | null;
   totalDays: number | null;
-  totalYears?: number | null;
+  totalHours: number | null;
 }
-export type UpdatePricingSchemaCommand = {
-  id: number;
-  name: string;
-  durationType: DurationType;
-  startTime: string | null;
-  endTime: string | null;
-  price: number;
-  isRepeated: boolean;
-  // orderPriority: number | null;
-  totalHours: number | null;
-  totalDays: number | null;
-  totalYears?: number | null;
-};

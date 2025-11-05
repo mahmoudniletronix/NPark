@@ -14,21 +14,49 @@
       >
         <i class="bi bi-house"></i> overview
       </a>
+
       <div class="text-secondary small mt-3 mb-1 text-uppercase">Parking</div>
-      <!-- <a
-        class="nav-link text-light d-flex align-items-center gap-2"
-        routerLink="/dashboard"
-        routerLinkActive="active"
-      >
-        <i class="bi bi-graph-up"></i> Dashboard
-      </a> -->
+
+      <!-- Gate with submenu -->
+      <div class="nav-item">
+        <button
+          class="nav-link text-light d-flex align-items-center gap-2 btn-toggle"
+          type="button"
+          (click)="toggleGate()"
+          [attr.aria-expanded]="gateOpen"
+        >
+          <i class="bi bi-door-open"></i>
+          Gate
+          <i class="bi ms-auto" [ngClass]="gateOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+        </button>
+
+        <div class="submenu" *ngIf="gateOpen">
+          <a
+            class="nav-link text-light d-flex align-items-center gap-2 ps-4"
+            routerLink="/tickets"
+            routerLinkActive="active"
+          >
+            <i class="bi bi-arrow-right-circle"></i> Entry Gate
+          </a>
+          <a
+            class="nav-link text-light d-flex align-items-center gap-2 ps-4"
+            routerLink="/exitgate"
+            routerLinkActive="active"
+          >
+            <i class="bi bi-box-arrow-right"></i> Exit Gate
+          </a>
+        </div>
+      </div>
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
-        routerLink="/tickets"
+        routerLink="/visitor"
         routerLinkActive="active"
       >
-        <i class="bi bi-door-open"></i> Gate
+        <i class="bi bi-credit-card"></i>
+        Visitor
       </a>
+
+      <!-- existing links -->
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
         routerLink="/subscription"
