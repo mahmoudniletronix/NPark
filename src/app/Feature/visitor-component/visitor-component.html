@@ -14,7 +14,7 @@
         </div>
 
         <div class="card-body">
-          <!-- Toolbar (sticky) -->
+          <!-- Toolbar -->
           <div class="toolbar sticky-top">
             <div class="search">
               <i class="bi bi-search"></i>
@@ -33,7 +33,6 @@
           <div *ngIf="loading()" class="text-center py-4">
             <div class="spinner-border"></div>
           </div>
-          <!-- <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div> -->
 
           <div class="list-wrap">
             <ul class="list-unstyled list-grid">
@@ -129,33 +128,20 @@
                 </div>
               </button>
 
+              <!-- Count (عرض فقط) -->
               <div class="qty-controls d-flex align-items-center gap-2">
+                <span class="count-badge">Count: {{ qty()[p.id] || 1 }}</span>
+              </div>
+
+              <!-- حذف من picked -->
+              <div class="picked-actions d-flex align-items-center gap-2">
                 <button
                   type="button"
-                  class="btn btn-sm btn-outline-secondary"
-                  (click)="dec(p)"
-                  title="Decrease"
+                  class="btn btn-sm btn-outline-danger"
+                  (click)="removeFromPicked(p)"
+                  title="Remove from picked"
                 >
-                  −
-                </button>
-
-                <input
-                  class="form-control form-control-sm text-center"
-                  type="number"
-                  min="0"
-                  [ngModel]="qty()[p.id] || 0"
-                  (ngModelChange)="onQtyChange(p, $event)"
-                  readonly
-                  style="width: 70px"
-                />
-
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary"
-                  (click)="inc(p)"
-                  title="Increase"
-                >
-                  +
+                  <i class="bi bi-x-lg"></i>
                 </button>
               </div>
             </div>

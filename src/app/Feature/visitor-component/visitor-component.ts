@@ -25,6 +25,11 @@ export class VisitorComponent implements OnInit {
   allItems = signal<RepeatedPricingDto[]>([]);
   picked = signal<RepeatedPricingDto[]>([]);
   active = signal<RepeatedPricingDto | null>(null);
+
+  /**
+   * qty: { itemId -> count }
+   * يتم بناؤها دائمًا من ترتيب picked (1..N).
+   */
   qty = signal<Record<string, number>>({});
 
   q = signal(''); // search keyword
@@ -41,7 +46,7 @@ export class VisitorComponent implements OnInit {
     );
   });
 
-  // Map: itemId -> 1-based order index (useful anywhere, not just in *ngFor)
+  // Map: itemId -> 1-based order index
   orderMap = computed<Record<string, number>>(() =>
     this.picked().reduce((acc, it, idx) => {
       acc[it.id] = idx + 1;
@@ -51,12 +56,14 @@ export class VisitorComponent implements OnInit {
 
   getOrderFor = (it: RepeatedPricingDto) => this.orderMap()[it.id] ?? 0;
 
+  // ===== Lifecycle =====
   ngOnInit() {
     this.fetch();
     this.loadOrder();
   }
 
   constructor() {
+    // لو العنصر النشط اتشال من أي قائمة، فضّي الاختيار
     effect(() => {
       const a = this.active();
       if (!a) return;
@@ -66,173 +73,14 @@ export class VisitorComponent implements OnInit {
     });
   }
 
-  // ===== API =====
-  loadOrder() {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.visitorServices.getOrder().subscribe({
-      next: (order: RepeatedPricingDto[]) => {
-        // إذا API ترجع order/count، رتب على order واملأ الكميات
-        const sorted = [...(order ?? [])].sort(
-          (a: any, b: any) => ((a?.order ?? 9999) as number) - ((b?.order ?? 9999) as number)
-        );
-
-        if (!sorted || sorted.length === 0) {
-          this.picked.set([]);
-          this.qty.set({});
-          this.loading.set(false);
-          return;
-        }
-
-        this.picked.set(sorted);
-
-        const updatedQty: Record<string, number> = {};
-        sorted.forEach((item: any) => {
-          updatedQty[item.id] = Number(item?.count ?? 0);
-        });
-        this.qty.set(updatedQty);
-
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error(err);
-        this.error.set('فشل في تحميل الأوردر');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  submitOrder() {
-    const items = this.picked();
-    const orderSchema = items
-      .map((p, idx) => ({
-        pricingSchemaId: p.id,
-        count: this.qty()[p.id] ?? 0,
-        order: idx + 1, // الترتيب الديناميكي (1-based)
-      }))
-      .filter((x) => x.count > 0);
-
-    if (orderSchema.length === 0) {
-      alert('Please select at least one pricing schema.');
-      return;
-    }
-
-    this.visitorServices.addOrder(orderSchema).subscribe({
-      next: () => {
-        alert('Order added successfully!');
-        this.clearPicked();
-        this.loadOrder();
-      },
-      error: (err) => {
-        console.error(err);
-        alert('Failed to add order.');
-      },
-    });
-  }
-
-  setQty(item: RepeatedPricingDto, raw: any) {
-    const num = Math.max(0, Math.floor(Number(raw) || 0));
-    this.qty.update((q) => {
-      const next = { ...q };
-      if (num === 0) {
-        delete next[item.id];
-        this.picked.update((arr) => arr.filter((x) => x.id !== item.id));
-        if (this.active()?.id === item.id) this.active.set(null);
-      } else {
-        next[item.id] = num;
-        if (!this.picked().some((x) => x.id === item.id)) {
-          this.picked.update((arr) => [...arr, item]);
-        }
-      }
-      return next;
-    });
-  }
-
-  onQtyChange(item: RepeatedPricingDto, value: any) {
-    this.setQty(item, value);
-  }
-
-  inc(item: RepeatedPricingDto) {
-    this.qty.update((q) => {
-      const next = { ...q };
-      next[item.id] = (next[item.id] ?? 0) + 1;
-      return next;
-    });
-  }
-
-  dec(item: RepeatedPricingDto) {
-    this.qty.update((q) => {
-      const next = { ...q };
-      const current = next[item.id] ?? 0;
-      const v = Math.max(0, current - 1);
-      if (v === 0) {
-        delete next[item.id];
-        this.picked.update((arr) => arr.filter((x) => x.id !== item.id));
-        if (this.active()?.id === item.id) this.active.set(null);
-      } else {
-        next[item.id] = v;
-      }
-      return next;
-    });
-  }
-
-  // ===== Actions =====
-  fetch() {
-    this.loading.set(true);
-    this.error.set(null);
-
-    this.visitorServices.getRepeated().subscribe({
-      next: (res) => {
-        this.allItems.set(res ?? []);
-        this.loading.set(false);
-      },
-      error: (err) => {
-        console.error(err);
-        this.error.set('Failed to load data');
-        this.loading.set(false);
-      },
-    });
-  }
-
-  select(item: RepeatedPricingDto) {
-    this.active.set(item);
-  }
-
-  addToPicked(item: RepeatedPricingDto) {
-    if (!this.picked().some((x) => x.id === item.id)) {
-      this.picked.update((arr) => [...arr, item]);
-    }
-    this.qty.update((q) => {
-      const next = { ...q };
-      next[item.id] = (next[item.id] ?? 0) + 1;
-      return next;
-    });
-  }
-
-  removeFromPicked(item: RepeatedPricingDto) {
-    this.picked.update((arr) => arr.filter((x) => x.id !== item.id));
-    this.qty.update((q) => {
-      const next = { ...q };
-      delete next[item.id];
-      return next;
-    });
-    if (this.active()?.id === item.id) this.active.set(null);
-  }
-
-  clearPicked() {
-    this.picked.set([]);
-    this.qty.set({});
-    this.active.set(null);
-  }
-
-  dropReorder(ev: CdkDragDrop<RepeatedPricingDto[]>) {
-    const arr = [...this.picked()];
-    moveItemInArray(arr, ev.previousIndex, ev.currentIndex);
-    this.picked.set(arr);
-  }
-
   // ===== Helpers =====
+  /** أعِد بناء العدّ 1..N حسب ترتيب picked */
+  private recomputeCounts() {
+    const map: Record<string, number> = {};
+    this.picked().forEach((it, idx) => (map[it.id] = idx + 1));
+    this.qty.set(map);
+  }
+
   mapDuration(d: number): string {
     switch (d) {
       case DurationType.Hours:
@@ -258,5 +106,114 @@ export class VisitorComponent implements OnInit {
 
   trackById(_: number, it: RepeatedPricingDto) {
     return it.id;
+  }
+
+  // ===== API =====
+  fetch() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.visitorServices.getRepeated().subscribe({
+      next: (res) => {
+        this.allItems.set(res ?? []);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.error.set('Failed to load data');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  loadOrder() {
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.visitorServices.getOrder().subscribe({
+      next: (order: RepeatedPricingDto[]) => {
+        // رتب حسب order القادم من API (لو موجود)
+        const sorted = [...(order ?? [])].sort(
+          (a: any, b: any) => ((a?.order ?? 9999) as number) - ((b?.order ?? 9999) as number)
+        );
+
+        if (!sorted || sorted.length === 0) {
+          this.picked.set([]);
+          this.qty.set({});
+          this.loading.set(false);
+          return;
+        }
+
+        this.picked.set(sorted);
+        this.recomputeCounts(); // تجاهل count المخزن، واجعل العدّ بحسب الترتيب الفعلي
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error(err);
+        this.error.set('فشل في تحميل الأوردر');
+        this.loading.set(false);
+      },
+    });
+  }
+
+  submitOrder() {
+    const items = this.picked();
+    const orderSchema = items.map((p, idx) => ({
+      pricingSchemaId: p.id,
+      count: idx + 1, // العدّ يعكس الترتيب الحالي مباشرة
+      order: idx + 1, // نفس الرقم للترتيب
+    }));
+
+    if (orderSchema.length === 0) {
+      alert('Please select at least one pricing schema.');
+      return;
+    }
+
+    this.visitorServices.addOrder(orderSchema).subscribe({
+      next: () => {
+        alert('Order added successfully!');
+        this.clearPicked();
+        this.loadOrder();
+      },
+      error: (err) => {
+        console.error(err);
+        alert('Failed to add order.');
+      },
+    });
+  }
+
+  // ===== Actions =====
+  select(item: RepeatedPricingDto) {
+    this.active.set(item);
+  }
+
+  /** إضافة: ضيف العنصر آخر القائمة، ثم أبنِ العدّ من جديد */
+  addToPicked(item: RepeatedPricingDto) {
+    if (!this.picked().some((x) => x.id === item.id)) {
+      this.picked.update((arr) => [...arr, item]);
+      this.recomputeCounts();
+    }
+    this.active.set(item);
+  }
+
+  /** حذف: اشطب من picked ثم أعِد بناء العدّ */
+  removeFromPicked(item: RepeatedPricingDto) {
+    this.picked.update((arr) => arr.filter((x) => x.id !== item.id));
+    this.recomputeCounts();
+    if (this.active()?.id === item.id) this.active.set(null);
+  }
+
+  /** سحب-وإفلات: أعد ترتيب المصفوفة ثم أعِد بناء العدّ */
+  dropReorder(ev: CdkDragDrop<RepeatedPricingDto[]>) {
+    const arr = [...this.picked()];
+    moveItemInArray(arr, ev.previousIndex, ev.currentIndex);
+    this.picked.set(arr);
+    this.recomputeCounts();
+  }
+
+  clearPicked() {
+    this.picked.set([]);
+    this.qty.set({});
+    this.active.set(null);
   }
 }
