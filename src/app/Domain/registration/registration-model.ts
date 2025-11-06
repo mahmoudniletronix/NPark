@@ -31,3 +31,31 @@ export interface AddParkingMembershipCommandFront {
   PricingSchemeId: string;
   VehicleImage?: File[];
 }
+export interface VehicleImageDto {
+  id: string;
+  filePath: string;
+}
+export interface ParkingMembershipDto {
+  id: string;
+  name: string;
+  phone: string;
+  nationalId: string;
+  vehicleImage: VehicleImageDto[];
+  vehicleNumber: string;
+  cardNumber: string;
+  pricingSchemeId: string;
+  startTime: string | null;
+  endTime: string | null;
+  createdAt: string;
+  endDate: string;
+}
+
+export interface PagedResult<T> {
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  totalItems: number;
+  data: T[];
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}

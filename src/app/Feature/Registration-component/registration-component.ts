@@ -12,7 +12,12 @@ import {
   Registrationservice,
 } from '../../Services/registration/registrationservice';
 import { NfcReaderService } from '../../Services/registration/nfc-reader.service';
-import { DocumentItem, PlateGroup } from '../../Domain/registration/registration-model';
+import {
+  DocumentItem,
+  PagedResult,
+  ParkingMembershipDto,
+  PlateGroup,
+} from '../../Domain/registration/registration-model';
 import { DurationType } from '../../Domain/Subscription-type/subscription-type.models';
 
 @Component({
@@ -27,6 +32,18 @@ export class RegistrationComponent implements OnInit {
   private svc = inject(Registrationservice);
   private nfc = inject(NfcReaderService);
 
+  // State
+  loading = signal(false);
+  pageNumber = signal(1);
+  pageSize = signal(10);
+
+  result = signal<PagedResult<ParkingMembershipDto> | null>(null);
+  rows = computed(() => this.result()?.data ?? []);
+  hasNext = computed(() => !!this.result()?.hasNextPage);
+  hasPrev = computed(() => !!this.result()?.hasPreviousPage);
+  totalItems = computed(() => this.result()?.totalItems ?? 0);
+  totalPages = computed(() => this.result()?.totalPages ?? 0);
+
   saving = signal(false);
 
   documents = signal<DocumentItem[]>([]);
@@ -38,11 +55,50 @@ export class RegistrationComponent implements OnInit {
 
   readingCard = signal(false);
 
+  load() {
+    this.loading.set(true);
+    this.svc.getMemberships(this.pageNumber(), this.pageSize()).subscribe({
+      next: (res) => this.result.set(res),
+      error: () => this.loading.set(false),
+      complete: () => this.loading.set(false),
+    });
+  }
+
+  first() {
+    if (this.pageNumber() === 1) return;
+    this.pageNumber.set(1);
+    this.load();
+  }
+  prev() {
+    if (!this.hasPrev()) return;
+    this.pageNumber.set(this.pageNumber() - 1);
+    this.load();
+  }
+  next() {
+    if (!this.hasNext()) return;
+    this.pageNumber.set(this.pageNumber() + 1);
+    this.load();
+  }
+  last() {
+    const lastPage = this.totalPages();
+    if (!lastPage || this.pageNumber() === lastPage) return;
+    this.pageNumber.set(lastPage);
+    this.load();
+  }
+  changePageSize(size: number) {
+    this.pageSize.set(size);
+    this.pageNumber.set(1);
+    this.load();
+  }
+
   // === Validators ===
   plateRequiredValidator(group: AbstractControl) {
     const p1 = (group.get('p1')?.value || '').trim();
+    const p2 = (group.get('p2')?.value || '').trim();
+    const p3 = (group.get('p3')?.value || '').trim();
     const p4 = (group.get('p4')?.value || '').trim();
-    return p1 && p4 ? null : { required: true };
+
+    return p1 || p2 || p3 || p4 ? null : { required: true };
   }
 
   form: FormGroup = this.fb.group(
@@ -105,6 +161,7 @@ export class RegistrationComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPricingSchemas();
+    this.load();
   }
 
   private loadPricingSchemas() {
