@@ -1,13 +1,18 @@
-<div class="overview page-rtl container-fluid">
+<div
+  class="overview container-fluid"
+  [attr.dir]="lang.dir()"
+  [class.page-rtl]="lang.isRTL()"
+  [class.page-ltr]="!lang.isRTL()"
+>
   <!-- Header -->
   <div class="page-header">
     <div>
-      <h1 class="page-title">Overview</h1>
-      <p class="page-subtitle">Welcome back</p>
+      <h1 class="page-title">{{ 'overview' | t }}</h1>
+      <p class="page-subtitle">{{ 'welcomeBack' | t }}</p>
     </div>
     <div class="header-actions">
-      <a class="btn btn-primary btn-sm" routerLink="/users">See all users</a>
-      <button class="btn btn-outline-secondary btn-sm">Logout</button>
+      <a class="btn btn-primary btn-sm" routerLink="/users">{{ 'seeAllUsers' | t }}</a>
+      <button class="btn btn-outline-secondary btn-sm">{{ 'logout' | t }}</button>
     </div>
   </div>
 
@@ -17,23 +22,23 @@
       <div class="row g-3 kpis">
         <div class="col-12 col-md-6">
           <div class="card kpi-card">
-            <div class="kpi-label">Stations</div>
+            <div class="kpi-label">{{ 'stations' | t }}</div>
             <div class="kpi-value">{{ stationsTotal() }}</div>
             <div class="kpi-sub">
-              <span class="tag tag--blue">Full: {{ stationsFull() }}</span>
+              <span class="tag tag--blue">{{ 'full' | t }}: {{ stationsFull() }}</span>
               <span class="sep">·</span>
-              <span class="tag tag--pink">Empty: {{ stationsEmpty() }}</span>
+              <span class="tag tag--pink">{{ 'empty' | t }}: {{ stationsEmpty() }}</span>
             </div>
           </div>
         </div>
 
         <div class="col-12 col-md-6">
           <div class="card kpi-card">
-            <div class="kpi-label">Users</div>
+            <div class="kpi-label">{{ 'users' | t }}</div>
             <div class="kpi-value">{{ usersTotal() }}</div>
             <div class="kpi-sub">
-              <span class="pill pill--success">Subscribers: {{ subscribers() }}</span>
-              <span class="pill pill--warning">Visitors: {{ visitors() }}</span>
+              <span class="pill pill--success">{{ 'subscribers' | t }}: {{ subscribers() }}</span>
+              <span class="pill pill--warning">{{ 'visitors' | t }}: {{ visitors() }}</span>
             </div>
           </div>
         </div>
@@ -42,10 +47,10 @@
       <!-- Table -->
       <div class="card table-card">
         <div class="card-header">
-          <div class="card-title">Recent Tickets</div>
+          <div class="card-title">{{ 'recentTickets' | t }}</div>
           <div class="card-meta">
-            <span class="muted">Last 10 Records</span>
-            <a class="btn btn-sm btn-primary" routerLink="/tickets">See all tickets</a>
+            <span class="muted">{{ 'last10' | t }}</span>
+            <a class="btn btn-sm btn-primary" routerLink="/tickets">{{ 'seeAllTickets' | t }}</a>
           </div>
         </div>
 
@@ -53,11 +58,11 @@
           <table class="table mb-0">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Plate</th>
-                <th>Action</th>
-                <th>Gate</th>
-                <th>Time</th>
+                <th>{{ 'id' | t }}</th>
+                <th>{{ 'plate' | t }}</th>
+                <th>{{ 'action' | t }}</th>
+                <th>{{ 'gate' | t }}</th>
+                <th>{{ 'time' | t }}</th>
               </tr>
             </thead>
             <tbody>
@@ -70,7 +75,7 @@
                     [class.in]="t.action === 'IN'"
                     [class.out]="t.action === 'OUT'"
                   >
-                    {{ t.action }}
+                    {{ (t.action === 'IN' ? 'IN' : 'OUT') | t }}
                   </span>
                 </td>
                 <td>{{ t.gate }}</td>
@@ -87,9 +92,10 @@
       <!-- Donut -->
       <div class="card chart-card">
         <div class="card-header">
-          <div class="card-title">Occupancy</div>
+          <div class="card-title">{{ 'occupancy' | t }}</div>
           <div class="legend">
-            <span class="dot dot--blue"></span> Full <span class="dot dot--pink ms-3"></span> Empty
+            <span class="dot dot--blue"></span> {{ 'full' | t }}
+            <span class="dot dot--pink ms-3"></span> {{ 'empty' | t }}
           </div>
         </div>
 
@@ -145,7 +151,7 @@
                 text-anchor="middle"
                 class="donut-caption"
               >
-                Full
+                {{ 'full' | t }}
               </text>
             </g>
           </svg>
@@ -155,9 +161,10 @@
       <!-- Line -->
       <div class="card chart-card">
         <div class="card-header">
-          <div class="card-title">Live In/Out (today)</div>
+          <div class="card-title">{{ 'liveInOutToday' | t }}</div>
           <div class="legend">
-            <span class="dot dot--blue"></span> IN <span class="dot dot--pink ms-3"></span> OUT
+            <span class="dot dot--blue"></span> {{ 'IN' | t }}
+            <span class="dot dot--pink ms-3"></span> {{ 'OUT' | t }}
           </div>
         </div>
 

@@ -12,13 +12,19 @@ import {
   ViewChild,
   AfterViewInit,
   OnDestroy,
+  Inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+
 import { ExtractResult, Lane, Station } from '../../Domain/parking.models/parking.models';
 import { extractFromInlineSvg } from './svg-extractor';
+
+import { LanguageService } from '../../Services/i18n/language-service';
+import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
+import { I18N_DICT, I18nDict } from '../../Services/i18n/i18n.tokens';
 
 type SlotStatus = 'free' | 'occupied' | 'reserved' | 'disabled';
 
@@ -32,15 +38,102 @@ interface Slot {
 @Component({
   selector: 'app-parking-guidance-diagram-component',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule, HttpClientModule, TranslatePipePipe],
   templateUrl: './parking-guidance-diagram-component.html',
-  styleUrl: './parking-guidance-diagram-component.css',
+  styleUrls: ['./parking-guidance-diagram-component.css'],
+  providers: [
+    {
+      provide: I18N_DICT,
+      useValue: (<I18nDict>{
+        ar: {
+          garageMap: 'خريطة الجراج',
+          exportJson: 'استخراج JSON',
+          zoomOut: 'تصغير',
+          reset: 'إعادة',
+          zoomIn: 'تكبير',
+          planB1: 'المخطط B1',
+          planB2: 'المخطط B2',
+          quickControl: 'تحكّم سريع',
+          searchById: 'بحث بالـID',
+          searchExample: 'مثال: L1-A',
+          searchHint: 'سيتم تظليل النتائج على الخريطة.',
+          slotId: 'Slot ID',
+          slotIdExample: 'مثال: L1-A2',
+          status: 'الحالة',
+          free: 'متاح',
+          occupied: 'مشغول',
+          reserved: 'محجوز',
+          disabled: 'ذوي الإعاقة',
+          applyToMap: 'تطبيق على الخريطة',
+          clickTip: 'يمكنك أيضًا الضغط على أي خانة داخل الخريطة لتحديد الـID تلقائيًا.',
+          stats: 'إحصائيات',
+          freeLbl: 'المتاح',
+          occupiedLbl: 'المشغول',
+          reservedLbl: 'المحجوز',
+          disabledLbl: 'ذوي الإعاقة',
+          mouseHint:
+            '◀ عجلة الماوس للتكبير/التصغير، واسحب للخريطة للتحريك. دبل كلك للتكبير حول المؤشر.',
+          titleExport: 'استخراج JSON',
+          titleZoomOut: 'تصغير',
+          titleReset: 'إعادة',
+          titleZoomIn: 'تكبير',
+        },
+        en: {
+          garageMap: 'Garage Map',
+          exportJson: 'Export JSON',
+          zoomOut: 'Zoom out',
+          reset: 'Reset',
+          zoomIn: 'Zoom in',
+          planB1: 'Plan B1',
+          planB2: 'Plan B2',
+          quickControl: 'Quick Controls',
+          searchById: 'Search by ID',
+          searchExample: 'e.g., L1-A',
+          searchHint: 'Matches will be highlighted on the map.',
+          slotId: 'Slot ID',
+          slotIdExample: 'e.g., L1-A2',
+          status: 'Status',
+          free: 'Free',
+          occupied: 'Occupied',
+          reserved: 'Reserved',
+          disabled: 'Accessible',
+          applyToMap: 'Apply to map',
+          clickTip: 'You can also click any slot inside the map to auto-fill the ID.',
+          stats: 'Statistics',
+          freeLbl: 'Free',
+          occupiedLbl: 'Occupied',
+          reservedLbl: 'Reserved',
+          disabledLbl: 'Accessible',
+          mouseHint: '◀ Use the mouse wheel to zoom, drag to pan. Double-click to zoom at cursor.',
+          titleExport: 'Export JSON',
+          titleZoomOut: 'Zoom out',
+          titleReset: 'Reset',
+          titleZoomIn: 'Zoom in',
+        },
+      }) as I18nDict,
+    },
+  ],
 })
 export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy {
   @Input() floor = 'B1';
   @Output() detected = new EventEmitter<ExtractResult>();
-
   @ViewChild('svgHost', { static: true }) svgHost?: ElementRef<HTMLDivElement>;
+
+  // i18n
+  public lang = inject(LanguageService);
+  constructor(@Inject(I18N_DICT) private dict: I18nDict) {
+    effect(() => {
+      const url = this.svgUrl();
+      this.loadSvg(url);
+    });
+
+    effect(() => this.applyDataToSvg());
+
+    effect(() => {
+      if (this.simulate()) this.startSim();
+      else this.stopSim();
+    });
+  }
 
   // DI
   private http = inject(HttpClient);
@@ -73,7 +166,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
     );
   });
 
-  // كاونتر الحالات
   private _slots = signal<Slot[]>([
     { id: 'L1-A1', status: 'free', sensorBattery: 88 },
     { id: 'L1-A2', status: 'occupied', plate: 'س م ن ١٢٣٤', sensorBattery: 72 },
@@ -126,20 +218,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
   private slotMap = new Map<string, SVGGElement | SVGGraphicsElement>();
   private bboxMap = new Map<string, DOMRect>();
 
-  constructor() {
-    effect(() => {
-      const url = this.svgUrl();
-      this.loadSvg(url);
-    });
-
-    effect(() => this.applyDataToSvg());
-
-    effect(() => {
-      if (this.simulate()) this.startSim();
-      else this.stopSim();
-    });
-  }
-
   ngAfterViewInit() {
     this.loadSvg(this.svgUrl());
   }
@@ -153,8 +231,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
   // ====== تحميل الـSVG
   private async loadSvg(url: string) {
     if (!url) return;
-
-    // فضّل إلغاء ربط الأحداث القديمة قبل حقن ملف جديد
     this.detachGlobalHandlers();
 
     const svgText = await this.http.get(url, { responseType: 'text' }).toPromise();
@@ -169,8 +245,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
       if (!found) return;
 
       this.svgEl = found;
-
-      // إعادة تهيئة
       (this.svgEl as any).__boundClick__ = false;
 
       this.preparePanZoom();
@@ -234,7 +308,7 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
     this._slots.set(arr);
     this.activeSelectedId.set(id);
     this.applyDataToSvg();
-    this.zoomToSlot(id, 2.2); // سلوك لطيف: ركّز على الخانة بعد التعديل
+    this.zoomToSlot(id, 2.2);
   }
 
   private indexSlotsOnce() {
@@ -329,7 +403,7 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
       label.textContent = id;
     } else if (label) {
       label.remove();
-      label = null;
+      label = null as any;
     }
 
     const bb = (slotEl as any).getBBox?.() as DOMRect | undefined;
@@ -349,7 +423,14 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
       titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title') as SVGTitleElement;
       sensorGroup.appendChild(titleEl);
     }
-    titleEl.textContent = `ID: ${id}${battery != null ? ` | بطارية: ${battery}%` : ''}`;
+    // العنوان ثنائي اللغة بسيط
+    const batteryTxt =
+      battery != null
+        ? this.lang.isRTL()
+          ? ` | بطارية: ${battery}%`
+          : ` | Battery: ${battery}%`
+        : '';
+    titleEl.textContent = `ID: ${id}${batteryTxt}`;
   }
 
   // ====== Pan & Zoom
@@ -357,7 +438,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
     const svg = this.svgEl;
     if (!svg) return;
 
-    // أنشئ / استخدم غلاف التحريك/التكبير
     this.pzWrap =
       svg.querySelector<SVGGElement>('#pz-wrap') ??
       document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -365,23 +445,21 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
     if (!this.pzWrap.id) {
       this.pzWrap.setAttribute('id', 'pz-wrap');
       const kids = Array.from(svg.childNodes);
-      for (const k of kids) if (k !== this.pzWrap) this.pzWrap.appendChild(k);
+      for (const k of kids) if (k !== this.pzWrap) this.pzWrap.appendChild(k as any);
       svg.appendChild(this.pzWrap);
     }
 
-    // ضبط الـviewBox
     const vb = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
     if (vb.length === 4 && vb.every((n) => !Number.isNaN(n))) {
       this.viewW = vb[2];
       this.viewH = vb[3];
     } else {
-      const bb = svg.getBBox?.();
+      const bb = (svg as any).getBBox?.();
       this.viewW = bb?.width || svg.clientWidth || 1000;
       this.viewH = bb?.height || svg.clientHeight || 800;
       svg.setAttribute('viewBox', `0 0 ${this.viewW} ${this.viewH}`);
     }
 
-    // قياس حاوية الـSVG
     const host = this.svgHost?.nativeElement;
     if (host) {
       this.ro?.disconnect();
@@ -389,7 +467,7 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
         const rect = host.getBoundingClientRect();
         this.hostW = rect.width;
         this.hostH = rect.height;
-        this.fitView(); // أعِد الضبط عند تغيير الحجم
+        this.fitView();
       });
       this.ro.observe(host);
       const rect = host.getBoundingClientRect();
@@ -397,17 +475,14 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
       this.hostH = rect.height;
     }
 
-    // اربط الأحداث (ماوس + كيبورد + تاتش)
     this.bindWheel(svg);
     this.bindMousePan(svg);
     this.bindPinch(svg);
 
-    // بداية مناسبة
     this.fitView();
   }
 
   private bindWheel(svg: SVGSVGElement) {
-    // امسح إن كان فيه ربط سابق
     this.wheelBound && svg.removeEventListener('wheel', this.wheelBound as any);
     this.dblClickBound && svg.removeEventListener('dblclick', this.dblClickBound as any);
 
@@ -431,14 +506,13 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
   }
 
   private bindMousePan(svg: SVGSVGElement) {
-    // امسح إن كان فيه ربط سابق
     this.mouseDownBound && svg.removeEventListener('mousedown', this.mouseDownBound);
     this.mouseMoveBound && window.removeEventListener('mousemove', this.mouseMoveBound);
     this.mouseUpBound && window.removeEventListener('mouseup', this.mouseUpBound);
 
     this.mouseDownBound = (e: MouseEvent) => {
       const t = e.target as Element;
-      if (t?.closest?.('[data-slot-id]')) return; // ما نحركش لو ضغط على خانة
+      if (t?.closest?.('[data-slot-id]')) return;
       this.isPanning = true;
       this.lastX = e.clientX;
       this.lastY = e.clientY;
@@ -545,7 +619,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
   private applyTransform() {
     if (!this.pzWrap || !this.svgEl) return;
 
-    // حدود بسيطة تمنع الطيران بعيدًا
     const maxPanX = this.hostW;
     const maxPanY = this.hostH;
     const minPanX = -this.viewW * this.scale;
@@ -570,7 +643,6 @@ export class ParkingGuidanceDiagramComponent implements AfterViewInit, OnDestroy
     this.applyTransform();
   }
 
-  // ====== أزرار التكبير/التصغير (حول مركز الـSVG)
   private svgCenter(): { mx: number; my: number } {
     const svg = this.svgEl;
     if (!svg) return { mx: this.hostW / 2, my: this.hostH / 2 };

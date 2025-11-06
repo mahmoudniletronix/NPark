@@ -10,6 +10,8 @@ import {
 
 import { SubscriptionType } from '../../Services/subscription-type/subscription-type';
 
+import { LanguageService, AppLang } from '../../Services/i18n/language-service';
+
 import {
   PricingSchemaAddDto,
   PricingSchemaUpdateDto,
@@ -39,6 +41,141 @@ export class SubscriptionComponent implements OnInit {
   private api = inject(SubscriptionType);
   public DurationType = DurationType;
 
+  // ===== i18n =====
+  public i18n = inject(LanguageService);
+  private dict: Record<AppLang, Record<string, string>> = {
+    ar: {
+      title: 'شريحة المحاسبة',
+      add: 'إضافة',
+      edit: 'تعديل',
+      field_name: 'اسم الشريحة',
+      name_placeholder: 'مثال: اشتراك شهري / Hourly Pass',
+      name_required: 'الاسم مطلوب (حد أدنى 2 حرف).',
+      duration_type: 'نوع المدة',
+      hours: 'بالساعات',
+      days: 'بالأيام',
+      year: 'بالسنة',
+      hours_short: 'ساعات',
+      days_short: 'أيام',
+      year_short: 'سنة',
+      repeated: 'حساب متكرر',
+      from: 'من',
+      to: 'إلى',
+      total_hours: 'إجمالي الساعات',
+      total_hours_required: 'إجمالي الساعات مطلوب (حد أدنى 1).',
+      total_days: 'إجمالي الأيام',
+      total_days_required: 'إجمالي الأيام مطلوب (حد أدنى 1).',
+      price_label: '(جنيه) السعر',
+      price_required: 'السعر مطلوب ويجب أن يكون 0 أو أكثر.',
+      reset: 'إعادة ضبط',
+      save: 'حفظ',
+      list_title: 'قائمة الشرائح',
+      search_placeholder: 'بحث...',
+      col_index: '#',
+      col_name: 'الاسم',
+      col_type: 'النوع',
+      col_from: 'من',
+      col_to: 'إلى',
+      col_price: 'السعر',
+      col_actions: 'إجراءات',
+      edit_action: 'تعديل',
+      delete_action: 'حذف',
+      empty_search: 'لا توجد بيانات مطابقة للبحث.',
+      total_footer: 'إجمالي',
+      page: 'صفحة',
+      of: 'من',
+      next: 'التالي',
+      prev: 'السابق',
+      last_n_hint: 'يظهر آخر',
+      slice_hint: 'شريحة.',
+      back_dashboard: 'عودة للوحة التحكم',
+      confirm_delete: 'هل أنت متأكد من الحذف؟',
+      errors_title: 'أخطاء في البيانات:',
+      err_name: 'الاسم مطلوب ويجب أن يكون على الأقل حرفين',
+      err_price: 'السعر مطلوب ويجب أن يكون 0 أو أكثر',
+      err_days: 'إجمالي الأيام مطلوب ويجب أن يكون 1 أو أكثر',
+      err_hours: 'إجمالي الساعات مطلوب ويجب أن يكون 1 أو أكثر',
+      err_time_needed: 'وقت البداية والنهاية مطلوبان عندما لا يكون الحساب متكرر',
+      server_error: 'حدث خطأ في الخادم:',
+      validation_errors: 'أخطاء التحقق:',
+      status: 'الحالة',
+      traceId: 'رقم التتبع',
+      type: 'النوع',
+      conn_error: 'خطأ في الاتصال',
+      unexpected_error: 'حدث خطأ غير متوقع',
+      time_window_off: '-',
+      loading: 'جاري التحميل…',
+      total_label: 'إجمالي',
+    },
+    en: {
+      title: 'Pricing Scheme',
+      add: 'Add',
+      edit: 'Edit',
+      field_name: 'Name',
+      name_placeholder: 'e.g., Monthly Pass / Hourly Pass',
+      name_required: 'Name is required (min 2 chars).',
+      duration_type: 'Duration Type',
+      hours: 'Hours',
+      days: 'Days',
+      year: 'Year',
+      hours_short: 'Hours',
+      days_short: 'Days',
+      year_short: 'Year',
+      repeated: 'Repeated',
+      from: 'From',
+      to: 'To',
+      total_hours: 'Total Hours',
+      total_hours_required: 'Total hours is required (min 1).',
+      total_days: 'Total Days',
+      total_days_required: 'Total days is required (min 1).',
+      price_label: 'Price (EGP)',
+      price_required: 'Price is required and must be ≥ 0.',
+      reset: 'Reset',
+      save: 'Save',
+      list_title: 'Schemes',
+      search_placeholder: 'Search...',
+      col_index: '#',
+      col_name: 'Name',
+      col_type: 'Type',
+      col_from: 'From',
+      col_to: 'To',
+      col_price: 'Price',
+      col_actions: 'Actions',
+      edit_action: 'Edit',
+      delete_action: 'Delete',
+      empty_search: 'No matching data.',
+      total_footer: 'Total',
+      page: 'Page',
+      of: 'of',
+      next: 'Next',
+      prev: 'Prev',
+      last_n_hint: 'Showing last',
+      slice_hint: 'slice(s).',
+      back_dashboard: 'Back to dashboard',
+      confirm_delete: 'Are you sure to delete?',
+      errors_title: 'Validation errors:',
+      err_name: 'Name is required (min 2 chars).',
+      err_price: 'Price is required and must be ≥ 0.',
+      err_days: 'Total days is required and must be ≥ 1.',
+      err_hours: 'Total hours is required and must be ≥ 1.',
+      err_time_needed: 'Start/End time are required when not repeated.',
+      server_error: 'Server error:',
+      validation_errors: 'Validation errors:',
+      status: 'Status',
+      traceId: 'TraceId',
+      type: 'Type',
+      conn_error: 'Connection error',
+      unexpected_error: 'Unexpected error',
+      time_window_off: '-',
+      loading: 'Loading…',
+      total_label: 'Total',
+    },
+  };
+  t = (key: string) => this.dict[this.i18n.current]?.[key] ?? key;
+  dir = computed(() => this.i18n.dir());
+  isRTL = computed(() => this.i18n.isRTL());
+
+  // ===== Paging =====
   page = signal(1);
   pageSize = signal(10);
   totalPages = signal(1);
@@ -46,6 +183,7 @@ export class SubscriptionComponent implements OnInit {
   hasPrev = computed(() => this.page() > 1);
   hasNext = signal(false);
 
+  // ===== Data/UI =====
   loading = signal(false);
   saving = signal(false);
   rows = signal<PricingSchemaRow[]>([]);
@@ -75,9 +213,11 @@ export class SubscriptionComponent implements OnInit {
     if (!q) return data;
     return data.filter(
       (r) =>
-        (r.name || '').toLowerCase().includes(q) || this.durationLabel(r.durationType).includes(q)
+        (r.name || '').toLowerCase().includes(q) ||
+        this.durationLabel(r.durationType).toLowerCase().includes(q)
     );
   });
+
   showTimeForRow(r: PricingSchemaRow): boolean {
     return r.durationType === DurationType.Hours && r.isRepeated === false;
   }
@@ -87,7 +227,7 @@ export class SubscriptionComponent implements OnInit {
     this.loadRows();
   }
 
-  // ====== Flags ======
+  // ===== Flags =====
   isDays(): boolean {
     return this.form.controls.durationType.value === DurationType.Days;
   }
@@ -117,12 +257,12 @@ export class SubscriptionComponent implements OnInit {
     return m ? `${m[1]}:${m[2]}` : null;
   }
 
-  // ====== Validation rules ======
+  // ===== Validation rules =====
   private updateTimeAndModeRules() {
     const dt = this.form.controls.durationType.value;
     const isRep = this.form.controls.isRepeated.value;
 
-    // نظّف الفاليديشن أولاً
+    // reset validators
     this.form.controls.startTime.clearValidators();
     this.form.controls.endTime.clearValidators();
     this.form.controls.totalDays.clearValidators();
@@ -132,7 +272,6 @@ export class SubscriptionComponent implements OnInit {
 
     if (dt === DurationType.Days) {
       this.form.controls.totalDays.setValidators([Validators.required, Validators.min(1)]);
-
       this.form.controls.totalHours.setValue(null, { emitEvent: false });
       this.form.controls.startTime.setValue(null, { emitEvent: false });
       this.form.controls.endTime.setValue(null, { emitEvent: false });
@@ -167,7 +306,7 @@ export class SubscriptionComponent implements OnInit {
     this.form.controls.price.updateValueAndValidity({ emitEvent: false });
   }
 
-  // ====== DTO builders ======
+  // ===== DTO builders =====
   private buildAddDto(): PricingSchemaAddDto {
     const v = this.form.getRawValue();
     const isHours = v.durationType === DurationType.Hours;
@@ -221,7 +360,7 @@ export class SubscriptionComponent implements OnInit {
     };
   }
 
-  // ====== Lifecycle ======
+  // ===== Lifecycle =====
   ngOnInit(): void {
     this.loadRows();
 
@@ -235,7 +374,7 @@ export class SubscriptionComponent implements OnInit {
     this.updateTimeAndModeRules();
   }
 
-  // ====== UI Helpers ======
+  // ===== UI Helpers =====
   editingId(): string | null {
     return this.editingRowId();
   }
@@ -247,17 +386,17 @@ export class SubscriptionComponent implements OnInit {
   durationLabel(dt: DurationType | null | undefined): string {
     switch (dt) {
       case DurationType.Hours:
-        return 'ساعات';
+        return this.t('hours_short');
       case DurationType.Days:
-        return 'أيام';
+        return this.t('days_short');
       case DurationType.Year:
-        return 'سنة';
+        return this.t('year_short');
       default:
         return '';
     }
   }
 
-  // ====== CRUD ======
+  // ===== CRUD =====
   private loadRows() {
     this.loading.set(true);
     this.api.list(this.page(), this.pageSize(), this.query()).subscribe({
@@ -308,7 +447,7 @@ export class SubscriptionComponent implements OnInit {
   remove(r: PricingSchemaRow) {
     const normId = this.normalizeId(r);
     if (normId === null || normId === undefined) return;
-    if (!confirm('هل أنت متأكد من الحذف؟')) return;
+    if (!confirm(this.t('confirm_delete'))) return;
     this.saving.set(true);
     this.api.delete(normId).subscribe({
       next: () => {
@@ -323,16 +462,7 @@ export class SubscriptionComponent implements OnInit {
     this.updateTimeAndModeRules();
     this.form.markAllAsTouched();
 
-    if (this.form.invalid) {
-      console.log('Form is invalid', this.form.errors);
-      Object.keys(this.form.controls).forEach((key) => {
-        const control = this.form.get(key);
-        if (control?.invalid) {
-          console.log(`Field ${key} is invalid:`, control.errors);
-        }
-      });
-      return;
-    }
+    if (this.form.invalid) return;
 
     const isEdit = this.editingRowId() !== null && this.editingRowId() !== undefined;
     this.saving.set(true);
@@ -377,7 +507,7 @@ export class SubscriptionComponent implements OnInit {
       }
     } catch (error) {
       this.saving.set(false);
-      alert('حدث خطأ في إعداد البيانات: ' + error);
+      alert('Error preparing data: ' + error);
     }
   }
 
@@ -385,24 +515,24 @@ export class SubscriptionComponent implements OnInit {
     const errors: string[] = [];
 
     if (!dto.name || dto.name.trim().length < 2) {
-      errors.push('الاسم مطلوب ويجب أن يكون على الأقل حرفين');
+      errors.push(this.t('err_name'));
     }
 
     if (dto.price === null || dto.price === undefined || dto.price < 0) {
-      errors.push('السعر مطلوب ويجب أن يكون 0 أو أكثر');
+      errors.push(this.t('err_price'));
     }
 
     if (dto.durationType === DurationType.Days) {
       if (!dto.totalDays || dto.totalDays < 1) {
-        errors.push('إجمالي الأيام مطلوب ويجب أن يكون 1 أو أكثر');
+        errors.push(this.t('err_days'));
       }
     } else if (dto.durationType === DurationType.Hours) {
       if (!dto.totalHours || dto.totalHours < 1) {
-        errors.push('إجمالي الساعات مطلوب ويجب أن يكون 1 أو أكثر');
+        errors.push(this.t('err_hours'));
       }
       if (!dto.isRepeated) {
         if (!dto.startTime || !dto.endTime) {
-          errors.push('وقت البداية والنهاية مطلوبان عندما لا يكون الحساب متكرر');
+          errors.push(this.t('err_time_needed'));
         }
       }
     } else if (dto.durationType === DurationType.Year) {
@@ -414,7 +544,7 @@ export class SubscriptionComponent implements OnInit {
     }
 
     if (errors.length > 0) {
-      alert('أخطاء في البيانات:\n' + errors.join('\n'));
+      alert(this.t('errors_title') + '\n' + errors.join('\n'));
       return false;
     }
     return true;
@@ -422,34 +552,34 @@ export class SubscriptionComponent implements OnInit {
 
   private handleApiError(err: any) {
     if (err?.error) {
-      let errorMessage = 'حدث خطأ في الخادم:\n\n';
+      let errorMessage = this.t('server_error') + '\n\n';
 
       if (err.error.errors) {
-        errorMessage += 'أخطاء التحقق:\n';
+        errorMessage += this.t('validation_errors') + '\n';
         Object.keys(err.error.errors).forEach((field) => {
           errorMessage += `• ${field}: ${err.error.errors[field].join(', ')}\n`;
         });
       } else if (err.error.title) {
-        errorMessage += `العنوان: ${err.error.title}\n`;
+        errorMessage += `Title: ${err.error.title}\n`;
       }
 
       if (err.error.status) {
-        errorMessage += `الحالة: ${err.error.status}\n`;
+        errorMessage += `${this.t('status')}: ${err.error.status}\n`;
       }
 
       if (err.error.traceId) {
-        errorMessage += `رقم التتبع: ${err.error.traceId}\n`;
+        errorMessage += `${this.t('traceId')}: ${err.error.traceId}\n`;
       }
 
       if (err.error.type) {
-        errorMessage += `النوع: ${err.error.type}\n`;
+        errorMessage += `${this.t('type')}: ${err.error.type}\n`;
       }
 
       alert(errorMessage);
     } else if (err?.message) {
-      alert('خطأ في الاتصال: ' + err.message);
+      alert(this.t('conn_error') + ': ' + err.message);
     } else {
-      alert('حدث خطأ غير متوقع');
+      alert(this.t('unexpected_error'));
     }
   }
 

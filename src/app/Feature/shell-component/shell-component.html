@@ -1,4 +1,4 @@
-<div class="app-shell d-flex">
+<div class="app-shell d-flex" [attr.dir]="dir()">
   <!-- Sidebar -->
   <aside class="app-sidebar d-flex flex-column p-3">
     <a class="brand text-decoration-none mb-4" routerLink="/">
@@ -12,10 +12,12 @@
         routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
       >
-        <i class="bi bi-house"></i> overview
+        <i class="bi bi-house"></i> {{ t('overview') }}
       </a>
 
-      <div class="text-secondary small mt-3 mb-1 text-uppercase">Parking</div>
+      <div class="text-secondary small mt-3 mb-1 text-uppercase">
+        {{ t('parking') }}
+      </div>
 
       <!-- Gate with submenu -->
       <div class="nav-item">
@@ -24,9 +26,10 @@
           type="button"
           (click)="toggleGate()"
           [attr.aria-expanded]="gateOpen"
+          [attr.aria-label]="t('toggleSubmenu')"
         >
           <i class="bi bi-door-open"></i>
-          Gate
+          {{ t('gate') }}
           <i class="bi ms-auto" [ngClass]="gateOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
         </button>
 
@@ -36,24 +39,25 @@
             routerLink="/tickets"
             routerLinkActive="active"
           >
-            <i class="bi bi-arrow-right-circle"></i> Entry Gate
+            <i class="bi bi-arrow-right-circle"></i> {{ t('entryGate') }}
           </a>
           <a
             class="nav-link text-light d-flex align-items-center gap-2 ps-4"
             routerLink="/exitgate"
             routerLinkActive="active"
           >
-            <i class="bi bi-box-arrow-right"></i> Exit Gate
+            <i class="bi bi-box-arrow-right"></i> {{ t('exitGate') }}
           </a>
         </div>
       </div>
+
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
         routerLink="/visitor"
         routerLinkActive="active"
       >
         <i class="bi bi-credit-card"></i>
-        Visitor
+        {{ t('visitor') }}
       </a>
 
       <!-- existing links -->
@@ -63,7 +67,7 @@
         routerLinkActive="active"
       >
         <i class="bi bi-credit-card"></i>
-        Altaeriffa
+        {{ t('altaeriffa') }}
       </a>
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
@@ -71,23 +75,25 @@
         routerLinkActive="active"
       >
         <i class="bi bi-person"></i>
-        Subscription
+        {{ t('subscription') }}
       </a>
 
-      <div class="text-secondary small mt-3 mb-1 text-uppercase">Management</div>
+      <div class="text-secondary small mt-3 mb-1 text-uppercase">
+        {{ t('management') }}
+      </div>
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
         routerLink="/users"
         routerLinkActive="active"
       >
-        <i class="bi bi-people"></i> Users
+        <i class="bi bi-people"></i> {{ t('users') }}
       </a>
       <a
         class="nav-link text-light d-flex align-items-center gap-2"
         routerLink="/configuration"
         routerLinkActive="active"
       >
-        <i class="bi bi-gear"></i> Configuration
+        <i class="bi bi-gear"></i> {{ t('configuration') }}
       </a>
 
       <a
@@ -95,17 +101,23 @@
         routerLink="/parking-guidance-diagram"
         routerLinkActive="active"
       >
-        <i class="bi bi-gear"></i> Parking Guidance Diagram
+        <i class="bi bi-gear"></i> {{ t('parkingGuidanceDiagram') }}
       </a>
     </nav>
 
-    <div class="mt-auto small text-secondary">v1.0</div>
+    <div class="mt-auto small text-secondary">{{ t('version') }} 1.0</div>
   </aside>
 
   <section class="app-content flex-fill d-flex flex-column">
     <header class="app-topbar d-flex align-items-center justify-content-between px-4 py-3">
-      <div class="fw-semibold">Dashboard</div>
-      <div class="text-muted small">Welcome back</div>
+      <div class="fw-semibold">{{ t('dashboard') }}</div>
+
+      <div class="d-flex align-items-center gap-2">
+        <div class="text-muted small">{{ t('welcome') }}</div>
+        <!-- <button class="btn btn-outline-secondary btn-sm" (click)="switchLang()">
+          {{ t('langButton') }}
+        </button> -->
+      </div>
     </header>
 
     <main class="p-4">

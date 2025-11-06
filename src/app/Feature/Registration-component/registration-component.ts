@@ -1,17 +1,12 @@
+import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import {
+  AbstractControl,
   FormBuilder,
   FormGroup,
-  Validators,
-  AbstractControl,
   ReactiveFormsModule,
+  Validators,
 } from '@angular/forms';
-import { CommonModule } from '@angular/common';
-import {
-  PricingSchemaDto,
-  Registrationservice,
-} from '../../Services/registration/registrationservice';
-import { NfcReaderService } from '../../Services/registration/nfc-reader.service';
 import {
   DocumentItem,
   PagedResult,
@@ -19,20 +14,192 @@ import {
   PlateGroup,
 } from '../../Domain/registration/registration-model';
 import { DurationType } from '../../Domain/Subscription-type/subscription-type.models';
+import {
+  PricingSchemaDto,
+  Registrationservice,
+} from '../../Services/registration/registrationservice';
+import { NfcReaderService } from '../../Services/registration/nfc-reader.service';
+
+import { LanguageService } from '../../Services/i18n/language-service';
+import { I18N_DICT, I18nDict } from '../../Services/i18n/i18n.tokens';
+import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
 
 @Component({
   selector: 'app-registration-component',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, TranslatePipePipe],
   templateUrl: './registration-component.html',
   styleUrl: './registration-component.css',
+  providers: [
+    {
+      provide: I18N_DICT,
+      useValue: (<I18nDict>{
+        ar: {
+          // ===== Form: subscriber =====
+          subscriberCard: 'بيانات المشترك',
+          newBadge: 'جديد',
+          plateNumber: 'رقم السيارة',
+          plateIncomplete: 'برجاء استكمال خانات لوحة السيارة',
+          subscriberName: 'اسم المشترك',
+          namePlaceholder: 'مثال: حسام خالد',
+          nameRequired: 'الاسم مطلوب (3 أحرف فأكثر)',
+          phone: 'رقم التليفون',
+          phonePlaceholder: 'مثال: 01012345678',
+          phoneInvalid: 'رقم هاتف غير صالح',
+          nationalId: 'رقم البطاقة',
+          nationalIdPlaceholder: 'مثال: 2980*********',
+          nationalIdInvalid: 'رقم بطاقة غير صالح',
+
+          // ===== subscription type =====
+          subscriptionType: 'نوع الاشتراك',
+          loadingSchemas: 'جاري التحميل…',
+          chooseSubscription: 'اختر نوع الاشتراك',
+          chooseSubscriptionPlaceholder: '— اختر نوع الاشتراك —',
+          schemaRequired: 'اختيار نوع الاشتراك مطلوب',
+
+          // ===== card data =====
+          cardData: 'بيانات الكارت',
+          cardNumber: 'رقم الكارت',
+          cardInvalid: 'رقم الكارت يجب أن يكون أحرف/أرقام هيكس بين 6 و 16.',
+          readCard: 'قراءة الكارت',
+          reading: 'جاري القراءة…',
+          readCardTitle: 'قراءة UID من القارئ',
+
+          // ===== documents =====
+          documents: 'المستندات',
+          filesCount: 'ملف',
+          uploadDocs: 'رفع مستندات',
+          scanCamera: 'مسح بالمـاسـح/الكاميرا',
+          delete: 'حذف',
+          noDocs: 'لا توجد مستندات مرفوعة بعد.',
+          notPreviewable: 'لا يمكن معاينة هذا النوع هنا. يمكنك تنزيله لفتحه محلياً.',
+          download: 'تنزيل الملف',
+          close: 'إغلاق',
+
+          // ===== preview overlay =====
+          previewCloseAria: 'إغلاق',
+
+          // ===== submit =====
+          saving: 'جاري الحفظ...',
+          saveSubscription: 'حفظ الاشتراك',
+          savedOk: 'تم حفظ الاشتراك بنجاح ✅',
+          saveFail: 'تعذر حفظ الاشتراك. تأكد من الـ API والبيانات.',
+
+          // ===== list =====
+          memberships: 'الاشتراكات',
+          pageSize: 'حجم الصفحة',
+          nameCol: 'الاسم',
+          phoneCol: 'الهاتف',
+          nidCol: 'الرقم القومي',
+          vehicleNumberCol: 'رقم المركبة',
+          cardNoCol: 'رقم الكارت',
+          usageTimeCol: 'وقت الاستخدام',
+          createdAtCol: 'تاريخ الإنشاء',
+          endDateCol: 'تاريخ الانتهاء',
+          noData: 'لا توجد بيانات',
+          total: 'إجمالي',
+          page: 'صفحة',
+          of: 'من',
+          first: 'الأولى',
+          prev: 'السابق',
+          next: 'التالي',
+          last: 'الأخيرة',
+
+          // ===== plate helpers =====
+          plateExampleNumbers: '5678',
+          plateExampleLetters: 'أ ب ج',
+          // ===== misc =====
+          loading: 'جاري التحميل…',
+        },
+        en: {
+          // ===== Form: subscriber =====
+          subscriberCard: 'Subscriber details',
+          newBadge: 'New',
+          plateNumber: 'Plate number',
+          plateIncomplete: 'Please complete the plate fields.',
+          subscriberName: 'Subscriber name',
+          namePlaceholder: 'e.g., Hussam Khaled',
+          nameRequired: 'Name is required (min 3 chars).',
+          phone: 'Phone number',
+          phonePlaceholder: 'e.g., +201012345678',
+          phoneInvalid: 'Invalid phone number',
+          nationalId: 'National ID',
+          nationalIdPlaceholder: 'e.g., 2980*********',
+          nationalIdInvalid: 'Invalid national ID',
+
+          // ===== subscription type =====
+          subscriptionType: 'Subscription type',
+          loadingSchemas: 'Loading…',
+          chooseSubscription: 'Choose a subscription',
+          chooseSubscriptionPlaceholder: '— Choose a subscription —',
+          schemaRequired: 'Subscription is required',
+
+          // ===== card data =====
+          cardData: 'Card data',
+          cardNumber: 'Card number',
+          cardInvalid: 'Card number must be hex (6–16).',
+          readCard: 'Read card',
+          reading: 'Reading…',
+          readCardTitle: 'Read UID from reader',
+
+          // ===== documents =====
+          documents: 'Documents',
+          filesCount: 'file(s)',
+          uploadDocs: 'Upload documents',
+          scanCamera: 'Scan by camera',
+          delete: 'Delete',
+          noDocs: 'No documents yet.',
+          notPreviewable: 'Preview is not available. You can download and open locally.',
+          download: 'Download',
+          close: 'Close',
+
+          // ===== preview overlay =====
+          previewCloseAria: 'Close',
+
+          // ===== submit =====
+          saving: 'Saving...',
+          saveSubscription: 'Save membership',
+          savedOk: 'Saved successfully ✅',
+          saveFail: 'Failed to save. Check API & data.',
+
+          // ===== list =====
+          memberships: 'Memberships',
+          pageSize: 'Page size',
+          nameCol: 'Name',
+          phoneCol: 'Phone',
+          nidCol: 'National ID',
+          vehicleNumberCol: 'Vehicle number',
+          cardNoCol: 'Card number',
+          usageTimeCol: 'Usage time',
+          createdAtCol: 'Created at',
+          endDateCol: 'End date',
+          noData: 'No data',
+          total: 'Total',
+          page: 'Page',
+          of: 'of',
+          first: 'First',
+          prev: 'Prev',
+          next: 'Next',
+          last: 'Last',
+
+          // ===== plate helpers =====
+          plateExampleNumbers: '5678',
+          plateExampleLetters: 'A B C',
+          // ===== misc =====
+          loading: 'Loading…',
+        },
+      }) as I18nDict,
+    },
+  ],
 })
 export class RegistrationComponent implements OnInit {
+  // ===== DI =====
   private fb = inject(FormBuilder);
   private svc = inject(Registrationservice);
   private nfc = inject(NfcReaderService);
+  public lang = inject(LanguageService);
 
-  // State
+  // ===== State (list/paging) =====
   loading = signal(false);
   pageNumber = signal(1);
   pageSize = signal(10);
@@ -44,6 +211,7 @@ export class RegistrationComponent implements OnInit {
   totalItems = computed(() => this.result()?.totalItems ?? 0);
   totalPages = computed(() => this.result()?.totalPages ?? 0);
 
+  // ===== State (form) =====
   saving = signal(false);
 
   documents = signal<DocumentItem[]>([]);
@@ -55,52 +223,7 @@ export class RegistrationComponent implements OnInit {
 
   readingCard = signal(false);
 
-  load() {
-    this.loading.set(true);
-    this.svc.getMemberships(this.pageNumber(), this.pageSize()).subscribe({
-      next: (res) => this.result.set(res),
-      error: () => this.loading.set(false),
-      complete: () => this.loading.set(false),
-    });
-  }
-
-  first() {
-    if (this.pageNumber() === 1) return;
-    this.pageNumber.set(1);
-    this.load();
-  }
-  prev() {
-    if (!this.hasPrev()) return;
-    this.pageNumber.set(this.pageNumber() - 1);
-    this.load();
-  }
-  next() {
-    if (!this.hasNext()) return;
-    this.pageNumber.set(this.pageNumber() + 1);
-    this.load();
-  }
-  last() {
-    const lastPage = this.totalPages();
-    if (!lastPage || this.pageNumber() === lastPage) return;
-    this.pageNumber.set(lastPage);
-    this.load();
-  }
-  changePageSize(size: number) {
-    this.pageSize.set(size);
-    this.pageNumber.set(1);
-    this.load();
-  }
-
-  // === Validators ===
-  plateRequiredValidator(group: AbstractControl) {
-    const p1 = (group.get('p1')?.value || '').trim();
-    const p2 = (group.get('p2')?.value || '').trim();
-    const p3 = (group.get('p3')?.value || '').trim();
-    const p4 = (group.get('p4')?.value || '').trim();
-
-    return p1 || p2 || p3 || p4 ? null : { required: true };
-  }
-
+  // ===== Form & Validators =====
   form: FormGroup = this.fb.group(
     {
       cardNo: ['', [Validators.required, Validators.pattern(/^[0-9A-Fa-f]{6,16}$/)]],
@@ -130,8 +253,7 @@ export class RegistrationComponent implements OnInit {
   isDaysOrMonthly = computed(() => this.form.get('durationType')?.value !== DurationType.Hours);
 
   constructor() {
-    this.loadPricingSchemas();
-
+    // dynamic enable/disable & validators based on duration type
     effect(() => {
       const hours = this.isHours();
       const timeFrom = this.form.get('timeFrom')!;
@@ -164,6 +286,7 @@ export class RegistrationComponent implements OnInit {
     this.load();
   }
 
+  // ===== Data =====
   private loadPricingSchemas() {
     this.loadingSchemas.set(true);
     this.svc.getAll().subscribe({
@@ -173,6 +296,53 @@ export class RegistrationComponent implements OnInit {
     });
   }
 
+  load() {
+    this.loading.set(true);
+    this.svc.getMemberships(this.pageNumber(), this.pageSize()).subscribe({
+      next: (res) => this.result.set(res),
+      error: () => this.loading.set(false),
+      complete: () => this.loading.set(false),
+    });
+  }
+
+  // ===== Paging actions =====
+  first() {
+    if (this.pageNumber() === 1) return;
+    this.pageNumber.set(1);
+    this.load();
+  }
+  prev() {
+    if (!this.hasPrev()) return;
+    this.pageNumber.set(this.pageNumber() - 1);
+    this.load();
+  }
+  next() {
+    if (!this.hasNext()) return;
+    this.pageNumber.set(this.pageNumber() + 1);
+    this.load();
+  }
+  last() {
+    const lastPage = this.totalPages();
+    if (!lastPage || this.pageNumber() === lastPage) return;
+    this.pageNumber.set(lastPage);
+    this.load();
+  }
+  changePageSize(size: number) {
+    this.pageSize.set(size);
+    this.pageNumber.set(1);
+    this.load();
+  }
+
+  // ===== Validators =====
+  plateRequiredValidator(group: AbstractControl) {
+    const p1 = (group.get('p1')?.value || '').trim();
+    const p2 = (group.get('p2')?.value || '').trim();
+    const p3 = (group.get('p3')?.value || '').trim();
+    const p4 = (group.get('p4')?.value || '').trim();
+    return p1 || p2 || p3 || p4 ? null : { required: true };
+  }
+
+  // ===== NFC read =====
   async readCard() {
     if (this.readingCard()) return;
     this.readingCard.set(true);
@@ -191,6 +361,7 @@ export class RegistrationComponent implements OnInit {
     }
   }
 
+  // ===== Documents (upload/preview) =====
   openScanner(inputEl: HTMLInputElement) {
     try {
       inputEl.click();
@@ -240,6 +411,7 @@ export class RegistrationComponent implements OnInit {
     this.documents.set(arr);
   }
 
+  // ===== Plate helpers =====
   private normalizeLetters(raw: string): string {
     if (!raw) return '';
     const letters =
@@ -266,11 +438,10 @@ export class RegistrationComponent implements OnInit {
     const p1 = (plate?.p1 ?? '').toString().trim();
     const p2 = this.normalizeLetters(plate?.p2 ?? '');
     const p4 = (plate?.p4 ?? '').toString().trim();
-
     return [p1, p2, p4].filter(Boolean).join(' ');
   }
 
-  // ====== SUBMIT ======
+  // ===== Submit =====
   save() {
     this.form.get('plate')?.markAllAsTouched();
     if (this.form.invalid) return;
@@ -333,16 +504,9 @@ export class RegistrationComponent implements OnInit {
     const mb = kb / 1024;
     return `${mb.toFixed(1)} MB`;
   }
-
-  // private joinPlate(plate: PlateGroup): string {
-  //   const parts = [plate?.p1, plate?.p2, plate?.p3, plate?.p4]
-  //     .map((x) => (x || '').toString().trim())
-  //     .filter(Boolean);
-  //   return parts.join(' ');
-  // }
 }
 
-/* ===== Helpers ===== */
+/* ===== Helpers (file utils + time range) ===== */
 function fileToDataUrl(file: File) {
   return new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -351,9 +515,11 @@ function fileToDataUrl(file: File) {
     reader.readAsDataURL(file);
   });
 }
+
 function isImageMime(mime: string) {
   return !!mime && mime.startsWith('image/');
 }
+
 function timeRangeValidator(group: AbstractControl) {
   const type = group.get('durationType')?.value as DurationType;
   if (type !== DurationType.Hours) return null;

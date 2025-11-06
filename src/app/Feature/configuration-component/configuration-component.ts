@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, OnInit, computed, signal } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, computed, signal, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormArray,
@@ -31,7 +31,10 @@ import {
   PricingSchemaDto,
 } from '../../Services/configuration/configurationervices';
 import { finalize } from 'rxjs/operators';
-
+import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
+import { AppLang, LanguageService } from '../../Services/i18n/language-service';
+import { I18nDict } from '../../Services/i18n/i18n.tokens';
+import { I18N_DICT } from '../../Services/i18n/i18n.tokens';
 type Mode = 'entry' | 'exit';
 
 // IPv4 strict
@@ -58,59 +61,124 @@ const HOST_OR_IP_REGEX =
     MatDividerModule,
     MatTabsModule,
     MatExpansionModule,
+    TranslatePipePipe,
   ],
   templateUrl: './configuration-component.html',
   styleUrls: ['./configuration-component.css'],
+  providers: [
+    {
+      provide: I18N_DICT,
+      useValue: (<I18nDict>{
+        ar: {
+          basics: 'الأساسيات',
+          entryGatesCount: 'عدد بوابات الدخول',
+          exitGatesCount: 'عدد بوابات الخروج',
+          allowedParkingSlots: 'عدد الباكيّات المسموح',
+          gracePeriodMinutes: 'فترة السماح (دقائق)',
+          next: 'التالي',
+          modeAndSettings: 'الوضع والإعدادات',
+          mode: 'الوضع',
+          entry: 'Entry (دخول)',
+          exit: 'Exit (خروج)',
+          vehiclePassenger: 'المركبة والركّاب',
+          captureMode: 'طريقة الالتقاط',
+          lpr: 'LPR كاميرا',
+          scanner: 'ScannerID كاميرا',
+          printType: 'أنواع التذاكر',
+          qr: 'QR',
+          rfid: 'RFID',
+          entryGates: 'بوابات الدخول',
+          exitGates: 'بوابات الخروج',
+          gate: 'البوابة',
+          device: 'الجهاز',
+          ipLabel: 'عنوان IP للكاميرا',
+          ipPlaceholder: 'مثال: 192.168.1.100',
+          back: 'رجوع',
+          save: 'حفظ',
+          summary: 'الملخّص',
+          startDate: 'تاريخ البداية',
+          notSet: 'غير محدد',
+        },
+        en: {
+          basics: 'Basics',
+          entryGatesCount: 'Entry gates count',
+          exitGatesCount: 'Exit gates count',
+          allowedParkingSlots: 'Allowed parking slots',
+          gracePeriodMinutes: 'Grace period (minutes)',
+          next: 'Next',
+          modeAndSettings: 'Mode & Settings',
+          mode: 'Mode',
+          entry: 'Entry',
+          exit: 'Exit',
+          vehiclePassenger: 'Vehicle & Passenger',
+          captureMode: 'Capture mode',
+          lpr: 'LPR Cam',
+          scanner: 'Scanner Cam',
+          printType: 'Ticket types',
+          qr: 'QR',
+          rfid: 'RFID',
+          entryGates: 'Entry Gates',
+          exitGates: 'Exit Gates',
+          gate: 'Gate',
+          device: 'Device',
+          ipLabel: 'Camera IP address',
+          ipPlaceholder: 'e.g. 192.168.1.100',
+          back: 'Back',
+          save: 'Save',
+          summary: 'Summary',
+          startDate: 'Start Date',
+          notSet: 'Not set',
+        },
+      }) as I18nDict,
+    },
+  ],
 })
 export class ConfigurationComponent implements OnInit {
   @Output() submitted = new EventEmitter<ParkingConfigurationUpdateCommand>();
 
-  pricingSchemas: PricingSchemaDto[] = [];
-  stepIndex = 0;
-  modeCtrl = new FormControl<Mode>('entry', { nonNullable: true });
-
-  step1Form: FormGroup;
-  step2Form: FormGroup;
-  saving = false;
-  loading = false;
-
-  constructor(private fb: FormBuilder, private svc: Configurationervices) {
-    // ===== Step 1
+  constructor(
+    private fb: FormBuilder,
+    private svc: Configurationervices,
+    public lang: LanguageService
+  ) {
+    // Step 1
     this.step1Form = this.fb.group({
       entryGatesCount: [1, [Validators.required, Validators.min(1)]],
       exitGatesCount: [1, [Validators.required, Validators.min(1)]],
       allowedParkingSlots: [100, [Validators.required, Validators.min(1)]],
       gracePeriodMinutes: [15, [Validators.required, Validators.min(0)]],
     });
-
-    // ===== Step 2
+    // Step 2
     this.step2Form = this.fb.group({
-      // enums mapped by UI-friendly fields
       captureMode: ['LPR', Validators.required], // LPR | SCANNER
       printType: ['QR', Validators.required], // QR | RFID
 
-      // ticket card
       startDate: [new Date(), Validators.required],
       ticketIdPrefix: ['TK', [Validators.maxLength(10)]],
 
-      // fees/schema
       onceFee: [20, [Validators.required, Validators.min(0)]],
-      tiers: this.fb.array([]), // لو هتستخدمها لاحقًا
+      tiers: this.fb.array([]),
       dateTimeFlag: [true],
       ticketIdFlag: [true],
       feesFlag: [true],
 
       pricingSchemaId: ['', Validators.required],
 
-      // gates
       entryGates: this.fb.array([]),
       exitGates: this.fb.array([]),
     });
 
-    // keep arrays sized with counts
     this.step1Form.get('entryGatesCount')?.valueChanges.subscribe(() => this.syncGateArrays());
     this.step1Form.get('exitGatesCount')?.valueChanges.subscribe(() => this.syncGateArrays());
   }
+
+  pricingSchemas: PricingSchemaDto[] = [];
+  stepIndex = 0;
+  modeCtrl = new FormControl<Mode>('entry', { nonNullable: true });
+  step1Form!: FormGroup;
+  step2Form!: FormGroup;
+  saving = false;
+  loading = false;
 
   ngOnInit() {
     this.loadPricingSchemas();
@@ -138,13 +206,11 @@ export class ConfigurationComponent implements OnInit {
   loadExistingConfigAndPatch() {
     this.loading = true;
     this.svc
-      .getConfiguration() // now typed as ParkingConfigurationView
+      .getConfiguration()
       .pipe(finalize(() => (this.loading = false)))
       .subscribe({
         next: (cfg: ParkingConfigurationView) => {
           if (!cfg) return;
-
-          // Step1
           this.step1Form.patchValue({
             entryGatesCount: cfg.entryGatesCount ?? 1,
             exitGatesCount: cfg.exitGatesCount ?? 1,
@@ -152,10 +218,8 @@ export class ConfigurationComponent implements OnInit {
             gracePeriodMinutes: cfg.gracePeriodMinutes ?? 0,
           });
 
-          // arrays before patch
           this.syncGateArrays();
 
-          // derive UI fields from enums
           const captureMode =
             cfg.vehiclePassengerData === VehiclePassengerData.Lpr ? 'LPR' : 'SCANNER';
           const printType = cfg.printType === PrintType.QrCode ? 'QR' : 'RFID';
@@ -174,9 +238,7 @@ export class ConfigurationComponent implements OnInit {
           this.patchGateArray(this.entryGatesFA, cfg.entryGates || []);
           this.patchGateArray(this.exitGatesFA, cfg.exitGates || []);
         },
-        error: (err) => {
-          console.error('Failed to load existing configuration', err);
-        },
+        error: (err) => console.error('Failed to load existing configuration', err),
       });
   }
 
@@ -200,32 +262,21 @@ export class ConfigurationComponent implements OnInit {
       lprIp: ['', [Validators.required, Validators.pattern(HOST_OR_IP_REGEX)]],
     });
   }
-
   private resizeFormArray(arr: FormArray, target: number) {
-    while (arr.length < target) {
-      arr.push(this.makeGateGroup(arr.length + 1));
-    }
-    while (arr.length > target) {
-      arr.removeAt(arr.length - 1);
-    }
+    while (arr.length < target) arr.push(this.makeGateGroup(arr.length + 1));
+    while (arr.length > target) arr.removeAt(arr.length - 1);
   }
-
   private syncGateArrays() {
     const entries = Number(this.step1Form.get('entryGatesCount')!.value || 0);
     const exits = Number(this.step1Form.get('exitGatesCount')!.value || 0);
     this.resizeFormArray(this.entryGatesFA, entries);
     this.resizeFormArray(this.exitGatesFA, exits);
-    // normalize numbering
     this.renumberGateArray(this.entryGatesFA);
     this.renumberGateArray(this.exitGatesFA);
   }
-
   private renumberGateArray(arr: FormArray<FormGroup>) {
-    arr.controls.forEach((fg, i) => {
-      fg.get('gateNumber')?.setValue(i + 1, { emitEvent: false });
-    });
+    arr.controls.forEach((fg, i) => fg.get('gateNumber')?.setValue(i + 1, { emitEvent: false }));
   }
-
   private patchGateArray(
     arr: FormArray<FormGroup>,
     data: Array<{ gateNumber: number; lprIp: string }>
@@ -234,14 +285,11 @@ export class ConfigurationComponent implements OnInit {
     this.resizeFormArray(arr, target);
     arr.controls.forEach((fg, i) => {
       const src = data?.[i];
-      fg.patchValue({
-        gateNumber: i + 1,
-        lprIp: src?.lprIp ?? '',
-      });
+      fg.patchValue({ gateNumber: i + 1, lprIp: src?.lprIp ?? '' });
     });
   }
 
-  // ======= UX navigation =======
+  // ======= UX =======
   goNext() {
     if (this.step1Form.invalid) {
       this.step1Form.markAllAsTouched();
@@ -254,12 +302,11 @@ export class ConfigurationComponent implements OnInit {
     if (this.stepIndex > 0) this.stepIndex--;
   }
 
-  // ======= Summary (for preview cards) =======
+  // ======= Summary =======
   get summaryForView() {
     const s1 = this.step1Form.value as any;
     const s2 = this.step2Form.getRawValue() as any;
     const mode = this.modeCtrl.value;
-
     return {
       entryGatesCount: s1.entryGatesCount,
       exitGatesCount: s1.exitGatesCount,
@@ -268,10 +315,7 @@ export class ConfigurationComponent implements OnInit {
       mode,
       captureMode: s2.captureMode,
       printType: s2.printType,
-      ticketCard: {
-        startDate: s2.startDate,
-        ticketIdPrefix: s2.ticketIdPrefix,
-      },
+      ticketCard: { startDate: s2.startDate, ticketIdPrefix: s2.ticketIdPrefix },
       flags: {
         dateTimeFlag: !!s2.dateTimeFlag,
         ticketIdFlag: !!s2.ticketIdFlag,
@@ -287,38 +331,29 @@ export class ConfigurationComponent implements OnInit {
   buildDto(): ParkingConfigurationUpdateCommand {
     const s1 = this.step1Form.value as any;
     const s2 = this.step2Form.getRawValue() as any;
-
-    const entryGates = this.entryGatesFA.getRawValue().map((g, i) => ({
-      gateNumber: i + 1,
-      lprIp: (g['lprIp'] || '').trim(),
-    }));
-    const exitGates = this.exitGatesFA.getRawValue().map((g, i) => ({
-      gateNumber: i + 1,
-      lprIp: (g['lprIp'] || '').trim(),
-    }));
-
+    const entryGates = this.entryGatesFA
+      .getRawValue()
+      .map((g, i) => ({ gateNumber: i + 1, lprIp: (g['lprIp'] || '').trim() }));
+    const exitGates = this.exitGatesFA
+      .getRawValue()
+      .map((g, i) => ({ gateNumber: i + 1, lprIp: (g['lprIp'] || '').trim() }));
     return {
       entryGatesCount: s1.entryGatesCount,
       exitGatesCount: s1.exitGatesCount,
       allowedParkingSlots: s1.allowedParkingSlots,
       gracePeriodMinutes: s1.gracePeriodMinutes,
-
       priceType: this.modeCtrl.value === 'entry' ? PriceType.Entry : PriceType.Exit,
       vehiclePassengerData:
         s2.captureMode === 'LPR' ? VehiclePassengerData.Lpr : VehiclePassengerData.ScannerId,
       printType: s2.printType === 'QR' ? PrintType.QrCode : PrintType.Rfid,
-
       dateTimeFlag: !!s2.dateTimeFlag,
       ticketIdFlag: !!s2.ticketIdFlag,
       feesFlag: !!s2.feesFlag,
-
       pricingSchemaId: s2.pricingSchemaId,
-
       ticketCard: {
         startDate: s2.startDate instanceof Date ? s2.startDate.toISOString() : s2.startDate,
         ticketIdPrefix: s2.ticketIdPrefix || 'TK',
       },
-
       entryGates,
       exitGates,
     };
@@ -326,7 +361,6 @@ export class ConfigurationComponent implements OnInit {
 
   save() {
     if (this.stepIndex !== 1) return;
-
     if (this.step1Form.invalid) {
       this.step1Form.markAllAsTouched();
       return;
@@ -335,7 +369,6 @@ export class ConfigurationComponent implements OnInit {
       this.step2Form.markAllAsTouched();
       return;
     }
-
     const dto: ParkingConfigurationUpdateCommand = this.buildDto();
     this.saving = true;
     this.svc

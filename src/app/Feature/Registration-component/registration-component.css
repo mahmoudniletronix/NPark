@@ -1,45 +1,51 @@
+/* ================== NPark Theme (Direct Colors) ================== */
+
 .page-rtl {
   direction: rtl;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   padding: 20px 0;
+  background: #f6f8fb;
+  color: #2f3b46;
 }
 
 .container-fluid {
   max-width: 1400px;
 }
 
+/* ===== Cards ===== */
 .card {
-  border: none;
+  border: 1px solid rgba(0, 0, 0, 0.04);
   border-radius: 16px;
   overflow: hidden;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
-
 .card--glass {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
-
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
 }
 
+/* ===== Card Header ===== */
 .card-header {
-  background: linear-gradient(135deg, #a8d3ff 0%, #2575fc 100%);
-  color: white;
-  border-bottom: none;
-  padding: 1rem 1.5rem;
+  background: #fff;
+  color: #2f3b46;
+  border-bottom: 1px solid #a8b4bf;
+  padding: 0.9rem 1.2rem;
 }
-
 .card-header h5 {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  margin: 0;
 }
 
-/* عناوين الأقسام */
+/* ===== Section Title ===== */
 .section-title {
   font-weight: 700;
   font-size: 1rem;
@@ -47,56 +53,56 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #2c3e50;
+  color: #2f3b46;
 }
 .section-title::before {
   content: '';
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #41394b 0%, #2575fc 100%);
+  background: #d81f2a;
   display: inline-block;
 }
 
-/* أزرار نوع الاشتراك */
+/* ===== Tabs ===== */
 .type-tabs {
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
 }
 .type-tab {
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   background: #fff;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
   transition: 0.2s;
   font-weight: 600;
-  color: #6c757d;
+  color: #4b5b68;
 }
 .type-tab.active {
-  border-color: transparent;
+  border-color: #d81f2a;
   color: #fff;
-  background: linear-gradient(135deg, #41394b 0%, #2575fc 100%);
-  box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3);
+  background: #d81f2a;
+  box-shadow: 0 4px 10px rgba(216, 31, 42, 0.25);
 }
 .type-tab:focus {
-  outline: 2px solid rgba(106, 17, 203, 0.35);
+  outline: 2px solid rgba(216, 31, 42, 0.22);
 }
 
-/* لوحة السيارة */
+/* ===== Plate Input ===== */
 .plate-input {
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  background: #f8f9fa;
+  background: #f8fafc;
   border-radius: 12px;
   padding: 0.5rem 0.75rem;
-  border: 1px solid #e9ecef;
-  transition: all 0.3s ease;
+  border: 1px solid #e6e9ee;
+  transition: all 0.25s ease;
 }
 .plate-input:focus-within {
-  border-color: #41394b;
-  box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.15);
+  border-color: #d81f2a;
+  box-shadow: 0 0 0 0.2rem rgba(216, 31, 42, 0.22);
 }
 .plate-input input {
   width: 2.5rem;
@@ -105,79 +111,75 @@
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 0.35rem;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 .plate-input input:focus {
-  border-color: #41394b;
-  box-shadow: 0 0 0 0.1rem rgba(106, 17, 203, 0.2);
+  border-color: #d81f2a;
+  box-shadow: 0 0 0 0.1rem rgba(216, 31, 42, 0.2);
 }
 .plate-input .sep {
   opacity: 0.5;
 }
 
-/* تحسين حقول الإدخال */
+/* ===== Inputs ===== */
 .form-control,
 .form-select {
   border-radius: 10px;
   padding: 0.6rem 1.75rem;
   border: 1px solid #e1e5eb;
-  transition: all 0.3s ease;
-  background-color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #2f3b46;
 }
-
 .form-control:focus,
 .form-select:focus {
-  border-color: #41394b;
-  box-shadow: 0 0 0 0.2rem rgba(106, 17, 203, 0.15);
-  background-color: white;
+  border-color: #d81f2a;
+  box-shadow: 0 0 0 0.2rem rgba(216, 31, 42, 0.22);
+  background-color: #fff;
 }
 
-/* تحسين الأزرار */
+/* ===== Buttons ===== */
 .btn {
   border-radius: 10px;
   padding: 0.5rem 1.2rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border: none;
 }
-
 .btn-primary {
-  background: linear-gradient(135deg, #41394b 0%, #2575fc 100%);
-  box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3);
+  background: #4a814a;
+  box-shadow: 0 4px 10px rgba(216, 31, 42, 0.25);
 }
-
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 15px rgba(106, 17, 203, 0.4);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(216, 31, 42, 0.3);
 }
-
 .btn-outline-primary {
-  color: #41394b;
-  border: 1px solid #41394b;
+  color: #2f3b46;
+  border: 1px solid #6e7f8f;
+  background: transparent;
 }
-
 .btn-outline-primary:hover {
-  background: linear-gradient(135deg, #41394b 0%, #2575fc 100%);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3);
+  background: #3fa856;
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(216, 31, 42, 0.25);
 }
 
-/* رفع الملفات */
+/* ===== Upload ===== */
 .upload input[type='file'] {
   width: 100%;
   border-radius: 10px;
   padding: 0.5rem;
-  border: 1px dashed #41394b;
-  background-color: rgba(106, 17, 203, 0.05);
-  transition: all 0.3s ease;
+  border: 1px dashed #6e7f8f;
+  background-color: rgba(75, 91, 104, 0.05);
+  transition: all 0.2s ease;
 }
-
 .upload input[type='file']:hover {
-  background-color: rgba(106, 17, 203, 0.1);
+  background-color: rgba(75, 91, 104, 0.1);
 }
 
-/* شبكة المستندات */
+/* ===== Docs grid ===== */
 .docs-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -190,27 +192,19 @@
   background: #fff;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-  transition: all 0.3s ease;
+  transition: 0.2s;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
 .doc-item:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.08);
 }
 .doc-thumb {
-  border: 0;
-  background: #f8f9fa;
+  background: #f4f6f8;
   border-radius: 10px;
-  padding: 0;
-  overflow: hidden;
   aspect-ratio: 16/10;
+  overflow: hidden;
   display: block;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-.doc-thumb:hover {
-  transform: scale(1.02);
 }
 .doc-thumb img {
   width: 100%;
@@ -219,13 +213,11 @@
   display: block;
 }
 .doc-icon {
-  width: 100%;
-  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  color: #41394b;
+  color: #4b5b68;
 }
 .doc-meta {
   margin-top: 0.5rem;
@@ -239,10 +231,10 @@
 }
 .doc-sub {
   font-size: 0.8rem;
-  color: #41394b;
+  color: #4b5b68;
 }
 
-/* نظرة عامة */
+/* ===== Meta list ===== */
 .meta {
   list-style: none;
   padding: 0;
@@ -255,7 +247,7 @@
   gap: 0.5rem;
 }
 .meta li span {
-  color: #41394b;
+  color: #4b5b68;
   min-width: 110px;
 }
 
@@ -264,17 +256,17 @@
   pointer-events: none;
 }
 
-/* ===== بوب-أب المعاينة ===== */
+/* ===== Preview modal ===== */
 .preview-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   outline: none;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(4px);
 }
 .preview-dialog {
   width: min(900px, 92vw);
@@ -285,12 +277,12 @@
   padding: 1.5rem;
   position: relative;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: modalFadeIn 0.3s ease-out;
+  animation: modalFadeIn 0.25s ease-out;
 }
 @keyframes modalFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.96);
   }
   to {
     opacity: 1;
@@ -309,7 +301,7 @@
   display: grid;
   place-items: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: 0.2s;
   z-index: 10;
 }
 .close-btn:hover {
@@ -318,11 +310,11 @@
 }
 .preview-head .name {
   font-weight: 800;
-  font-size: 1.2rem;
-  color: #2c3e50;
+  font-size: 1.15rem;
+  color: #2f3b46;
 }
 .preview-head .sub {
-  color: #6c757d;
+  color: #6e7f8f;
   font-size: 0.85rem;
 }
 .preview-body {
@@ -333,69 +325,63 @@
   height: auto;
   display: block;
   border-radius: 12px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
 }
-
 .file-preview {
   text-align: center;
   padding: 2rem 1rem;
-  color: #495057;
+  color: #4b5b68;
 }
 .file-preview i {
   font-size: 3rem;
   display: block;
-  color: #6a11cb;
+  color: #d81f2a;
 }
 
-/* تحسينات للجدول */
+/* ===== Tables ===== */
 .table-responsive {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.04);
 }
-
 .table {
   margin-bottom: 0;
 }
-
 .table th {
-  background: linear-gradient(135deg, #4080ac 0%, #2575fc 100%);
-  color: white;
+  background: #2f3b46;
+  color: #fff;
   font-weight: 600;
   border: none;
   padding: 1rem 0.75rem;
 }
-
 .table td {
   padding: 0.75rem;
   vertical-align: middle;
-  border-color: #f1f3f5;
+  border-color: #edf1f5;
+  color: #2f3b46;
 }
-
 .table-striped tbody tr:nth-of-type(odd) {
-  background-color: rgba(106, 17, 203, 0.03);
+  background-color: rgba(216, 31, 42, 0.03);
 }
-
 .table-hover tbody tr:hover {
-  background-color: rgba(106, 17, 203, 0.08);
+  background-color: rgba(216, 31, 42, 0.07);
 }
 
+/* ===== Thumbs in table ===== */
 .thumbs {
   display: flex;
   align-items: center;
 }
-
 .thumb {
   border-radius: 8px;
   object-fit: cover;
   margin-left: 5px;
-  border: 2px solid white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
 }
-
 .more {
-  background: #4080ac;
-  color: white;
+  background: #d81f2a;
+  color: #fff;
   border-radius: 50%;
   width: 30px;
   height: 30px;
@@ -406,25 +392,22 @@
   margin-left: 5px;
 }
 
-/* تحسينات للبادجات */
+/* ===== Footer & badges ===== */
 .badge {
   border-radius: 10px;
   padding: 0.35em 0.65em;
   font-weight: 600;
 }
-
 .badge--info {
   background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%);
-  color: white;
+  color: #fff;
 }
-
-/* تحسينات للباجينيشن */
 .card-footer {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* تحسينات للرسائل */
+/* ===== Form messages ===== */
 .invalid-feedback {
   font-size: 0.8rem;
   margin-top: 0.3rem;
@@ -432,44 +415,38 @@
   font-weight: 500;
 }
 
-/* تأثيرات للعناصر عند التحميل */
+/* ===== Loading shimmer ===== */
 .loading {
   position: relative;
   overflow: hidden;
 }
-
 .loading::after {
   content: '';
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
   animation: shimmer 1.5s infinite;
 }
-
 @keyframes shimmer {
   100% {
     transform: translateX(100%);
   }
 }
 
-/* تحسينات للفاصل */
+/* ===== Divider ===== */
 hr {
-  opacity: 0.3;
-  background: linear-gradient(to right, transparent, #6a11cb, transparent);
+  opacity: 0.35;
+  background: linear-gradient(to right, transparent, #d81f2a, transparent);
   height: 1px;
   border: none;
 }
 
-/* تحسينات للبطاقة المميزة */
+/* ===== Fancy card aura ===== */
 .fancy-card {
   position: relative;
   overflow: hidden;
 }
-
 .fancy-card::before {
   content: '';
   position: absolute;
@@ -477,31 +454,28 @@ hr {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(106, 17, 203, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(216, 31, 42, 0.08) 0%, transparent 70%);
   z-index: 0;
 }
-
 .fancy-card > * {
   position: relative;
   z-index: 1;
 }
 
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .docs-grid {
     grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   }
-
   .plate-input {
     flex-wrap: wrap;
     justify-content: center;
   }
-
   .card-header {
     padding: 0.8rem 1rem;
   }
-
   .btn {
-    padding: 0.4rem 1rem;
-    font-size: 0.9rem;
+    padding: 0.45rem 1rem;
+    font-size: 0.92rem;
   }
 }

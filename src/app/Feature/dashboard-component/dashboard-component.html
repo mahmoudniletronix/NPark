@@ -1,10 +1,15 @@
-<div class="container-fluid dash-theme">
+<div
+  class="container-fluid dash-theme"
+  [attr.dir]="lang.dir()"
+  [class.page-rtl]="lang.isRTL()"
+  [class.page-ltr]="!lang.isRTL()"
+>
   <div class="topbar">
-    <h5 class="mb-0 text-muted">Dashboard</h5>
+    <h5 class="mb-0 text-muted">{{ 'dashboard' | t }}</h5>
 
     <button class="btn btn-outline btn-sm" (click)="detectSensorsFromPlan()">
       <i class="bi bi-broadcast-pin"></i>
-      اكتشاف الحساسات
+      {{ 'detectSensors' | t }}
     </button>
   </div>
 
@@ -13,12 +18,13 @@
     <div class="col-12 col-md-4">
       <div class="card kpi kpi-blue h-100">
         <div class="card-header">
-          <div class="text-muted small">Stations</div>
+          <div class="text-muted small">{{ 'stations' | t }}</div>
         </div>
         <div class="card-body">
           <div class="value">{{ stations?.total || 0 }}</div>
           <div class="small text-muted">
-            Full: {{ stations?.full || 0 }} · Empty: {{ stations?.empty || 0 }}
+            {{ 'full' | t }}: {{ stations?.full || 0 }} · {{ 'empty' | t }}:
+            {{ stations?.empty || 0 }}
           </div>
           <div class="chart-wrap mt-3">
             <canvas #stationsChart></canvas>
@@ -32,9 +38,9 @@
       <div class="card kpi kpi-green h-100 users-card">
         <div class="card-header">
           <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted small">Users</span>
+            <span class="text-muted small">{{ 'users' | t }}</span>
             <a routerLink="/users" class="btn btn-sm btn-primary shadow-none text-muted">
-              <i class="bi bi-people"></i> See all users
+              <i class="bi bi-people"></i> {{ 'seeAllUsers' | t }}
             </a>
           </div>
         </div>
@@ -42,15 +48,15 @@
         <div class="card-body">
           <div>
             <div class="value mb-1">{{ usersTotal() }}</div>
-            <div class="small text-muted">إجمالي المستخدمين (Subscribers + Visitors)</div>
+            <div class="small text-muted">{{ 'usersTotalNote' | t }}</div>
           </div>
 
           <div class="d-flex flex-wrap gap-2 mt-3">
             <span class="badge pill theme-green-soft text-muted">
-              Subscribers: {{ users?.subscribers || 0 }}
+              {{ 'subscribers' | t }}: {{ users?.subscribers || 0 }}
             </span>
             <span class="badge pill theme-amber-soft text-muted">
-              Visitors: {{ users?.visitors || 0 }}
+              {{ 'visitors' | t }}: {{ users?.visitors || 0 }}
             </span>
           </div>
         </div>
@@ -61,7 +67,7 @@
     <div class="col-12 col-md-4">
       <div class="card kpi kpi-amber h-100">
         <div class="card-header">
-          <div class="text-muted small">Live In/Out (today)</div>
+          <div class="text-muted small">{{ 'liveInOutToday' | t }}</div>
         </div>
         <div class="card-body">
           <div class="chart-wrap mt-1">
@@ -76,11 +82,11 @@
       <div class="card shadow-soft">
         <div class="card-header">
           <div class="d-flex justify-content-between align-items-center">
-            <strong>Recent Tickets</strong>
+            <strong>{{ 'recentTickets' | t }}</strong>
             <div class="d-flex align-items-center gap-2">
-              <span class="text-muted small d-none d-md-inline">Last 10 Records</span>
+              <span class="text-muted small d-none d-md-inline">{{ 'last10' | t }}</span>
               <a routerLink="/tickets" class="btn btn-sm btn-primary text-muted">
-                <i class="bi bi-card-list"></i> See all tickets
+                <i class="bi bi-card-list"></i> {{ 'seeAllTickets' | t }}
               </a>
             </div>
           </div>
@@ -90,11 +96,11 @@
           <table class="table align-middle mb-0">
             <thead>
               <tr>
-                <th style="width: 90px">ID</th>
-                <th>Plate</th>
-                <th style="width: 120px">Action</th>
-                <th style="width: 100px">Gate</th>
-                <th style="width: 140px">Time</th>
+                <th style="width: 90px">{{ 'id' | t }}</th>
+                <th>{{ 'plate' | t }}</th>
+                <th style="width: 120px">{{ 'action' | t }}</th>
+                <th style="width: 100px">{{ 'gate' | t }}</th>
+                <th style="width: 140px">{{ 'time' | t }}</th>
               </tr>
             </thead>
 
@@ -109,7 +115,7 @@
                     [class.bg-success]="t.action === 'IN'"
                     [class.bg-danger]="t.action === 'OUT'"
                   >
-                    {{ t.action }}
+                    {{ (t.action === 'IN' ? 'IN' : 'OUT') | t }}
                   </span>
                 </td>
                 <td class="mono">{{ t.gate }}</td>
@@ -117,7 +123,7 @@
               </tr>
               } @if (tickets.length === 0) {
               <tr>
-                <td colspan="5" class="text-center text-muted py-4">No data</td>
+                <td colspan="5" class="text-center text-muted py-4">{{ 'noData' | t }}</td>
               </tr>
               }
             </tbody>

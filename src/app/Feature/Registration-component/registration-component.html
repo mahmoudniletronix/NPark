@@ -1,6 +1,8 @@
 <form
-  class="registration page-rtl container-fluid"
-  dir="rtl"
+  class="registration container-fluid"
+  [attr.dir]="lang.dir()"
+  [class.page-rtl]="lang.isRTL()"
+  [class.page-ltr]="!lang.isRTL()"
   [formGroup]="form"
   (ngSubmit)="save()"
   novalidate
@@ -11,14 +13,14 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-person-badge-fill"></i>
-            <h5 class="mb-0 fw-bold">بيانات المشترك</h5>
+            <h5 class="mb-0 fw-bold">{{ 'subscriberCard' | t }}</h5>
           </div>
-          <span class="badge pill badge--info">جديد</span>
+          <span class="badge pill badge--info">{{ 'newBadge' | t }}</span>
         </div>
 
         <div class="card-body">
           <div class="mb-3" formGroupName="plate">
-            <label class="form-label d-block">رقم السيارة</label>
+            <label class="form-label d-block">{{ 'plateNumber' | t }}</label>
 
             <div class="plate-input">
               <input
@@ -27,7 +29,8 @@
                 formControlName="p4"
                 inputmode="numeric"
                 pattern="[0-9]*"
-                placeholder="5678"
+                [placeholder]="'plateExampleNumbers' | t"
+                dir="ltr"
               />
               <span class="sep">ـ</span>
 
@@ -36,7 +39,7 @@
                 class="w-100 text-center"
                 formControlName="p2"
                 (input)="formatLetters('p2')"
-                placeholder="أ ب ج"
+                [placeholder]="'plateExampleLetters' | t"
               />
             </div>
 
@@ -44,36 +47,46 @@
               class="invalid-feedback d-block"
               *ngIf="form.get('plate')?.touched && form.get('plate')?.invalid"
             >
-              برجاء استكمال خانات لوحة السيارة
+              {{ 'plateIncomplete' | t }}
             </div>
           </div>
 
           <div class="row">
             <div class="mb-3 col-12">
-              <label class="form-label">اسم المشترك</label>
+              <label class="form-label">{{ 'subscriberName' | t }}</label>
               <input
                 class="form-control"
                 formControlName="subscriberName"
-                placeholder="مثال: حسام خالد"
+                [placeholder]="'namePlaceholder' | t"
               />
               <div class="invalid-feedback d-block" *ngIf="hasErr('subscriberName')">
-                الاسم مطلوب (3 أحرف فأكثر)
+                {{ 'nameRequired' | t }}
               </div>
             </div>
+
             <div class="mb-3 col-6">
-              <label class="form-label">رقم التليفون</label>
-              <input class="form-control" formControlName="phone" placeholder="مثال: 01012345678" />
-              <div class="invalid-feedback d-block" *ngIf="hasErr('phone')">رقم هاتف غير صالح</div>
+              <label class="form-label">{{ 'phone' | t }}</label>
+              <input
+                class="form-control"
+                formControlName="phone"
+                [placeholder]="'phonePlaceholder' | t"
+                dir="ltr"
+              />
+              <div class="invalid-feedback d-block" *ngIf="hasErr('phone')">
+                {{ 'phoneInvalid' | t }}
+              </div>
             </div>
+
             <div class="mb-3 col-6">
-              <label class="form-label">رقم البطاقة</label>
+              <label class="form-label">{{ 'nationalId' | t }}</label>
               <input
                 class="form-control"
                 formControlName="nationalId"
-                placeholder="مثال: 2980*********"
+                [placeholder]="'nationalIdPlaceholder' | t"
+                dir="ltr"
               />
               <div class="invalid-feedback d-block" *ngIf="hasErr('nationalId')">
-                رقم بطاقة غير صالح
+                {{ 'nationalIdInvalid' | t }}
               </div>
             </div>
           </div>
@@ -85,35 +98,35 @@
     <div class="col-12 col-lg-4">
       <div class="card shadow-sm card--glass h-100">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="mb-0 fw-bold">نوع الاشتراك</h5>
-          <span *ngIf="loadingSchemas()" class="text-muted small">جاري التحميل…</span>
+          <h5 class="mb-0 fw-bold">{{ 'subscriptionType' | t }}</h5>
+          <span *ngIf="loadingSchemas()" class="text-muted small">{{ 'loadingSchemas' | t }}</span>
         </div>
 
         <div class="card-body">
           <div class="mb-3">
-            <label class="form-label">اختر نوع الاشتراك</label>
+            <label class="form-label">{{ 'chooseSubscription' | t }}</label>
             <select class="form-select" formControlName="pricingSchemaId">
-              <option [ngValue]="null" disabled>— اختر نوع الاشتراك —</option>
+              <option [ngValue]="null" disabled>{{ 'chooseSubscriptionPlaceholder' | t }}</option>
               <option *ngFor="let s of schemas()" [value]="s.id">{{ s.name }}</option>
             </select>
             <div
               class="invalid-feedback d-block"
               *ngIf="form.get('pricingSchemaId')?.touched && form.get('pricingSchemaId')?.invalid"
             >
-              اختيار نوع الاشتراك مطلوب
+              {{ 'schemaRequired' | t }}
             </div>
           </div>
 
           <hr class="my-4" />
 
           <!-- بيانات الكارت -->
-          <h6 class="fw-bold mb-3">بيانات الكارت</h6>
+          <h6 class="fw-bold mb-3">{{ 'cardData' | t }}</h6>
 
           <div class="mb-3">
-            <label class="form-label">رقم الكارت</label>
-            <input class="form-control" formControlName="cardNo" placeholder="مثال: 123456" />
+            <label class="form-label">{{ 'cardNumber' | t }}</label>
+            <input class="form-control" formControlName="cardNo" dir="ltr" />
             <div class="invalid-feedback d-block" *ngIf="hasErr('cardNo')">
-              رقم الكارت يجب أن يكون أحرف/أرقام هيكس بين 6 و 16.
+              {{ 'cardInvalid' | t }}
             </div>
           </div>
 
@@ -124,10 +137,10 @@
                 type="button"
                 (click)="readCard()"
                 [disabled]="readingCard()"
-                title="قراءة UID من القارئ"
+                [title]="'readCardTitle' | t"
               >
                 <i class="bi bi-upc-scan"></i>
-                <span class="ms-1">{{ readingCard() ? 'جاري القراءة…' : 'قراءة الكارت' }}</span>
+                <span class="ms-1">{{ readingCard() ? ('reading' | t) : ('readCard' | t) }}</span>
               </button>
             </div>
           </div>
@@ -139,13 +152,13 @@
     <div class="col-12 col-lg-4">
       <div class="card shadow-sm card--glass h-100">
         <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="mb-0 fw-bold">المستندات</h5>
-          <span class="badge bg-secondary">{{ documents().length }} ملف</span>
+          <h5 class="mb-0 fw-bold">{{ 'documents' | t }}</h5>
+          <span class="badge bg-secondary">{{ documents().length }} {{ 'filesCount' | t }}</span>
         </div>
 
         <div class="card-body">
           <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
-            <label class="form-label m-0">رفع مستندات</label>
+            <label class="form-label m-0">{{ 'uploadDocs' | t }}</label>
 
             <input
               type="file"
@@ -160,7 +173,7 @@
               (click)="openScanner(camInput)"
             >
               <i class="bi bi-camera"></i>
-              مسح بالمـاسـح/الكاميرا
+              {{ 'scanCamera' | t }}
             </button>
 
             <input
@@ -185,15 +198,15 @@
               </button>
               <div class="doc-meta">
                 <div class="doc-name" [title]="d.name">{{ d.name }}</div>
-                <div class="doc-sub">{{ d.mime }} • {{ humanSize(d.size) }}</div>
+                <div class="doc-sub" dir="ltr">{{ d.mime }} • {{ humanSize(d.size) }}</div>
               </div>
               <button class="btn btn-sm btn-outline-danger w-100 mt-2" (click)="removeDocument(i)">
-                <i class="bi bi-trash3"></i> حذف
+                <i class="bi bi-trash3"></i> {{ 'delete' | t }}
               </button>
             </div>
           </div>
           <ng-template #noDocs>
-            <div class="text-muted">لا توجد مستندات مرفوعة بعد.</div>
+            <div class="text-muted">{{ 'noDocs' | t }}</div>
           </ng-template>
         </div>
       </div>
@@ -209,13 +222,13 @@
     tabindex="0"
   >
     <div class="preview-dialog" (click)="$event.stopPropagation()">
-      <button class="close-btn" (click)="forceClose()" aria-label="إغلاق">
+      <button class="close-btn" (click)="forceClose()" [attr.aria-label]="'previewCloseAria' | t">
         <i class="bi bi-x-lg"></i>
       </button>
       <ng-container *ngIf="currentPreview(); let p">
         <div class="preview-head">
           <div class="name" [title]="p.name">{{ p.name }}</div>
-          <div class="sub">{{ p.mime }} • {{ humanSize(p.size) }}</div>
+          <div class="sub" dir="ltr">{{ p.mime }} • {{ humanSize(p.size) }}</div>
         </div>
         <div class="preview-body">
           <ng-container *ngIf="p.isImage; else nonImage">
@@ -224,9 +237,9 @@
           <ng-template #nonImage>
             <div class="file-preview">
               <i class="bi bi-file-earmark-text"></i>
-              <p class="mt-2">لا يمكن معاينة هذا النوع هنا. يمكنك تنزيله لفتحه محلياً.</p>
-              <a [href]="p.dataUrl" download="{{ p.name }}" class="btn btn-primary">
-                <i class="bi bi-download"></i> تنزيل الملف
+              <p class="mt-2">{{ 'notPreviewable' | t }}</p>
+              <a [href]="p.dataUrl" [download]="p.name" class="btn btn-primary">
+                <i class="bi bi-download"></i> {{ 'download' | t }}
               </a>
             </div>
           </ng-template>
@@ -237,21 +250,24 @@
 
   <div class="d-flex gap-2 justify-content-end mt-3">
     <button type="submit" class="btn btn-primary" [disabled]="saving() || form.invalid">
-      {{ saving() ? 'جاري الحفظ...' : 'حفظ الاشتراك' }}
+      {{ saving() ? ('saving' | t) : ('saveSubscription' | t) }}
     </button>
-    <!-- <button type="button" class="btn btn-outline-secondary" (click)="reset()" [disabled]="saving()">
-      مسح
-    </button> -->
   </div>
 </form>
 
-<div class="memberships page-rtl container-fluid mt-4" dir="ltr">
+<!-- ===== List (Memberships) ===== -->
+<div
+  class="memberships container-fluid mt-4"
+  [attr.dir]="lang.dir()"
+  [class.page-rtl]="lang.isRTL()"
+  [class.page-ltr]="!lang.isRTL()"
+>
   <div class="card shadow-sm card--glass">
     <div class="card-header d-flex align-items-center justify-content-between">
-      <h5 class="mb-0 fw-bold">الاشتراكات</h5>
+      <h5 class="mb-0 fw-bold">{{ 'memberships' | t }}</h5>
 
       <div class="d-flex align-items-center gap-2">
-        <label class="form-label m-0 small text-muted">حجم الصفحة</label>
+        <label class="form-label m-0 small text-muted">{{ 'pageSize' | t }}</label>
         <select
           class="form-select form-select-sm w-auto"
           [value]="pageSize()"
@@ -266,20 +282,20 @@
     </div>
 
     <div class="card-body p-0">
-      <div *ngIf="loading()" class="p-3 text-muted">جاري التحميل…</div>
+      <div *ngIf="loading()" class="p-3 text-muted">{{ 'loading' | t }}</div>
 
       <div class="table-responsive" *ngIf="!loading()">
         <table class="table table-striped table-hover align-middle">
           <thead>
             <tr>
-              <th>الاسم</th>
-              <th>الهاتف</th>
-              <th>الرقم القومي</th>
-              <th>رقم المركبة</th>
-              <th>رقم الكارت</th>
-              <th>وقت الاستخدام</th>
-              <th>تاريخ الإنشاء</th>
-              <th>تاريخ الانتهاء</th>
+              <th>{{ 'nameCol' | t }}</th>
+              <th>{{ 'phoneCol' | t }}</th>
+              <th>{{ 'nidCol' | t }}</th>
+              <th>{{ 'vehicleNumberCol' | t }}</th>
+              <th>{{ 'cardNoCol' | t }}</th>
+              <th>{{ 'usageTimeCol' | t }}</th>
+              <th>{{ 'createdAtCol' | t }}</th>
+              <th>{{ 'endDateCol' | t }}</th>
             </tr>
           </thead>
           <tbody>
@@ -302,7 +318,7 @@
             </tr>
 
             <tr *ngIf="!rows().length">
-              <td colspan="9" class="text-center text-muted py-4">لا توجد بيانات</td>
+              <td colspan="9" class="text-center text-muted py-4">{{ 'noData' | t }}</td>
             </tr>
           </tbody>
         </table>
@@ -310,13 +326,10 @@
     </div>
 
     <!-- Pagination footer -->
-    <div
-      class="card-footer d-flex flex-wrap gap-2 align-items-center justify-content-between"
-      dir="ltr"
-    >
+    <div class="card-footer d-flex flex-wrap gap-2 align-items-center justify-content-between">
       <div class="text-muted small">
-        إجمالي: <b>{{ totalItems() }}</b> — صفحة <b>{{ pageNumber() }}</b> من
-        <b>{{ totalPages() }}</b>
+        {{ 'total' | t }}: <b>{{ totalItems() }}</b> — {{ 'page' | t }} <b>{{ pageNumber() }}</b>
+        {{ 'of' | t }} <b>{{ totalPages() }}</b>
       </div>
 
       <div class="btn-group">
@@ -325,21 +338,21 @@
           (click)="last()"
           [disabled]="pageNumber() === totalPages()"
         >
-          الأخيرة
+          {{ 'last' | t }}
         </button>
 
         <button class="btn btn-sm btn-outline-secondary" (click)="prev()" [disabled]="!hasPrev()">
-          السابق
+          {{ 'prev' | t }}
         </button>
         <button class="btn btn-sm btn-outline-secondary" (click)="next()" [disabled]="!hasNext()">
-          التالي
+          {{ 'next' | t }}
         </button>
         <button
           class="btn btn-sm btn-outline-secondary"
           (click)="first()"
           [disabled]="pageNumber() === 1"
         >
-          الأولى
+          {{ 'first' | t }}
         </button>
       </div>
     </div>

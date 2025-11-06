@@ -1,4 +1,4 @@
-<div class="subscription page-rtl container-fluid">
+<div class="subscription container-fluid" [class.page-rtl]="isRTL()" [attr.dir]="dir()">
   <div class="row g-4">
     <!-- ==== Form ==== -->
     <div class="col-12 col-lg-5">
@@ -6,33 +6,33 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-badge-ad fill"></i>
-            <h5 class="mb-0 fw-bold">شريحة المحاسبة</h5>
+            <h5 class="mb-0 fw-bold">{{ t('title') }}</h5>
           </div>
           <span class="badge pill badge--info">
-            {{ editingId() ? 'تعديل' : 'إضافة' }}
+            {{ editingId() ? t('edit') : t('add') }}
           </span>
         </div>
 
         <div class="card-body" [formGroup]="form">
           <!-- Field: Name -->
           <div class="mb-3">
-            <label class="form-label">اسم الشريحة</label>
+            <label class="form-label">{{ t('field_name') }}</label>
             <input
               class="form-control"
               formControlName="name"
-              placeholder="مثال: اشتراك شهري / Hourly Pass"
+              [placeholder]="t('name_placeholder')"
             />
             <div
               class="invalid-feedback d-block"
               *ngIf="form.get('name')?.touched && form.get('name')?.invalid"
             >
-              الاسم مطلوب (حد أدنى 2 حرف).
+              {{ t('name_required') }}
             </div>
           </div>
 
-          <!-- Field: Duration Type (Hours, Days, Year) -->
+          <!-- Field: Duration Type -->
           <div class="mb-3">
-            <label class="form-label">نوع المدة</label>
+            <label class="form-label">{{ t('duration_type') }}</label>
             <div class="btn-group w-100 mode-toggle" role="group">
               <button
                 type="button"
@@ -40,10 +40,10 @@
                 [class.btn-primary]="form.value.durationType === DurationType.Hours"
                 [class.btn-outline-primary]="form.value.durationType !== DurationType.Hours"
                 (click)="setMode(DurationType.Hours)"
-                title="احتساب بالساعة"
+                [title]="t('hours')"
               >
                 <i class="bi bi-clock"></i>
-                بالساعات
+                {{ t('hours') }}
               </button>
 
               <button
@@ -52,30 +52,29 @@
                 [class.btn-primary]="form.value.durationType === DurationType.Days"
                 [class.btn-outline-primary]="form.value.durationType !== DurationType.Days"
                 (click)="setMode(DurationType.Days)"
-                title="احتساب بالأيام"
+                [title]="t('days')"
               >
                 <i class="bi bi-calendar3"></i>
-                بالأيام
+                {{ t('days') }}
               </button>
 
-              <!-- New: Year -->
               <button
                 type="button"
                 class="btn btn-ghost me-2"
                 [class.btn-primary]="form.value.durationType === DurationType.Year"
                 [class.btn-outline-primary]="form.value.durationType !== DurationType.Year"
                 (click)="setMode(DurationType.Year)"
-                title="احتساب بالسنة"
+                [title]="t('year')"
               >
                 <i class="bi bi-calendar-check"></i>
-                بالسنة
+                {{ t('year') }}
               </button>
             </div>
           </div>
 
           <!-- Toggle: Repeated (only for Hours) -->
           <div class="col-12 d-flex align-items-center mt-2 gap-2" *ngIf="showIsRepeated()">
-            <label class="form-label mb-0">حساب متكرر</label>
+            <label class="form-label mb-0">{{ t('repeated') }}</label>
             <div class="form-check form-switch">
               <input
                 class="form-check-input"
@@ -86,60 +85,60 @@
             </div>
           </div>
 
-          <!-- Time Window: shown only when Hours + not repeated -->
+          <!-- Time Window -->
           <div class="row g-2 mb-3" *ngIf="showRangeWindow()">
             <div class="col-6">
-              <label class="form-label">من</label>
+              <label class="form-label">{{ t('from') }}</label>
               <input type="time" class="form-control" formControlName="startTime" />
             </div>
             <div class="col-6">
-              <label class="form-label">إلى</label>
+              <label class="form-label">{{ t('to') }}</label>
               <input type="time" class="form-control" formControlName="endTime" />
             </div>
           </div>
 
-          <!-- Field: Total Hours (Hours only) -->
+          <!-- Total Hours -->
           <div class="mb-3" *ngIf="isHours()">
-            <label class="form-label">إجمالي الساعات</label>
+            <label class="form-label">{{ t('total_hours') }}</label>
             <input
               type="number"
               class="form-control"
               formControlName="totalHours"
               min="1"
               step="1"
-              placeholder="مثال: 12"
+              placeholder="12"
             />
             <div
               class="invalid-feedback d-block"
               *ngIf="form.get('totalHours')?.touched && form.get('totalHours')?.invalid"
             >
-              إجمالي الساعات مطلوب (حد أدنى 1).
+              {{ t('total_hours_required') }}
             </div>
           </div>
 
-          <!-- Field: Total Days (Days only) -->
+          <!-- Total Days -->
           <div class="mb-3" *ngIf="isDays()">
-            <label class="form-label">إجمالي الأيام</label>
+            <label class="form-label">{{ t('total_days') }}</label>
             <input
               type="number"
               class="form-control"
               formControlName="totalDays"
               min="1"
               step="1"
-              placeholder="مثال: 30"
+              placeholder="30"
             />
             <div
               class="invalid-feedback d-block"
               *ngIf="form.get('totalDays')?.touched && form.get('totalDays')?.invalid"
             >
-              إجمالي الأيام مطلوب (حد أدنى 1).
+              {{ t('total_days_required') }}
             </div>
           </div>
 
-          <!-- Field: Price -->
+          <!-- Price -->
           <div class="row g-2">
             <div class="col-6">
-              <label class="form-label">(جنيه) السعر</label>
+              <label class="form-label">{{ t('price_label') }}</label>
               <input
                 type="number"
                 class="form-control"
@@ -151,7 +150,7 @@
                 class="invalid-feedback d-block"
                 *ngIf="form.get('price')?.touched && form.get('price')?.invalid"
               >
-                السعر مطلوب ويجب أن يكون 0 أو أكثر.
+                {{ t('price_required') }}
               </div>
             </div>
           </div>
@@ -160,7 +159,7 @@
         <!-- Form Actions -->
         <div class="card-footer d-flex gap-2 justify-content-end">
           <button class="btn btn-light btn-soft" type="button" (click)="resetForm()">
-            <i class="bi bi-arrow-repeat"></i> إعادة ضبط
+            <i class="bi bi-arrow-repeat"></i> {{ t('reset') }}
           </button>
           <button
             class="btn btn-primary btn-raised"
@@ -168,7 +167,7 @@
             (click)="save()"
             [disabled]="loading() || saving()"
           >
-            <i class="bi bi-save"></i> حفظ
+            <i class="bi bi-save"></i> {{ t('save') }}
           </button>
         </div>
       </div>
@@ -180,17 +179,17 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-table"></i>
-            <h6 class="mb-0">قائمة الشرائح</h6>
+            <h6 class="mb-0">{{ t('list_title') }}</h6>
           </div>
           <!-- Top Search -->
           <div class="search-wrap">
             <i class="bi bi-search"></i>
             <input
-              #searchBox
+              #searchBoxTop
               class="form-control form-control-sm"
-              placeholder="بحث..."
+              [placeholder]="t('search_placeholder')"
               [value]="query()"
-              (input)="query.set(searchBox.value)"
+              (input)="query.set(searchBoxTop.value)"
             />
           </div>
         </div>
@@ -200,13 +199,13 @@
           <table class="table table-hover align-middle mb-0 table-striped table-modern">
             <thead class="table-light sticky-top">
               <tr>
-                <th class="text-center">#</th>
-                <th>الاسم</th>
-                <th>النوع</th>
-                <th>من</th>
-                <th>إلى</th>
-                <th>السعر</th>
-                <th class="text-end">إجراءات</th>
+                <th class="text-center">{{ t('col_index') }}</th>
+                <th>{{ t('col_name') }}</th>
+                <th>{{ t('col_type') }}</th>
+                <th>{{ t('col_from') }}</th>
+                <th>{{ t('col_to') }}</th>
+                <th>{{ t('col_price') }}</th>
+                <th class="text-end">{{ t('col_actions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -220,18 +219,18 @@
                     {{ durationLabel(r.durationType) }}
                   </span>
                 </td>
-                <td>{{ showTimeForRow(r) ? r.startTime || '00:00' : '-' }}</td>
-                <td>{{ showTimeForRow(r) ? r.endTime || '00:00' : '-' }}</td>
+                <td>{{ showTimeForRow(r) ? r.startTime || '00:00' : t('time_window_off') }}</td>
+                <td>{{ showTimeForRow(r) ? r.endTime || '00:00' : t('time_window_off') }}</td>
                 <td>
                   <span class="badge pill badge--success">
-                    {{ r.price | number : '1.0-2' }} ج
+                    {{ r.price | number : '1.0-2' }}
                   </span>
                 </td>
                 <td class="text-end d-flex gap-1">
                   <button
                     class="btn btn-sm btn-outline-primary me-1 btn-icon"
                     (click)="edit(r)"
-                    title="تعديل"
+                    [title]="t('edit_action')"
                   >
                     <i class="bi bi-pencil-square"></i>
                   </button>
@@ -239,7 +238,7 @@
                     class="btn btn-sm btn-outline-danger btn-icon"
                     (click)="remove(r)"
                     [disabled]="!normalizeId(r)"
-                    title="حذف"
+                    [title]="t('delete_action')"
                   >
                     <i class="bi bi-trash3"></i>
                   </button>
@@ -249,7 +248,7 @@
               <!-- Empty State -->
               <tr *ngIf="!filtered().length">
                 <td colspan="7" class="text-center text-muted py-4">
-                  لا توجد بيانات مطابقة للبحث.
+                  {{ t('empty_search') }}
                 </td>
               </tr>
             </tbody>
@@ -260,7 +259,8 @@
         <div class="card-footer small text-muted d-flex align-items-center justify-content-between">
           <span>
             <i class="bi bi-info-circle"></i>
-            إجمالي {{ totalItems() }} — صفحة {{ page() }} من {{ totalPages() }}
+            {{ t('total_label') }} {{ totalItems() }} — {{ t('page') }} {{ page() }} {{ t('of') }}
+            {{ totalPages() }}
           </span>
 
           <div class="d-flex align-items-center gap-2">
@@ -269,7 +269,7 @@
               <input
                 #searchBox
                 class="form-control form-control-sm"
-                placeholder="بحث..."
+                [placeholder]="t('search_placeholder')"
                 [value]="query()"
                 (input)="onSearch(searchBox.value)"
               />
@@ -281,14 +281,14 @@
                 [disabled]="!hasNext()"
                 (click)="goNext()"
               >
-                التالي
+                {{ t('next') }}
               </button>
               <button
                 class="btn btn-sm btn-outline-secondary"
                 [disabled]="!hasPrev()"
                 (click)="goPrev()"
               >
-                السابق
+                {{ t('prev') }}
               </button>
             </div>
           </div>
@@ -296,9 +296,12 @@
 
         <!-- Footer: Back link -->
         <div class="card-footer small text-muted d-flex align-items-center justify-content-between">
-          <span><i class="bi bi-info-circle"></i> يظهر آخر {{ filtered().length }} شريحة.</span>
+          <span>
+            <i class="bi bi-info-circle"></i>
+            {{ t('last_n_hint') }} {{ filtered().length }} {{ t('slice_hint') }}
+          </span>
           <a routerLink="/dashboard" class="link-underline link-underline-opacity-0">
-            عودة للوحة التحكم
+            {{ t('back_dashboard') }}
           </a>
         </div>
       </div>

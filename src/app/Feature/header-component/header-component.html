@@ -4,21 +4,11 @@
       <span class="text-danger">N</span><span class="text-secondary">Park</span>
     </a>
 
-    <!-- <button
-      class="navbar-toggler"
-      type="button"
-      data-bs-toggle="collapse"
-      data-bs-target="#navbarNav"
-      aria-controls="navbarNav"
-      aria-expanded="false"
-      aria-label="Toggle navigation"
-    >
-      <span class="navbar-toggler-icon"></span>
-    </button> -->
-
     <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-      <ul class="navbar-nav"></ul>
+      <ul class="navbar-nav">
+        <app-switch-language class="m-2"></app-switch-language>
+        <button class="btn btn-outline-secondary btn-sm m-2" (click)="logout()">Logout</button>
+      </ul>
     </div>
   </div>
-  <button class="btn btn-outline-secondary btn-sm me-5" (click)="logout()">Logout</button>
 </nav>

@@ -1,0 +1,20 @@
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+}
+.flag {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-inline-end: 0.4rem;
+}
+.flag.ar {
+  background: linear-gradient(90deg, #006c35 0 50%, #fff 50% 75%, #c8102e 75% 100%);
+}
+.flag.en {
+  background: linear-gradient(90deg, #012169 0 50%, #c8102e 50% 100%);
+}
+.label {
+  vertical-align: middle;
+}

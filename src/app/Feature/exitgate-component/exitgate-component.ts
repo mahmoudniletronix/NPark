@@ -1,17 +1,103 @@
-import { Component, ElementRef, inject, ViewChild } from '@angular/core';
-import { TicketDto, TicketAction, TicketDetailsDto } from '../../Domain/tickets/tickets.model';
-import { TicketsServices } from '../../Services/Tickets/tickets-services';
+import { Component, ElementRef, inject, Inject, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
+import { TicketDto, TicketAction, TicketDetailsDto } from '../../Domain/tickets/tickets.model';
+import { TicketsServices } from '../../Services/Tickets/tickets-services';
+
+import { LanguageService } from '../../Services/i18n/language-service';
+import { I18N_DICT, I18nDict } from '../../Services/i18n/i18n.tokens';
+import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
+
 @Component({
   selector: 'app-exitgate-component',
-  imports: [CommonModule, FormsModule],
+  standalone: true,
+  imports: [CommonModule, FormsModule, TranslatePipePipe],
   templateUrl: './exitgate-component.html',
-  styleUrl: './exitgate-component.css',
+  styleUrls: ['./exitgate-component.css'],
+  providers: [
+    {
+      provide: I18N_DICT,
+      useValue: (<I18nDict>{
+        ar: {
+          exitTicket: 'تذكرة الخروج',
+          EXIT: 'خروج',
+          readyToCollect: 'جاهز للتحصيل',
+          scanHint: 'امسح التذكرة من اليمين لعرض التفاصيل والتحصيل',
+          id: 'المعرف',
+          plate: 'اللوحة',
+          start: 'البداية',
+          end: 'النهاية',
+          price: 'السعر',
+          exceed: 'الزيادة',
+          total: 'الإجمالي',
+          totalDue: 'الإجمالي المستحق',
+          closeAndCollect: 'إغلاق وتحصيل',
+          exitModeNote: 'في وضع الخروج لا يمكن إصدار تذاكر جديدة — فقط تحصيل وإغلاق.',
+          scanAndCollect: 'مسح وتحصيل',
+          scannerReady: 'الماسح جاهز',
+          scanLabel: 'مسح QR / لصق الكود',
+          scanPlaceholder: 'ضع المؤشر هنا ثم امسح...',
+          fetching: 'جاري جلب تفاصيل التذكرة...',
+          collect: 'تحصيل',
+          emptyState: 'امسح تذكرة لعرض تفاصيلها والتحصيل.',
+          ticketsExit: 'التذاكر — خروج',
+          searchPlaceholder: 'بحث بالمعرف / اللوحة',
+          allGates: 'كل البوابات',
+          action: 'الإجراء',
+          gate: 'البوابة',
+          time: 'الوقت',
+          noTickets: 'لا توجد تذاكر',
+          showing: 'عرض',
+          of: 'من',
+          prev: 'السابق',
+          next: 'التالي',
+          outOnlyTitle: 'بوابة الخروج تدعم OUT فقط',
+          collectedOk: 'تم التحصيل وإغلاق التذكرة',
+        },
+        en: {
+          exitTicket: 'Exit Ticket',
+          EXIT: 'EXIT',
+          readyToCollect: 'Ready to collect',
+          scanHint: 'Scan the ticket on the right to view details and collect.',
+          id: 'ID',
+          plate: 'Plate',
+          start: 'Start',
+          end: 'End',
+          price: 'Price',
+          exceed: 'Exceed',
+          total: 'Total',
+          totalDue: 'Total Due',
+          closeAndCollect: 'Close & Collect',
+          exitModeNote: 'In Exit mode you cannot issue new tickets — only collect & close.',
+          scanAndCollect: 'Scan & Collect',
+          scannerReady: 'Scanner ready',
+          scanLabel: 'Scan QR / Paste Code',
+          scanPlaceholder: 'Focus here then scan...',
+          fetching: 'Fetching ticket details...',
+          collect: 'Collect',
+          emptyState: 'Scan a ticket to show its details and collect payment.',
+          ticketsExit: 'Tickets — Exit',
+          searchPlaceholder: 'Search ID / Plate',
+          allGates: 'All gates',
+          action: 'Action',
+          gate: 'Gate',
+          time: 'Time',
+          noTickets: 'No tickets',
+          showing: 'Showing',
+          of: 'of',
+          prev: 'Prev',
+          next: 'Next',
+          outOnlyTitle: 'Exit gate is OUT only',
+          collectedOk: 'Collected and ticket closed',
+        },
+      }) as I18nDict,
+    },
+  ],
 })
 export class ExitgateComponent {
   private svc = inject(TicketsServices);
+  constructor(public lang: LanguageService, @Inject(I18N_DICT) private dict: I18nDict) {}
 
   tickets: TicketDto[] = [];
   filtered: TicketDto[] = [];
@@ -24,10 +110,6 @@ export class ExitgateComponent {
 
   page = 1;
   pageSize = 10;
-
-  currentIssuedQr: string | null = null;
-  currentIssuedQrType: 'image' | 'text' | null = null;
-  lastIssuedTicketId: number | null = null;
 
   scanBuffer = '';
   scanning = false;
@@ -74,7 +156,7 @@ export class ExitgateComponent {
     this.collecting = true;
     this.svc.collect(t.id).subscribe({
       next: () => {
-        alert('تم التحصيل وإغلاق التذكرة');
+        alert(this.t('collectedOk'));
         this.scanBuffer = '';
         this.scannedTicket = null;
         this.reloadList();
@@ -118,5 +200,10 @@ export class ExitgateComponent {
 
   pagesCount() {
     return Math.max(1, Math.ceil(this.filtered.length / this.pageSize));
+  }
+
+  // ترجمة سريعة داخل TS
+  private t(key: string) {
+    return this.dict[this.lang.current]?.[key] ?? key;
   }
 }

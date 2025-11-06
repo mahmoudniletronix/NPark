@@ -1,0 +1,6 @@
+<div class="lang-switch">
+  <button class="btn btn-outline-secondary btn-sm" (click)="toggle()">
+    <span class="flag" [class.ar]="isRTL()" [class.en]="!isRTL()"></span>
+    <span class="label">{{ label() }}</span>
+  </button>
+</div>

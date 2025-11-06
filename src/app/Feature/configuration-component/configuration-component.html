@@ -1,27 +1,33 @@
-<div class="container" dir="rtl">
+<div
+  class="container"
+  [attr.dir]="lang.dir()"
+  [class.page-rtl]="lang.isRTL()"
+  [class.page-ltr]="!lang.isRTL()"
+>
   <div class="layout">
-    <!-- Wizard -->
     <mat-card class="main">
       <mat-horizontal-stepper
         [linear]="true"
         [selectedIndex]="stepIndex"
         (selectionChange)="stepIndex = $event.selectedIndex"
       >
-        <!-- ===== Step 1 ===== -->
-        <mat-step [stepControl]="step1Form" label="الأساسيات">
+        <!-- Step 1 -->
+        <mat-step [stepControl]="step1Form" [label]="'basics' | t">
           <form [formGroup]="step1Form" class="grid">
             <mat-form-field appearance="outline">
-              <mat-label>عدد بوابات الدخول</mat-label>
+              <mat-label>{{ 'entryGatesCount' | t }}</mat-label>
               <input matInput type="number" formControlName="entryGatesCount" min="1" required />
-              <mat-error *ngIf="step1Form.get('entryGatesCount')?.invalid">أدخل رقم ≥ 1</mat-error>
+              <mat-error *ngIf="step1Form.get('entryGatesCount')?.invalid">≥ 1</mat-error>
             </mat-form-field>
+
             <mat-form-field appearance="outline">
-              <mat-label>عدد بوابات الخروج</mat-label>
+              <mat-label>{{ 'exitGatesCount' | t }}</mat-label>
               <input matInput type="number" formControlName="exitGatesCount" min="1" required />
-              <mat-error *ngIf="step1Form.get('exitGatesCount')?.invalid">أدخل رقم ≥ 1</mat-error>
+              <mat-error *ngIf="step1Form.get('exitGatesCount')?.invalid">≥ 1</mat-error>
             </mat-form-field>
+
             <mat-form-field appearance="outline">
-              <mat-label>عدد الباكيّات المسموح</mat-label>
+              <mat-label>{{ 'allowedParkingSlots' | t }}</mat-label>
               <input
                 matInput
                 type="number"
@@ -29,19 +35,14 @@
                 min="1"
                 required
               />
-              <mat-error *ngIf="step1Form.get('allowedParkingSlots')?.invalid"
-                >أدخل رقم ≥ 1</mat-error
-              >
+              <mat-error *ngIf="step1Form.get('allowedParkingSlots')?.invalid">≥ 1</mat-error>
             </mat-form-field>
-            <!-- NEW: Grace Period -->
+
             <mat-form-field appearance="outline">
-              <mat-label>فترة السماح (دقائق)</mat-label>
+              <mat-label>{{ 'gracePeriodMinutes' | t }}</mat-label>
               <input matInput type="number" formControlName="gracePeriodMinutes" min="0" required />
-              <mat-hint>عدد الدقائق المسموح بها قبل احتساب الرسوم</mat-hint>
-              <mat-error *ngIf="step1Form.get('gracePeriodMinutes')?.invalid"
-                >أدخل رقم ≥ 0</mat-error
-              >
             </mat-form-field>
+
             <div class="actions">
               <button
                 mat-flat-button
@@ -49,153 +50,154 @@
                 (click)="goNext()"
                 [disabled]="step1Form.invalid"
               >
-                التالي
+                {{ 'next' | t }}
               </button>
             </div>
           </form>
         </mat-step>
-        <!-- ===== Step 2 ===== -->
-        <mat-step [stepControl]="step2Form" label="الوضع والإعدادات">
+
+        <!-- Step 2 -->
+        <mat-step [stepControl]="step2Form" [label]="'modeAndSettings' | t">
           <form [formGroup]="step2Form">
             <div class="section">
-              <label class="section-title">الوضع</label>
+              <label class="section-title">{{ 'mode' | t }}</label>
               <mat-radio-group [formControl]="modeCtrl" class="row">
-                <mat-radio-button value="entry">Entry (دخول)</mat-radio-button>
-                <mat-radio-button value="exit">Exit (خروج)</mat-radio-button>
+                <mat-radio-button value="entry">{{ 'entry' | t }}</mat-radio-button>
+                <mat-radio-button value="exit">{{ 'exit' | t }}</mat-radio-button>
               </mat-radio-group>
             </div>
+
             <mat-divider></mat-divider>
-            <label class="section-title">Vehicle & Passenger</label>
+
+            <label class="section-title">{{ 'vehiclePassenger' | t }}</label>
             <div class="grid">
-              <!-- Capture mode -->
               <mat-form-field appearance="outline">
-                <mat-label>طريقة الالتقاط</mat-label>
+                <mat-label>{{ 'captureMode' | t }}</mat-label>
                 <mat-select formControlName="captureMode" required>
-                  <mat-option value="LPR">LPR Cam</mat-option>
-                  <mat-option value="ScannerID">ScannerID Cam</mat-option>
+                  <mat-option value="LPR">{{ 'lpr' | t }}</mat-option>
+                  <mat-option value="SCANNER">{{ 'scanner' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
-              <!-- Print type -->
+
               <mat-form-field appearance="outline">
-                <mat-label>أنواع التذاكر</mat-label>
+                <mat-label>{{ 'printType' | t }}</mat-label>
                 <mat-select formControlName="printType" required>
-                  <mat-option value="QR">QR</mat-option>
-                  <mat-option value="RFID">RFID</mat-option>
+                  <mat-option value="QR">{{ 'qr' | t }}</mat-option>
+                  <mat-option value="RFID">{{ 'rfid' | t }}</mat-option>
                 </mat-select>
               </mat-form-field>
             </div>
+
             <mat-divider class="my-3"></mat-divider>
 
+            <!-- Entry Gates -->
             <div class="horizontal-accordion">
-              <!-- Entry Gates Main Accordion -->
               <div class="main-accordion">
-                <mat-expansion-panel [expanded]="false">
+                <mat-expansion-panel>
                   <mat-expansion-panel-header>
                     <div class="accordion-header">
                       <mat-panel-title>
                         <mat-icon class="gate-icon">door_front</mat-icon>
-                        بوابات الدخول
+                        {{ 'entryGates' | t }}
                       </mat-panel-title>
                       <span class="gate-count">{{ entryGatesControls.length }}</span>
                     </div>
                   </mat-expansion-panel-header>
 
-                  <!-- Individual Gates Grid -->
-                  <div class="gates-grid">
-                    <div formArrayName="entryGates">
-                      <div
-                        class="gate-accordion"
-                        *ngFor="let g of entryGatesControls; let i = index"
-                        [formGroupName]="i"
-                      >
-                        <mat-expansion-panel>
-                          <mat-expansion-panel-header>
-                            <mat-panel-title>
-                              <mat-icon class="gate-icon">door_front</mat-icon>
-                              البوابة {{ g.get('gateNumber')?.value }}
-                            </mat-panel-title>
-                          </mat-expansion-panel-header>
+                  <div class="gates-grid" formArrayName="entryGates">
+                    <div
+                      class="gate-accordion"
+                      *ngFor="let g of entryGatesControls; let i = index"
+                      [formGroupName]="i"
+                    >
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon class="gate-icon">door_front</mat-icon>
+                            {{ 'gate' | t }} {{ g.get('gateNumber')?.value }}
+                          </mat-panel-title>
+                        </mat-expansion-panel-header>
 
-                          <div class="gate-details">
-                            <div class="gate-info">
-                              <div class="gate-number">
-                                <mat-icon class="gate-icon">numbers</mat-icon>
-                                رقم البوابة: {{ g.get('gateNumber')?.value }}
-                              </div>
-                              <div class="device-name">
-                                <mat-icon class="device-icon">devices</mat-icon>
-                                الجهاز: {{ g.get('lprIp')?.value || 'غير محدد' }}
-                              </div>
-                              <div class="ip-input-container">
-                                <label class="ip-label">عنوان IP للكاميرا</label>
-                                <input
-                                  class="ip-address"
-                                  type="text"
-                                  [formControlName]="'lprIp'"
-                                  placeholder="مثال: 192.168.1.100"
-                                />
-                              </div>
+                        <div class="gate-details">
+                          <div class="gate-info">
+                            <div class="gate-number">
+                              <mat-icon class="gate-icon">numbers</mat-icon>
+                              {{ 'gate' | t }}: {{ g.get('gateNumber')?.value }}
+                            </div>
+
+                            <div class="device-name">
+                              <mat-icon class="device-icon">devices</mat-icon>
+                              {{ 'device' | t }}: {{ g.get('lprIp')?.value || ('notSet' | t) }}
+                            </div>
+
+                            <div class="ip-input-container">
+                              <label class="ip-label">{{ 'ipLabel' | t }}</label>
+                              <input
+                                class="ip-address"
+                                type="text"
+                                formControlName="lprIp"
+                                [placeholder]="'ipPlaceholder' | t"
+                              />
                             </div>
                           </div>
-                        </mat-expansion-panel>
-                      </div>
+                        </div>
+                      </mat-expansion-panel>
                     </div>
                   </div>
                 </mat-expansion-panel>
               </div>
 
-              <!-- Exit Gates Main Accordion -->
+              <!-- Exit Gates -->
               <div class="main-accordion">
-                <mat-expansion-panel [expanded]="false">
+                <mat-expansion-panel>
                   <mat-expansion-panel-header>
                     <div class="accordion-header">
                       <mat-panel-title>
                         <mat-icon class="gate-icon">exit_to_app</mat-icon>
-                        بوابات الخروج
+                        {{ 'exitGates' | t }}
                       </mat-panel-title>
                       <span class="gate-count">{{ exitGatesControls.length }}</span>
                     </div>
                   </mat-expansion-panel-header>
 
-                  <!-- Individual Gates Grid -->
-                  <div class="gates-grid">
-                    <div formArrayName="exitGates">
-                      <div
-                        class="gate-accordion"
-                        *ngFor="let g of exitGatesControls; let i = index"
-                        [formGroupName]="i"
-                      >
-                        <mat-expansion-panel>
-                          <mat-expansion-panel-header>
-                            <mat-panel-title>
-                              <mat-icon class="gate-icon">exit_to_app</mat-icon>
-                              البوابة {{ g.get('gateNumber')?.value }}
-                            </mat-panel-title>
-                          </mat-expansion-panel-header>
+                  <div class="gates-grid" formArrayName="exitGates">
+                    <div
+                      class="gate-accordion"
+                      *ngFor="let g of exitGatesControls; let i = index"
+                      [formGroupName]="i"
+                    >
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon class="gate-icon">exit_to_app</mat-icon>
+                            {{ 'gate' | t }} {{ g.get('gateNumber')?.value }}
+                          </mat-panel-title>
+                        </mat-expansion-panel-header>
 
-                          <div class="gate-details">
-                            <div class="gate-info">
-                              <div class="gate-number">
-                                <mat-icon class="gate-icon">numbers</mat-icon>
-                                رقم البوابة: {{ g.get('gateNumber')?.value }}
-                              </div>
-                              <div class="device-name">
-                                <mat-icon class="device-icon">devices</mat-icon>
-                                الجهاز: {{ g.get('lprIp')?.value || 'غير محدد' }}
-                              </div>
-                              <div class="ip-input-container">
-                                <label class="ip-label">عنوان IP للكاميرا</label>
-                                <input
-                                  class="ip-address"
-                                  type="text"
-                                  [formControlName]="'lprIp'"
-                                  placeholder="مثال: 192.168.1.100"
-                                />
-                              </div>
+                        <div class="gate-details">
+                          <div class="gate-info">
+                            <div class="gate-number">
+                              <mat-icon class="gate-icon">numbers</mat-icon>
+                              {{ 'gate' | t }}: {{ g.get('gateNumber')?.value }}
+                            </div>
+
+                            <div class="device-name">
+                              <mat-icon class="device-icon">devices</mat-icon>
+                              {{ 'device' | t }}: {{ g.get('lprIp')?.value || ('notSet' | t) }}
+                            </div>
+
+                            <div class="ip-input-container">
+                              <label class="ip-label">{{ 'ipLabel' | t }}</label>
+                              <input
+                                class="ip-address"
+                                type="text"
+                                formControlName="lprIp"
+                                [placeholder]="'ipPlaceholder' | t"
+                              />
                             </div>
                           </div>
-                        </mat-expansion-panel>
-                      </div>
+                        </div>
+                      </mat-expansion-panel>
                     </div>
                   </div>
                 </mat-expansion-panel>
@@ -203,46 +205,53 @@
             </div>
 
             <div class="flex-between">
-              <button mat-stroked-button type="button" (click)="goBack()">رجوع</button>
-              <button mat-flat-button color="primary" type="button" (click)="save()">حفظ</button>
+              <button mat-stroked-button type="button" (click)="goBack()">{{ 'back' | t }}</button>
+              <button mat-flat-button color="primary" type="button" (click)="save()">
+                {{ 'save' | t }}
+              </button>
             </div>
           </form>
         </mat-step>
       </mat-horizontal-stepper>
     </mat-card>
+
     <!-- Summary -->
     <mat-card class="summary mat-elevation-z2">
-      <h3 class="sum-title">الملخّص</h3>
+      <h3 class="sum-title">{{ 'summary' | t }}</h3>
+
       <div class="sum-line">
-        <span class="muted">بوابات الدخول</span>
-        <span class="bold">{{ summaryForView.entryGatesCount }}</span>
+        <span class="muted">{{ 'entryGatesCount' | t }}</span
+        ><span class="bold">{{ summaryForView.entryGatesCount }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">بوابات الخروج</span>
-        <span class="bold">{{ summaryForView.exitGatesCount }}</span>
+        <span class="muted">{{ 'exitGatesCount' | t }}</span
+        ><span class="bold">{{ summaryForView.exitGatesCount }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">عدد الباكيّات المسموح</span>
-        <span class="bold">{{ summaryForView.allowedParkingSlots }}</span>
+        <span class="muted">{{ 'allowedParkingSlots' | t }}</span
+        ><span class="bold">{{ summaryForView.allowedParkingSlots }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">فترة السماح (دقائق)</span>
-        <span class="bold">{{ summaryForView.gracePeriodMinutes }}</span>
+        <span class="muted">{{ 'gracePeriodMinutes' | t }}</span
+        ><span class="bold">{{ summaryForView.gracePeriodMinutes }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">الوضع</span>
-        <span class="bold">{{ summaryForView.mode === 'entry' ? 'Entry' : 'Exit' }}</span>
+        <span class="muted">{{ 'mode' | t }}</span>
+        <span class="bold">{{
+          summaryForView.mode === 'entry' ? ('entry' | t) : ('exit' | t)
+        }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">طريقة الالتقاط</span>
-        <span class="bold">{{ summaryForView.captureMode }}</span>
+        <span class="muted">{{ 'captureMode' | t }}</span
+        ><span class="bold">{{ summaryForView.captureMode }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">الطباعة</span> <span class="bold">{{ summaryForView.printType }}</span>
+        <span class="muted">{{ 'printType' | t }}</span
+        ><span class="bold">{{ summaryForView.printType }}</span>
       </div>
       <div class="sum-line">
-        <span class="muted">Start Date</span>
-        <span class="bold">{{ summaryForView.ticketCard.startDate | date : 'yyyy-MM-dd' }}</span>
+        <span class="muted">{{ 'startDate' | t }}</span
+        ><span class="bold">{{ summaryForView.ticketCard.startDate | date : 'yyyy-MM-dd' }}</span>
       </div>
     </mat-card>
   </div>

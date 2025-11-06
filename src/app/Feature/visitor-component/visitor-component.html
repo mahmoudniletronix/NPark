@@ -1,4 +1,4 @@
-<div class="visitors-theme container-fluid page-rtl">
+<div class="visitors-theme container-fluid" [class.page-rtl]="isRTL()" [attr.dir]="dir()">
   <div class="row g-4">
     <!-- ===== Block 1: All data ===== -->
     <div class="col-12 col-xl-4">
@@ -6,10 +6,10 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-collection"></i>
-            <h5 class="mb-0 fw-bold">All Records</h5>
+            <h5 class="mb-0 fw-bold">{{ t('all_records') }}</h5>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="badge pill badge--info">Block 1</span>
+            <span class="badge pill badge--info">{{ t('block1') }}</span>
           </div>
         </div>
 
@@ -20,12 +20,16 @@
               <i class="bi bi-search"></i>
               <input
                 class="form-control"
-                placeholder="Search..."
+                [placeholder]="t('search_placeholder')"
                 [ngModel]="q()"
                 (ngModelChange)="q.set($event)"
               />
             </div>
-            <button class="btn btn-outline-secondary btn-icon" (click)="fetch()" title="Reload">
+            <button
+              class="btn btn-outline-secondary btn-icon"
+              (click)="fetch()"
+              [title]="t('reload')"
+            >
               <i class="bi bi-arrow-repeat"></i>
             </button>
           </div>
@@ -50,7 +54,7 @@
                     <span class="chip chip--soft">{{ badgeFor(item) }}</span>
                     <span class="chip chip--price">$ {{ item.price }}</span>
                     <span class="chip" [class.ok]="item.isRepeated" [class.no]="!item.isRepeated">
-                      {{ item.isRepeated ? 'Repeated' : 'One-time' }}
+                      {{ item.isRepeated ? t('repeated_badge_true') : t('repeated_badge_false') }}
                     </span>
                   </div>
                 </button>
@@ -58,14 +62,14 @@
                 <div class="row-actions">
                   <button
                     class="btn btn-sm btn-outline-secondary btn-icon"
-                    title="Details"
+                    [title]="t('details_btn')"
                     (click)="select(item)"
                   >
                     <i class="bi bi-eye"></i>
                   </button>
                   <button
                     class="btn btn-sm btn-primary arrow-btn"
-                    title="Send to Block 2"
+                    [title]="t('send_to_block2')"
                     (click)="addToPicked(item)"
                   >
                     <i class="bi bi-arrow-left"></i>
@@ -76,8 +80,8 @@
 
             <div *ngIf="!loading() && filtered().length === 0" class="empty-state">
               <i class="bi bi-inboxes"></i>
-              <div>No results</div>
-              <small class="muted">Try another keyword</small>
+              <div>{{ t('no_results') }}</div>
+              <small class="muted">{{ t('try_another_keyword') }}</small>
             </div>
           </div>
         </div>
@@ -90,17 +94,17 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-list-ol"></i>
-            <h5 class="mb-0 fw-bold">Selected & Order</h5>
+            <h5 class="mb-0 fw-bold">{{ t('selected_order') }}</h5>
           </div>
           <div class="d-flex align-items-center gap-2">
-            <span class="badge pill badge--warning">Block 2</span>
+            <span class="badge pill badge--warning">{{ t('block2') }}</span>
             <button
               class="btn btn-sm btn-outline-danger"
               (click)="clearPicked()"
               [disabled]="picked().length === 0"
-              title="Clear"
+              [title]="t('clear')"
             >
-              Clear
+              {{ t('clear') }}
             </button>
           </div>
         </div>
@@ -113,7 +117,7 @@
               cdkDrag
               [class.active]="isActive(p)"
             >
-              <div class="drag-handle" cdkDragHandle title="Drag to reorder">
+              <div class="drag-handle" cdkDragHandle [title]="t('reorder')">
                 <i class="bi bi-grip-vertical"></i>
               </div>
 
@@ -130,7 +134,7 @@
 
               <!-- Count (عرض فقط) -->
               <div class="qty-controls d-flex align-items-center gap-2">
-                <span class="count-badge">Count: {{ qty()[p.id] || 1 }}</span>
+                <span class="count-badge">{{ t('count_label') }}: {{ qty()[p.id] || 1 }}</span>
               </div>
 
               <!-- حذف من picked -->
@@ -139,7 +143,7 @@
                   type="button"
                   class="btn btn-sm btn-outline-danger"
                   (click)="removeFromPicked(p)"
-                  title="Remove from picked"
+                  [title]="t('clear')"
                 >
                   <i class="bi bi-x-lg"></i>
                 </button>
@@ -148,7 +152,7 @@
 
             <div *ngIf="picked().length === 0" class="empty">
               <i class="bi bi-arrow-left-right me-2"></i>
-              Drag or send items here to build your order
+              {{ t('drag_here') }}
             </div>
           </div>
         </div>
@@ -160,7 +164,7 @@
             (click)="submitOrder()"
           >
             <i class="bi bi-send me-1"></i>
-            Add Order
+            {{ t('add_order') }}
           </button>
         </div>
       </div>
@@ -172,9 +176,9 @@
         <div class="card-header d-flex align-items-center justify-content-between">
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-info-circle"></i>
-            <h5 class="mb-0 fw-bold">Details</h5>
+            <h5 class="mb-0 fw-bold">{{ t('details') }}</h5>
           </div>
-          <span class="badge pill badge--success">Block 3</span>
+          <span class="badge pill badge--success">{{ t('block3') }}</span>
         </div>
 
         <div class="card-body">
@@ -183,33 +187,33 @@
               <div class="hero">
                 <div class="hero-title">
                   {{ active()!.name }}
-                  <span class="hero-tag">Pricing</span>
+                  <span class="hero-tag">{{ t('pricing') }}</span>
                 </div>
                 <div class="hero-sub">#{{ active()!.id }}</div>
               </div>
 
               <div class="grid">
                 <div class="kv">
-                  <div class="k"><i class="bi bi-cash-coin"></i> Price</div>
+                  <div class="k"><i class="bi bi-cash-coin"></i> {{ t('price') }}</div>
                   <div class="v">$ {{ active()!.price }}</div>
                 </div>
                 <div class="kv">
-                  <div class="k"><i class="bi bi-clock-history"></i> Type</div>
+                  <div class="k"><i class="bi bi-clock-history"></i> {{ t('type') }}</div>
                   <div class="v">{{ mapDuration(active()!.durationType) }}</div>
                 </div>
                 <div class="kv">
-                  <div class="k"><i class="bi bi-123"></i> Total</div>
+                  <div class="k"><i class="bi bi-123"></i> {{ t('total') }}</div>
                   <div class="v">{{ active()!.totalHours ?? '—' }}</div>
                 </div>
                 <div class="kv">
-                  <div class="k"><i class="bi bi-repeat"></i> Repeated</div>
+                  <div class="k"><i class="bi bi-repeat"></i> {{ t('repeated') }}</div>
                   <div class="v">
                     <span
                       class="chip"
                       [class.ok]="active()!.isRepeated"
                       [class.no]="!active()!.isRepeated"
                     >
-                      {{ active()!.isRepeated ? 'Yes' : 'No' }}
+                      {{ active()!.isRepeated ? t('yes') : t('no') }}
                     </span>
                   </div>
                 </div>
@@ -217,7 +221,7 @@
 
               <div class="hint">
                 <i class="bi bi-info-circle me-1"></i>
-                Click items in Block 1 or 2 to update this panel.
+                {{ t('hint_click_update') }}
               </div>
             </div>
           </ng-container>
@@ -225,7 +229,7 @@
           <ng-template #noSel>
             <div class="no-sel">
               <i class="bi bi-hand-index-thumb"></i>
-              <p>Select a record to see its full details here.</p>
+              <p>{{ t('select_record') }}</p>
             </div>
           </ng-template>
         </div>
