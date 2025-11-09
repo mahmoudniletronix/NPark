@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 export type AppLang = 'ar' | 'en';
+type Lang = AppLang;
 import { BehaviorSubject } from 'rxjs';
 
 type Dict = Record<string, string>;

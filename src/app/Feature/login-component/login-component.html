@@ -6,14 +6,18 @@
 >
   <div class="card shadow border-0 login-card">
     <div class="card-body p-4 p-md-5">
+      <!-- Brand / Subtitle -->
       <div class="text-center mb-4">
         <div class="brand fs-2 fw-bold">
-          <span class="text-danger">N</span><span class="text-secondary">Park</span>
+          <span class="text-danger">N</span
+          ><span class="text-secondary">{{ 'brandSuffix' | t }}</span>
         </div>
         <div class="text-muted">{{ 'signInToContinue' | t }}</div>
       </div>
 
+      <!-- Login Form -->
       <form [formGroup]="form" (ngSubmit)="submit()">
+        <!-- Username -->
         <div class="mb-3">
           <label class="form-label">{{ 'username' | t }}</label>
           <input
@@ -30,6 +34,7 @@
           </div>
         </div>
 
+        <!-- Password with show/hide -->
         <div class="mb-3">
           <label class="form-label">{{ 'password' | t }}</label>
           <div class="input-group">
@@ -48,7 +53,6 @@
               <i [class]="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
             </button>
           </div>
-
           <div
             class="invalid-feedback d-block"
             *ngIf="form.controls.password.touched && form.controls.password.invalid"
@@ -57,6 +61,41 @@
           </div>
         </div>
 
+        <!-- Gate selection (type + number) -->
+        <div class="row">
+          <div class="col-12 col-md-6 mb-3">
+            <label class="form-label">{{ 'gateType' | t }}</label>
+            <select class="form-select" formControlName="gateType">
+              <option [ngValue]="0">{{ 'entryGate' | t }}</option>
+              <option [ngValue]="1">{{ 'exitGate' | t }}</option>
+            </select>
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.controls.gateType.touched && form.controls.gateType.invalid"
+            >
+              {{ 'gateTypeRequired' | t }}
+            </div>
+          </div>
+
+          <div class="col-12 col-md-6 mb-3">
+            <label class="form-label">{{ 'gateNumber' | t }}</label>
+            <input
+              class="form-control"
+              type="number"
+              min="1"
+              formControlName="gateNumber"
+              [placeholder]="'gateNumberPh' | t"
+            />
+            <div
+              class="invalid-feedback d-block"
+              *ngIf="form.controls.gateNumber.touched && form.controls.gateNumber.invalid"
+            >
+              {{ 'gateNumberRequired' | t }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Remember + Forgot -->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <div class="form-check">
             <input
@@ -72,11 +111,13 @@
           }}</a>
         </div>
 
+        <!-- Submit -->
         <button class="btn btn-danger w-100" [disabled]="loading">
           <span *ngIf="!loading">{{ 'signIn' | t }}</span>
           <span *ngIf="loading" class="spinner-border spinner-border-sm"></span>
         </button>
 
+        <!-- Any error toast shown inline (fallback) -->
         <div *ngIf="errorToast" class="alert alert-danger mt-3 mb-0">
           {{ errorToast }}
         </div>

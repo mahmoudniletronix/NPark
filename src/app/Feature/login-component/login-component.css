@@ -9,3 +9,9 @@
 .brand {
   letter-spacing: 1px;
 }
+.modal .modal-content {
+  border-radius: 12px;
+}
+.modal .modal-header {
+  border-bottom: none;
+}

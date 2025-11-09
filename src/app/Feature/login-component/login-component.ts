@@ -2,13 +2,13 @@ import { Component, Inject, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-
 import { AuthService } from '../../Services/Auth/auth-service';
 import { ToastServices } from '../../Services/Toster/toast-services';
 
 import { LanguageService } from '../../Services/i18n/language-service';
 import { I18N_DICT, I18nDict } from '../../Services/i18n/i18n.tokens';
 import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
+import { GateType } from '../../Domain/Auth/auth.models';
 
 @Component({
   selector: 'app-login-component',
@@ -21,7 +21,7 @@ import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
       provide: I18N_DICT,
       useValue: (<I18nDict>{
         ar: {
-          brandSuffix: 'تابع',
+          brandSuffix: 'Park',
           signInToContinue: 'سجّل الدخول للمتابعة',
           username: 'اسم المستخدم',
           password: 'كلمة المرور',
@@ -44,7 +44,16 @@ import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
             'لا توجد بيانات أول مرة. أعد محاولة تسجيل الدخول بـ Admin / Admin123',
           successLogin: 'تم تسجيل الدخول بنجاح',
           successPwdUpdated: 'تم تحديث كلمة المرور وتسجيل الدخول بنجاح',
-          scannerReady: 'الماسح جاهز', // احتياطي لو احتجته لاحقًا
+          scannerReady: 'الماسح جاهز',
+
+          gateType: 'نوع البوابة',
+          entryGate: 'دخول',
+          exitGate: 'خروج',
+          gateNumber: 'رقم البوابة',
+          gateNumberPh: 'مثال: 1',
+
+          gateTypeRequired: 'نوع البوابة مطلوب.',
+          gateNumberRequired: 'رقم البوابة مطلوب.',
         },
         en: {
           brandSuffix: 'Park',
@@ -70,6 +79,15 @@ import { TranslatePipePipe } from '../../Services/i18n/translate-pipe-pipe';
           successLogin: 'Logged in successfully',
           successPwdUpdated: 'Password updated and logged in successfully',
           scannerReady: 'Scanner ready',
+
+          gateType: 'Gate Type',
+          entryGate: 'Entry',
+          exitGate: 'Exit',
+          gateNumber: 'Gate Number',
+          gateNumberPh: 'e.g. 1',
+
+          gateTypeRequired: 'Gate type is required.',
+          gateNumberRequired: 'Gate number is required.',
         },
       }) as I18nDict,
     },
@@ -96,11 +114,12 @@ export class LoginComponent {
     username: ['', [Validators.required]],
     password: ['', [Validators.required]],
     remember: [true],
+    gateType: [GateType.Entrance, [Validators.required]],
+    gateNumber: [1, [Validators.required, Validators.min(1)]],
   });
 
   showChangeModal = false;
   changeLoading = false;
-
   changeForm = this.fb.group(
     {
       newPassword: ['', [Validators.required, Validators.minLength(6)]],
@@ -122,20 +141,25 @@ export class LoginComponent {
     }
 
     this.loading = true;
-    const userName = (this.form.value.username ?? '').trim();
-    const password = this.form.value.password ?? '';
 
-    // أول تسجيل دخول افتراضي
-    if ((userName === 'Admin' || userName === 'admin') && password === 'Admin123') {
-      this.firstUserName = userName;
-      this.firstPassword = password;
+    const dto = {
+      userName: (this.form.value.username ?? '').trim(),
+      password: this.form.value.password ?? '',
+      gateType: this.form.value.gateType!,
+      gateNumber: Number(this.form.value.gateNumber) || 1,
+      remember: !!this.form.value.remember,
+    };
+
+    if ((dto.userName === 'Admin' || dto.userName === 'admin') && dto.password === 'Admin123') {
+      this.firstUserName = dto.userName;
+      this.firstPassword = dto.password;
       this.loading = false;
       this.showChangeModal = true;
       this.changeForm.reset();
       return;
     }
 
-    this.auth.login({ userName, password }).subscribe({
+    this.auth.login(dto).subscribe({
       next: () => {
         this.loading = false;
         this.toast?.success?.(this.t('successLogin'));
@@ -143,6 +167,19 @@ export class LoginComponent {
       },
       error: (err) => {
         this.loading = false;
+
+        const detail = err?.error?.detail || err?.error?.title || '';
+        if (err?.status === 422 && /Gate Already Occupied/i.test(detail)) {
+          const typeLabel = dto.gateType === GateType.Entrance ? this.t('entry') : this.t('exit');
+          const msg = this.t('gateOccupied')
+            .replace('{{num}}', String(dto.gateNumber))
+            .replace('{{type}}', typeLabel);
+          this.toast?.warn?.(`${msg} ${this.t('chooseAnotherGate')}`);
+
+          this.form.patchValue({ gateNumber: Number(dto.gateNumber || 1) + 1 });
+          return;
+        }
+
         this.toast?.fromProblem?.(err);
       },
     });
@@ -160,16 +197,29 @@ export class LoginComponent {
 
     this.changeLoading = true;
 
+    const gateType = this.form.value.gateType!;
+    const gateNumber = Number(this.form.value.gateNumber) || 1;
+    const remember = !!this.form.value.remember;
+
     const payload = {
       userName: this.firstUserName,
       password: this.firstPassword,
       newPassword: this.changeForm.value.newPassword!,
+      gateType,
+      gateNumber,
+      remember,
     };
 
     this.auth.loginFirstTime(payload).subscribe({
       next: () => {
         this.auth
-          .login({ userName: this.firstUserName!, password: payload.newPassword })
+          .login({
+            userName: this.firstUserName!,
+            password: payload.newPassword,
+            gateType,
+            gateNumber,
+            remember,
+          })
           .subscribe({
             next: () => {
               this.changeLoading = false;
@@ -191,7 +241,7 @@ export class LoginComponent {
   }
 
   private navigateAfterLogin() {
-    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/dashboard';
+    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') || '/overview';
     this.router.navigateByUrl(returnUrl);
   }
 
